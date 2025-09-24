@@ -19,7 +19,9 @@ export async function run(): Promise<void> {
   const octokit = github.getOctokit(token)
   const workflow_run_payload = github.context.payload['workflow_run']
 
-  core.error(JSON.stringify(workflow_run_payload))
+  core.error(`workflow_run_payload: ${workflow_run_payload}`)
+
+  core.error(`github.context: ${github.context}`)
 
   const runId = workflow_run_payload.id
   core.info(`Run ID: ${runId}`)
@@ -51,6 +53,7 @@ export async function run(): Promise<void> {
 
   const diagnosticsDir = core.getInput('artifacts-dir')
   const artifactDir = path.join(process.cwd(), diagnosticsDir)
+  core.warning
   fs.mkdirSync(artifactDir, { recursive: true })
 
   fs.writeFileSync(
