@@ -16,12 +16,25 @@ export async function run(): Promise<void> {
     )
   }
 
+  const diagnosticsDir = core.getInput('artifacts-dir')
+  const artifactDir = path.join(process.cwd(), diagnosticsDir)
+  core.warning(`Artifact directory: ${artifactDir}`)
+  fs.mkdirSync(artifactDir, { recursive: true })
+
+  core.startGroup(`Logging input`)
   const octokit = github.getOctokit(token)
   const workflow_run_payload = github.context.payload['workflow_run']
 
-  core.error(`workflow_run_payload: ${workflow_run_payload}`)
+  fs.writeFileSync(
+    path.join(process.cwd(), 'workflow_run_payload.json'),
+    JSON.stringify(workflow_run_payload, null, 2)
+  )
 
-  core.error(`github.context: ${github.context}`)
+  fs.writeFileSync(
+    path.join(process.cwd(), 'github_context.json'),
+    JSON.stringify(github.context, null, 2)
+  )
+  core.endGroup()
 
   const runId = workflow_run_payload.id
   core.info(`Run ID: ${runId}`)
@@ -50,11 +63,6 @@ export async function run(): Promise<void> {
     }
   }
   core.endGroup()
-
-  const diagnosticsDir = core.getInput('artifacts-dir')
-  const artifactDir = path.join(process.cwd(), diagnosticsDir)
-  core.warning
-  fs.mkdirSync(artifactDir, { recursive: true })
 
   fs.writeFileSync(
     path.join(artifactDir, 'artifacts.json'),
