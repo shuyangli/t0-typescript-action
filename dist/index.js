@@ -31253,11 +31253,20 @@ async function run() {
     if (!token) {
         throw new Error('A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.');
     }
+    const diagnosticsDir = coreExports.getInput('artifacts-dir');
+    const artifactDir = path.join(process.cwd(), diagnosticsDir);
+    coreExports.warning(`Artifact directory: ${artifactDir}`);
+    fs.mkdirSync(artifactDir, { recursive: true });
+    coreExports.startGroup(`Logging input`);
     const octokit = githubExports.getOctokit(token);
-    coreExports.error(JSON.stringify(githubExports.context.payload, null, 2));
-    const runId = githubExports.context.runId || process.env.RUN_ID;
+    const workflow_run_payload = githubExports.context.payload['workflow_run'];
+    fs.writeFileSync(path.join(process.cwd(), 'workflow_run_payload.json'), JSON.stringify(workflow_run_payload, null, 2));
+    fs.writeFileSync(path.join(process.cwd(), 'github_context.json'), JSON.stringify(githubExports.context, null, 2));
+    coreExports.endGroup();
+    const runId = workflow_run_payload.id;
+    coreExports.info(`Run ID: ${runId}`);
     if (!runId) {
-        throw new Error('Unable to determine target workflow run. Provide the `run-id` input when running outside of a workflow context.');
+        throw new Error('Unable to determine target workflow run.');
     }
     const { owner, repo } = githubExports.context.repo;
     const artifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {
@@ -31276,9 +31285,6 @@ async function run() {
         }
     }
     coreExports.endGroup();
-    const diagnosticsDir = coreExports.getInput('artifacts-dir');
-    const artifactDir = path.join(process.cwd(), diagnosticsDir);
-    fs.mkdirSync(artifactDir, { recursive: true });
     fs.writeFileSync(path.join(artifactDir, 'artifacts.json'), JSON.stringify(artifacts, null, 2));
     fs.writeFileSync(path.join(artifactDir, 'artifact-names.txt'), artifacts.map((artifact) => artifact.name).join('\n'));
     coreExports.setOutput('artifact-names', artifacts.map((artifact) => artifact.name).join('\n'));
