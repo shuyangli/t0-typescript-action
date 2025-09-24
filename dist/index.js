@@ -31243,6 +31243,29 @@ function requireGithub () {
 
 var githubExports = requireGithub();
 
+function getFileContentFromInput(inputName) {
+    const filepath = coreExports.getInput(inputName)?.trim();
+    if (!filepath) {
+        throw new Error(`Input ${inputName} does not exist; check the GitHub Workflow definition`);
+    }
+    return fs.readFileSync(filepath, {
+        encoding: 'utf-8'
+    });
+}
+async function getJobStatus(jobsUrl, token) {
+    // Fetch jobs from the workflow run
+    const jobsResponse = await fetch(jobsUrl, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28'
+        }
+    });
+    if (jobsResponse.ok) {
+        return (await jobsResponse.json());
+    }
+    throw new Error('Failed to load jobs');
+}
 /**
  * The main function for the action.
  *
@@ -31254,6 +31277,8 @@ async function run() {
         throw new Error('A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.');
     }
     coreExports.info(`Action running in directory ${process.cwd()}`);
+    const artifactDir = path.join(process.cwd(), 'custom-action-artifacts');
+    coreExports.info(`Output artifact directory: ${artifactDir}`);
     const octokit = githubExports.getOctokit(token);
     const workflow_run_payload = githubExports.context.payload['workflow_run'];
     const runId = workflow_run_payload.id;
@@ -31261,16 +31286,27 @@ async function run() {
         throw new Error('Unable to determine target workflow run.');
     }
     coreExports.info(`Target workflow run ID: ${runId}`);
+    if (workflow_run_payload.conclusion !== 'failure') {
+        coreExports.warning(`Workflow run did not fail. Skipping action.`);
+        return;
+    }
+    // Fetching jobs from the workflow run to get what steps failed
+    const jobsUrl = workflow_run_payload.jobs_url;
+    if (!jobsUrl) {
+        throw new Error('Missing jobs_url from workflow_run');
+    }
+    coreExports.info(`Fetching jobs from: ${jobsUrl}`);
+    const workflowJobsStatus = await getJobStatus(jobsUrl, token);
+    fs.writeFileSync(path.join(artifactDir, 'workflow-jobs.json'), JSON.stringify(workflowJobsStatus, null, 2));
+    coreExports.info('Jobs data written to workflow-jobs.json');
+    // Load diff summary and full diff.
+    // TODO: consider loading pull request diff here using github REST APIs.
+    const diffSummary = getFileContentFromInput('diff-summary-path');
+    const fullDiff = getFileContentFromInput('full-diff-path');
+    coreExports.info(diffSummary);
+    coreExports.info(fullDiff);
     // Prepare artifact directory
-    // const diagnosticsDir = core.getInput('artifacts-dir')
-    const artifactDir = path.join(process.cwd(), 'custom-action-artifacts');
-    coreExports.warning(`Artifact directory: ${artifactDir}`);
     fs.mkdirSync(artifactDir, { recursive: true });
-    // Debug only
-    coreExports.startGroup(`Logging input`);
-    fs.writeFileSync(path.join(artifactDir, 'workflow_run_payload.json'), JSON.stringify(workflow_run_payload, null, 2));
-    fs.writeFileSync(path.join(artifactDir, 'github_context.json'), JSON.stringify(githubExports.context, null, 2));
-    coreExports.endGroup();
     // Collect artifacts from failed workflow run
     const { owner, repo } = githubExports.context.repo;
     const artifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {
