@@ -130,7 +130,7 @@ export async function run(): Promise<void> {
     apiKey: 'dummy'
   })
   const response = await client.chat.completions.create({
-    model: 'openai::gpt-5',
+    model: 'tensorzero::model_name::openai::gpt-5',
     messages: [
       {
         content: 'Who are you?',
