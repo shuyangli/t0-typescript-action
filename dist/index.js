@@ -31268,8 +31268,8 @@ async function run() {
     fs.mkdirSync(artifactDir, { recursive: true });
     // Debug only
     coreExports.startGroup(`Logging input`);
-    fs.writeFileSync(path.join(process.cwd(), 'workflow_run_payload.json'), JSON.stringify(workflow_run_payload, null, 2));
-    fs.writeFileSync(path.join(process.cwd(), 'github_context.json'), JSON.stringify(githubExports.context, null, 2));
+    fs.writeFileSync(path.join(artifactDir, 'workflow_run_payload.json'), JSON.stringify(workflow_run_payload, null, 2));
+    fs.writeFileSync(path.join(artifactDir, 'github_context.json'), JSON.stringify(githubExports.context, null, 2));
     coreExports.endGroup();
     // Collect artifacts from failed workflow run
     const { owner, repo } = githubExports.context.repo;

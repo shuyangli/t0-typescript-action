@@ -36,12 +36,12 @@ export async function run(): Promise<void> {
   // Debug only
   core.startGroup(`Logging input`)
   fs.writeFileSync(
-    path.join(process.cwd(), 'workflow_run_payload.json'),
+    path.join(artifactDir, 'workflow_run_payload.json'),
     JSON.stringify(workflow_run_payload, null, 2)
   )
 
   fs.writeFileSync(
-    path.join(process.cwd(), 'github_context.json'),
+    path.join(artifactDir, 'github_context.json'),
     JSON.stringify(github.context, null, 2)
   )
   core.endGroup()
