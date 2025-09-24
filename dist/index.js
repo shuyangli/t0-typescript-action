@@ -38140,6 +38140,16 @@ async function getJobStatus(jobsUrl, token) {
     }
     throw new Error('Failed to load jobs');
 }
+function getOpenAiCompatibleUrl() {
+    let tensorZeroBaseUrl = coreExports.getInput('tensorzero-base-url')?.trim();
+    if (!tensorZeroBaseUrl) {
+        throw new Error('TensorZero base url is required; provide one via the `tensorzero-base-url` input.');
+    }
+    if (tensorZeroBaseUrl[tensorZeroBaseUrl.length - 1] === '/') {
+        tensorZeroBaseUrl = tensorZeroBaseUrl.slice(0, -1);
+    }
+    return `${tensorZeroBaseUrl}/openai`;
+}
 /**
  * The main function for the action.
  *
@@ -38155,11 +38165,6 @@ async function run() {
     const artifactDir = path$1.join(process.cwd(), 'custom-action-artifacts');
     coreExports.info(`Output artifact directory: ${artifactDir}`);
     fs.mkdirSync(artifactDir, { recursive: true });
-    const tensorZeroBaseUrl = coreExports.getInput('tensorzero-base-url')?.trim();
-    if (!tensorZeroBaseUrl) {
-        throw new Error('TensorZero base url is required; provide one via the `tensorzero-base-url` input.');
-    }
-    // const apiKey = core.getInput('openai-api-key')?.trim()
     const octokit = githubExports.getOctokit(token);
     const workflow_run_payload = githubExports.context.payload['workflow_run'];
     const runId = workflow_run_payload.id;
@@ -38205,8 +38210,9 @@ async function run() {
     }
     coreExports.endGroup();
     // Construct a prompt to call an LLM.
+    const tensorZeroOpenAiEndpointUrl = getOpenAiCompatibleUrl();
     const client = new OpenAI({
-        baseURL: tensorZeroBaseUrl,
+        baseURL: tensorZeroOpenAiEndpointUrl,
         apiKey: 'dummy'
     });
     const response = await client.chat.completions.create({
