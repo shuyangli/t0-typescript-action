@@ -31276,9 +31276,11 @@ async function run() {
     if (!token) {
         throw new Error('A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.');
     }
+    // Prepare artifact directory
     coreExports.info(`Action running in directory ${process.cwd()}`);
     const artifactDir = path.join(process.cwd(), 'custom-action-artifacts');
     coreExports.info(`Output artifact directory: ${artifactDir}`);
+    fs.mkdirSync(artifactDir, { recursive: true });
     const octokit = githubExports.getOctokit(token);
     const workflow_run_payload = githubExports.context.payload['workflow_run'];
     const runId = workflow_run_payload.id;
@@ -31305,8 +31307,6 @@ async function run() {
     const fullDiff = getFileContentFromInput('full-diff-path');
     coreExports.info(diffSummary);
     coreExports.info(fullDiff);
-    // Prepare artifact directory
-    fs.mkdirSync(artifactDir, { recursive: true });
     // Collect artifacts from failed workflow run
     const { owner, repo } = githubExports.context.repo;
     const artifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {

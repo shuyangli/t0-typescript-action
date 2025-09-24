@@ -46,9 +46,11 @@ export async function run(): Promise<void> {
     )
   }
 
+  // Prepare artifact directory
   core.info(`Action running in directory ${process.cwd()}`)
   const artifactDir = path.join(process.cwd(), 'custom-action-artifacts')
   core.info(`Output artifact directory: ${artifactDir}`)
+  fs.mkdirSync(artifactDir, { recursive: true })
 
   const octokit = github.getOctokit(token)
   const workflow_run_payload = github.context.payload['workflow_run']
@@ -84,9 +86,6 @@ export async function run(): Promise<void> {
   core.info(diffSummary)
 
   core.info(fullDiff)
-
-  // Prepare artifact directory
-  fs.mkdirSync(artifactDir, { recursive: true })
 
   // Collect artifacts from failed workflow run
   const { owner, repo } = github.context.repo
