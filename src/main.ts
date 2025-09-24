@@ -17,15 +17,14 @@ export async function run(): Promise<void> {
   }
 
   const octokit = github.getOctokit(token)
+  const workflow_run_payload = github.context.payload['workflow_run']
 
-  core.error(JSON.stringify(github.context.payload, null, 2))
+  core.error(JSON.stringify(workflow_run_payload))
 
-  const runId = github.context.runId || process.env.RUN_ID
-
+  const runId = workflow_run_payload.id
+  core.info(`Run ID: ${runId}`)
   if (!runId) {
-    throw new Error(
-      'Unable to determine target workflow run. Provide the `run-id` input when running outside of a workflow context.'
-    )
+    throw new Error('Unable to determine target workflow run.')
   }
 
   const { owner, repo } = github.context.repo
