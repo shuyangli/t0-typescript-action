@@ -121,7 +121,8 @@ export async function run(): Promise<void> {
 
   // Construct a prompt to call an LLM.
   const client = new OpenAI({
-    baseURL: tensorZeroBaseUrl
+    baseURL: tensorZeroBaseUrl,
+    apiKey: 'dummy'
   })
   const response = await client.chat.completions.create({
     model: 'gpt-5',
