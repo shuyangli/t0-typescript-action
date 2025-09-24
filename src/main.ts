@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import * as fs from 'fs'
 import * as path from 'path'
+import { OpenAI } from 'openai'
 
 function getFileContentFromInput(inputName: string): string {
   const filepath = core.getInput(inputName)?.trim()
@@ -51,6 +52,15 @@ export async function run(): Promise<void> {
   const artifactDir = path.join(process.cwd(), 'custom-action-artifacts')
   core.info(`Output artifact directory: ${artifactDir}`)
   fs.mkdirSync(artifactDir, { recursive: true })
+
+  const tensorZeroBaseUrl = core.getInput('tensorzero-base-url')?.trim()
+  if (!tensorZeroBaseUrl) {
+    throw new Error(
+      'TensorZero base url is required; provide one via the `tensorzero-base-url` input.'
+    )
+  }
+
+  // const apiKey = core.getInput('openai-api-key')?.trim()
 
   const octokit = github.getOctokit(token)
   const workflow_run_payload = github.context.payload['workflow_run']
@@ -108,6 +118,25 @@ export async function run(): Promise<void> {
     }
   }
   core.endGroup()
+
+  // Construct a prompt to call an LLM.
+  const client = new OpenAI({
+    baseURL: tensorZeroBaseUrl
+  })
+  const response = await client.chat.completions.create({
+    model: 'gpt-5',
+    messages: [
+      {
+        content: 'Who are you?',
+        role: 'user'
+      }
+    ]
+  })
+
+  fs.writeFileSync(
+    path.join(artifactDir, 'llm-response.json'),
+    JSON.stringify(response, null, 2)
+  )
 
   fs.writeFileSync(
     path.join(artifactDir, 'artifacts.json'),

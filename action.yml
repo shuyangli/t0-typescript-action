@@ -12,8 +12,14 @@ inputs:
   token:
     description: GitHub token used to query workflow run artifacts.
     required: true
-  workflow:
-    description: The github workflow event.
+  tensorzero-base-url:
+    description: Base URL for the TensorZero instance.
+    required: true
+  diff-summary-path:
+    description: File path for diff summary.
+    required: false
+  full-diff-path:
+    description: File path for full diff.
     required: false
   artifacts-dir:
     description: The directory to store the artifacts.
