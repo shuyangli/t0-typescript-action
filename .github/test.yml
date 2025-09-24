@@ -1,0 +1,220 @@
+name: TensorZero CI Diagnosis Bot
+
+on:
+  workflow_run:
+    # TODO: Replace with the actual workflow(s) to monitor. This doesn't seem to work yet.
+    workflows: ['Dummy CI Failure']
+    types:
+      - completed
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+jobs:
+  gather-diff:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    name: Gather failure context
+    env:
+      DIAGNOSTICS_DIR: diagnostics
+    steps:
+      # TODO: delete this before actually sending it out
+      - name: Install GitHub CLI (act local only)
+        run: |
+          type -p gh >/dev/null || (
+            sudo apt-get update &&
+            sudo apt-get install -y gh
+          )
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Gather PR metadata
+        id: pr-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const pr = run.pull_requests[0];
+
+            if (!pr) {
+              core.setFailed('No pull request found for the failing workflow run.');
+              return;
+            }
+
+            core.setOutput('pr-number', pr.number);
+            core.setOutput('base-ref', pr.base.ref);
+            core.setOutput('head-ref', pr.head.ref);
+            core.setOutput('head-sha', run.head_sha);
+            core.setOutput('run-id', run.id);
+            core.setOutput('run-attempt', run.run_attempt);
+
+      - name: Fetch base branch for diff
+        run: |
+          git fetch origin "${{ steps.pr-info.outputs.base-ref }}"
+
+      - name: Prepare diagnostics workspace
+        run: |
+          mkdir -p "${DIAGNOSTICS_DIR}"
+
+      - name: Capture PR diff summary
+        run: |
+          git diff --stat "origin/${{ steps.pr-info.outputs.base-ref }}...${{ steps.pr-info.outputs.head-sha }}" > "${DIAGNOSTICS_DIR}/diff-summary.txt"
+
+      - name: Capture full PR diff
+        run: |
+          git diff "origin/${{ steps.pr-info.outputs.base-ref }}...${{ steps.pr-info.outputs.head-sha }}" > "${DIAGNOSTICS_DIR}/diff.patch"
+
+      # TODO: capture logs properly
+      - name: Discover workflow artifacts
+        id: list-artifacts
+        uses: actions/github-script@v7
+        env:
+          RUN_ID: ${{ steps.pr-info.outputs.run-id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const runId = process.env.RUN_ID;
+            const { owner, repo } = context.repo;
+
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              {
+                owner,
+                repo,
+                run_id: runId,
+                per_page: 100,
+              }
+            );
+
+            core.startGroup(`Artifacts for workflow run ${runId}`);
+            if (!artifacts.length) {
+              core.warning('No artifacts found for the failing workflow run.');
+            } else {
+              for (const artifact of artifacts) {
+                core.info(`• ${artifact.name} (${artifact.size_in_bytes} bytes)`);
+              }
+            }
+            core.endGroup();
+
+            const diagnosticsDir = process.env.DIAGNOSTICS_DIR;
+            const artifactDir = path.join(process.cwd(), diagnosticsDir, 'artifacts');
+            fs.mkdirSync(artifactDir, { recursive: true });
+
+            fs.writeFileSync(
+              path.join(artifactDir, 'artifacts.json'),
+              JSON.stringify(artifacts, null, 2)
+            );
+
+            fs.writeFileSync(
+              path.join(artifactDir, 'artifact-names.txt'),
+              artifacts.map((artifact) => artifact.name).join('\n')
+            );
+
+            core.setOutput('artifact-names', artifacts.map((artifact) => artifact.name).join('\n'));
+            core.setOutput('artifact-count', artifacts.length.toString());
+
+      - name: Download workflow artifacts
+        if: ${{ steps.list-artifacts.outputs.artifact-count != '0' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ steps.pr-info.outputs.run-id }}
+          DIAGNOSTICS_DIR: ${{ env.DIAGNOSTICS_DIR }}
+        run: |
+          mkdir -p "${DIAGNOSTICS_DIR}/artifacts"
+          while IFS= read -r artifact_name || [ -n "$artifact_name" ]; do
+            echo "Downloading artifact: $artifact_name"
+            gh run download "$RUN_ID" --name "$artifact_name" --dir "${DIAGNOSTICS_DIR}/artifacts"
+          done < "${DIAGNOSTICS_DIR}/artifacts/artifact-names.txt"
+
+      - name: Display structure of downloaded files
+        run: ls -R ${DIAGNOSTICS_DIR}
+
+      # - name: Download failing workflow logs
+      #   run: |
+      #     run_id="${{ steps.pr-info.outputs.run-id }}"
+      #     attempt="${{ steps.pr-info.outputs.run-attempt }}"
+      #     mkdir -p "${DIAGNOSTICS_DIR}/logs"
+      #     echo "/repos/${{ github.repository }}/actions/runs/${run_id}/logs" > "${DIAGNOSTICS_DIR}/logs/run-${run_id}-attempt-${attempt}.json";
+      #     gh api \
+      #       -H "Accept: application/json" \
+      #       "/repos/${{ github.repository }}/actions/runs/${run_id}/logs" > "${DIAGNOSTICS_DIR}/logs/run-${run_id}-attempt-${attempt}.json"
+      #     cat "${DIAGNOSTICS_DIR}/logs/run-${run_id}-attempt-${attempt}.json"
+      #   # tail -n 400 "${DIAGNOSTICS_DIR}/logs/run-${run_id}-attempt-${attempt}.json" > "${DIAGNOSTICS_DIR}/logs/failure-tail.log"
+      #   # grep -iE 'fail|error|exception|traceback' "${DIAGNOSTICS_DIR}/logs/run-${run_id}-attempt-${attempt}.log" | tail -n 200 > "${DIAGNOSTICS_DIR}/logs/error-snippets.log" || true
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-action:
+    needs: gather-diff
+    uses: ./
+    with:
+      workflow: ${{ github.event.workflow_run }}
+
+  diagnose:
+    needs: gather-diff
+    runs-on: ubuntu-latest
+    name: Call LLM diagnostics
+    env:
+      DIAGNOSTICS_DIR: diagnostics
+      # TODO: need to set up API keys for T0
+    steps:
+      - name: Build prompt payload for LLM
+        run: |
+          cat <<'PROMPT' > "${DIAGNOSTICS_DIR}/prompt.json"
+          {
+            "repository": "${{ github.repository }}",
+            "pr_number": "${{ steps.pr-info.outputs.pr-number }}",
+            "workflow_run_id": "${{ steps.pr-info.outputs.run-id }}",
+            "summary_path": "${DIAGNOSTICS_DIR}/diff-summary.txt",
+            "diff_path": "${DIAGNOSTICS_DIR}/diff.patch",
+            "log_excerpt_path": "${DIAGNOSTICS_DIR}/logs/failure-tail.log",
+            "error_snippets_path": "${DIAGNOSTICS_DIR}/logs/error-snippets.log",
+            "notes": "TODO: enrich prompt with additional repository context (e.g., recent commits, owner instructions)."
+          }
+          PROMPT
+
+      - name: Call LLM diagnostics (placeholder)
+        run: |
+          echo "TODO: Replace this placeholder with a call to the chosen LLM provider." | tee "${DIAGNOSTICS_DIR}/llm-response.txt"
+          echo "# TODO: Wire up environment variables / secrets (e.g., LLM_API_KEY) before enabling real calls." >> "${DIAGNOSTICS_DIR}/llm-response.txt"
+
+      - name: Upload diagnostics bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-failure-diagnostics
+          path: |
+            ${DIAGNOSTICS_DIR}/diff-summary.txt
+            ${DIAGNOSTICS_DIR}/diff.patch
+            ${DIAGNOSTICS_DIR}/logs/failure-tail.log
+            ${DIAGNOSTICS_DIR}/logs/error-snippets.log
+            ${DIAGNOSTICS_DIR}/artifacts/artifacts.json
+            ${DIAGNOSTICS_DIR}/artifacts/artifact-names.txt
+            ${DIAGNOSTICS_DIR}/prompt.json
+            ${DIAGNOSTICS_DIR}/llm-response.txt
+
+      - name: Post placeholder comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number("${{ steps.pr-info.outputs.pr-number }}"),
+              body: [
+                `🤖 CI Failure Diagnostics (placeholder)`,
+                '',
+                `• Workflow Run ID: ${{ steps.pr-info.outputs.run-id }}`,
+                `• Captured a diff summary and logs for analysis.`,
+                `• LLM call not yet implemented. Replace the placeholder step in ci-failure-diagnosis.yml.`,
+                '',
+                `Artifacts: ci-failure-diagnostics`
+              ].join('\n')
+            });
