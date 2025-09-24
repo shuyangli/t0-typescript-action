@@ -38148,7 +38148,7 @@ function getOpenAiCompatibleUrl() {
     if (tensorZeroBaseUrl[tensorZeroBaseUrl.length - 1] === '/') {
         tensorZeroBaseUrl = tensorZeroBaseUrl.slice(0, -1);
     }
-    return `${tensorZeroBaseUrl}/openai`;
+    return `${tensorZeroBaseUrl}/openai/v1`;
 }
 /**
  * The main function for the action.
