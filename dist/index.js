@@ -31253,21 +31253,25 @@ async function run() {
     if (!token) {
         throw new Error('A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.');
     }
-    const diagnosticsDir = coreExports.getInput('artifacts-dir');
-    const artifactDir = path.join(process.cwd(), diagnosticsDir);
-    coreExports.warning(`Artifact directory: ${artifactDir}`);
-    fs.mkdirSync(artifactDir, { recursive: true });
-    coreExports.startGroup(`Logging input`);
+    coreExports.info(`Action running in directory ${process.cwd()}`);
     const octokit = githubExports.getOctokit(token);
     const workflow_run_payload = githubExports.context.payload['workflow_run'];
-    fs.writeFileSync(path.join(process.cwd(), 'workflow_run_payload.json'), JSON.stringify(workflow_run_payload, null, 2));
-    fs.writeFileSync(path.join(process.cwd(), 'github_context.json'), JSON.stringify(githubExports.context, null, 2));
-    coreExports.endGroup();
     const runId = workflow_run_payload.id;
-    coreExports.info(`Run ID: ${runId}`);
     if (!runId) {
         throw new Error('Unable to determine target workflow run.');
     }
+    coreExports.info(`Target workflow run ID: ${runId}`);
+    // Prepare artifact directory
+    // const diagnosticsDir = core.getInput('artifacts-dir')
+    const artifactDir = path.join(process.cwd(), 'custom-action-artifacts');
+    coreExports.warning(`Artifact directory: ${artifactDir}`);
+    fs.mkdirSync(artifactDir, { recursive: true });
+    // Debug only
+    coreExports.startGroup(`Logging input`);
+    fs.writeFileSync(path.join(process.cwd(), 'workflow_run_payload.json'), JSON.stringify(workflow_run_payload, null, 2));
+    fs.writeFileSync(path.join(process.cwd(), 'github_context.json'), JSON.stringify(githubExports.context, null, 2));
+    coreExports.endGroup();
+    // Collect artifacts from failed workflow run
     const { owner, repo } = githubExports.context.repo;
     const artifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {
         owner,

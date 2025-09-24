@@ -16,15 +16,25 @@ export async function run(): Promise<void> {
     )
   }
 
-  const diagnosticsDir = core.getInput('artifacts-dir')
-  const artifactDir = path.join(process.cwd(), diagnosticsDir)
+  core.info(`Action running in directory ${process.cwd()}`)
+
+  const octokit = github.getOctokit(token)
+  const workflow_run_payload = github.context.payload['workflow_run']
+  const runId = workflow_run_payload.id
+  if (!runId) {
+    throw new Error('Unable to determine target workflow run.')
+  }
+
+  core.info(`Target workflow run ID: ${runId}`)
+
+  // Prepare artifact directory
+  // const diagnosticsDir = core.getInput('artifacts-dir')
+  const artifactDir = path.join(process.cwd(), 'custom-action-artifacts')
   core.warning(`Artifact directory: ${artifactDir}`)
   fs.mkdirSync(artifactDir, { recursive: true })
 
+  // Debug only
   core.startGroup(`Logging input`)
-  const octokit = github.getOctokit(token)
-  const workflow_run_payload = github.context.payload['workflow_run']
-
   fs.writeFileSync(
     path.join(process.cwd(), 'workflow_run_payload.json'),
     JSON.stringify(workflow_run_payload, null, 2)
@@ -36,14 +46,8 @@ export async function run(): Promise<void> {
   )
   core.endGroup()
 
-  const runId = workflow_run_payload.id
-  core.info(`Run ID: ${runId}`)
-  if (!runId) {
-    throw new Error('Unable to determine target workflow run.')
-  }
-
+  // Collect artifacts from failed workflow run
   const { owner, repo } = github.context.repo
-
   const artifacts = await octokit.paginate(
     octokit.rest.actions.listWorkflowRunArtifacts,
     {
