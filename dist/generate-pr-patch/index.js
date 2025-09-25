@@ -46854,10 +46854,6 @@ function parseAndValidateActionInputs() {
 async function run() {
     const inputs = parseAndValidateActionInputs();
     const { token, tensorZeroBaseUrl, diffSummaryPath, fullDiffPath, inputLogsDir, outputArtifactsDir } = inputs;
-    if (!isPrEligibleForFix()) {
-        coreExports.warning(`Pull request is not eligible for fix. Skipping action.`);
-        return;
-    }
     // Prepare artifact directory
     coreExports.info(`Action running in directory ${process.cwd()}`);
     const outputDir = outputArtifactsDir
@@ -46869,6 +46865,15 @@ async function run() {
     }
     else {
         coreExports.warning(`Not creating output artifacts.`);
+    }
+    // Write context for debugging
+    if (outputDir) {
+        fs.writeFileSync(path$1.join(outputDir, 'payload.json'), JSON.stringify(githubExports.context.payload, null, 2));
+        coreExports.info('Payload written to payload.json');
+    }
+    if (!isPrEligibleForFix()) {
+        coreExports.warning(`Pull request is not eligible for fix. Skipping action.`);
+        return;
     }
     const workflow_run_payload = githubExports.context.payload['workflow_run'];
     const runId = workflow_run_payload.id;

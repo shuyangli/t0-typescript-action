@@ -317,15 +317,8 @@ export async function run(): Promise<void> {
     inputLogsDir,
     outputArtifactsDir
   } = inputs
-
-  if (!isPrEligibleForFix()) {
-    core.warning(`Pull request is not eligible for fix. Skipping action.`)
-    return
-  }
-
   // Prepare artifact directory
   core.info(`Action running in directory ${process.cwd()}`)
-
   const outputDir = outputArtifactsDir
     ? path.join(process.cwd(), outputArtifactsDir)
     : undefined
@@ -334,6 +327,20 @@ export async function run(): Promise<void> {
     fs.mkdirSync(outputDir, { recursive: true })
   } else {
     core.warning(`Not creating output artifacts.`)
+  }
+
+  // Write context for debugging
+  if (outputDir) {
+    fs.writeFileSync(
+      path.join(outputDir, 'payload.json'),
+      JSON.stringify(github.context.payload, null, 2)
+    )
+    core.info('Payload written to payload.json')
+  }
+
+  if (!isPrEligibleForFix()) {
+    core.warning(`Pull request is not eligible for fix. Skipping action.`)
+    return
   }
 
   const workflow_run_payload = github.context.payload['workflow_run']
