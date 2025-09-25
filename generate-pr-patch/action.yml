@@ -30,4 +30,4 @@ outputs: {}
 
 runs:
   using: node24
-  main: ../../dist/generate-pr-patch/index.js
+  main: ../dist/generate-pr-patch/index.js
