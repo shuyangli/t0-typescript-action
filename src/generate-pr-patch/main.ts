@@ -278,11 +278,10 @@ function isPullRequestEligibleForFix(): boolean {
 
   // If the pull request is not targeting the main branch, we don't want to fix it.
   if (
-    github.context.payload.pull_request?.base?.ref !==
-    github.context.payload.repository?.default_branch
+    pullRequest.base?.ref !== github.context.payload.repository?.default_branch
   ) {
     core.warning(
-      `PR is not targeting the main branch: PR branch is ${github.context.payload.pull_request?.base?.ref}, but main branch is ${github.context.payload.repository?.default_branch}; skipping action.`
+      `PR is not targeting the main branch: PR branch is ${pullRequest.base?.ref}, but main branch is ${github.context.payload.repository?.default_branch}; skipping action.`
     )
     return false
   }

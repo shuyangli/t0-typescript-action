@@ -46829,9 +46829,8 @@ function isPullRequestEligibleForFix() {
         return false;
     }
     // If the pull request is not targeting the main branch, we don't want to fix it.
-    if (githubExports.context.payload.pull_request?.base?.ref !==
-        githubExports.context.payload.repository?.default_branch) {
-        coreExports.warning(`PR is not targeting the main branch: PR branch is ${githubExports.context.payload.pull_request?.base?.ref}, but main branch is ${githubExports.context.payload.repository?.default_branch}; skipping action.`);
+    if (pullRequest.base?.ref !== githubExports.context.payload.repository?.default_branch) {
+        coreExports.warning(`PR is not targeting the main branch: PR branch is ${pullRequest.base?.ref}, but main branch is ${githubExports.context.payload.repository?.default_branch}; skipping action.`);
         return false;
     }
     coreExports.info(`PR is eligible for fix.`);
