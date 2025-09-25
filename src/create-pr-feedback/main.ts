@@ -1,41 +1,53 @@
 import * as core from '@actions/core'
+import { context } from '@actions/github'
 import * as fs from 'fs'
 import * as path from 'path'
 
-function readFeedbackFromFile(filePath: string): string {
-  const resolvedPath = path.resolve(process.cwd(), filePath)
-  if (!fs.existsSync(resolvedPath)) {
-    throw new Error(`Feedback file not found at path: ${resolvedPath}`)
+type PullRequestPayload = {
+  id?: number
+  merged?: boolean
+  number?: number
+}
+
+const supportedEvents = new Set(['pull_request', 'pull_request_target'])
+
+function resolveClosedOrMergedPullRequest(): PullRequestPayload | null {
+  if (!supportedEvents.has(context.eventName)) {
+    core.info(
+      `Event '${context.eventName}' is not supported. This action only runs when pull requests are closed or merged. Skipping.`
+    )
+    return null
   }
 
-  return fs.readFileSync(resolvedPath, { encoding: 'utf-8' })
+  const pullRequest = context.payload.pull_request as
+    | PullRequestPayload
+    | undefined
+  if (!pullRequest) {
+    core.info(
+      'Pull request payload missing from event. Skipping action execution.'
+    )
+    return null
+  }
+
+  const action = context.payload.action
+  if (action !== 'closed') {
+    core.info(
+      `Pull request action '${action ?? 'unknown'}' does not indicate a merge or close. Skipping action execution.`
+    )
+    return null
+  }
+
+  return pullRequest
 }
 
 export async function run(): Promise<void> {
   try {
-    const feedbackFromInput = core.getInput('feedback-body')?.trim()
-    const feedbackFilePath = core.getInput('feedback-file')?.trim()
-
-    let feedback = ''
-    if (feedbackFilePath) {
-      feedback = readFeedbackFromFile(feedbackFilePath)
-    } else if (feedbackFromInput) {
-      feedback = feedbackFromInput
-    }
-
-    if (!feedback) {
-      core.info('No feedback provided. Skipping comment generation.')
+    const pullRequest = resolveClosedOrMergedPullRequest()
+    if (!pullRequest) {
       return
     }
 
-    core.info('Pull request feedback prepared.')
-
-    core.setOutput('feedback-body', feedback)
-
-    await core.summary
-      .addHeading('Prepared Pull Request Feedback')
-      .addCodeBlock(feedback, 'markdown')
-      .write()
+    core.info(JSON.stringify(pullRequest, null, 2))
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message)
