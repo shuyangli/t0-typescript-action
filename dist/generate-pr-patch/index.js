@@ -46672,7 +46672,7 @@ async function execGit(args, options = {}) {
         throw new Error(`${commandString} failed: ${maskSecret(stderr, token)}`);
     }
 }
-async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff }) {
+async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff }, outputDir) {
     const normalizedDiff = diff.trim();
     if (!normalizedDiff) {
         coreExports.info('Diff content empty after trimming; skipping follow-up PR creation.');
@@ -46757,6 +46757,9 @@ async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff
             title: prTitle,
             body: prBody
         });
+        if (outputDir) {
+            fs.writeFileSync(path$1.join(outputDir, 'followup-pr-payload.json'), JSON.stringify(createdPr, null, 2));
+        }
         return {
             number: createdPr.data.number,
             htmlUrl: createdPr.data.html_url
@@ -46807,6 +46810,36 @@ function getOpenAiCompatibleUrl(baseUrl) {
     }
     return `${baseUrl}/openai/v1`;
 }
+async function recordInferenceInClickHouse(config, params) {
+    const { url, database, table, username, password } = config;
+    const endpoint = new URL(url);
+    if (database) {
+        endpoint.searchParams.set('database', database);
+    }
+    const query = `INSERT INTO ${table} FORMAT JSONEachRow`;
+    endpoint.searchParams.set('query', query);
+    const row = {
+        inference_id: params.inferenceId,
+        pull_request_number: params.pullRequestNumber,
+        created_at: new Date().toISOString()
+    };
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    if (username) {
+        const authValue = `${username}:${password ?? ''}`;
+        headers.Authorization = `Basic ${Buffer.from(authValue).toString('base64')}`;
+    }
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: `${JSON.stringify(row)}\n`
+    });
+    if (!response.ok) {
+        const responseText = await response.text();
+        throw new Error(`ClickHouse insert request failed with status ${response.status}: ${responseText}`);
+    }
+}
 function isPullRequestEligibleForFix() {
     // If the workflow run is not associated with a single pull request, we don't want to fix it.
     if (githubExports.context.payload.workflow_run?.pull_requests?.length !== 1) {
@@ -46846,13 +46879,40 @@ function parseAndValidateActionInputs() {
     if (!tensorZeroBaseUrl) {
         throw new Error('TensorZero base url is required; provide one via the `tensorzero-base-url` input.');
     }
+    const clickHouseUrl = coreExports.getInput('clickhouse-url')?.trim();
+    const clickHouseTable = coreExports.getInput('clickhouse-table')?.trim();
+    const clickHouseUsername = coreExports.getInput('clickhouse-username')?.trim();
+    const clickHousePassword = coreExports.getInput('clickhouse-password')?.trim();
+    const clickHouseDatabase = coreExports.getInput('clickhouse-database')?.trim();
+    const clickHouseInputsProvided = Boolean(clickHouseUrl ||
+        clickHouseTable ||
+        clickHouseUsername ||
+        clickHousePassword ||
+        clickHouseDatabase);
+    let clickHouseConfig;
+    if (clickHouseInputsProvided) {
+        if (!clickHouseUrl) {
+            throw new Error('ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-url` input.');
+        }
+        if (!clickHouseTable) {
+            throw new Error('ClickHouse table name is required when configuring ClickHouse logging; provide one via the `clickhouse-table` input.');
+        }
+        clickHouseConfig = {
+            url: clickHouseUrl,
+            table: clickHouseTable,
+            username: clickHouseUsername || undefined,
+            password: clickHousePassword || undefined,
+            database: clickHouseDatabase || undefined
+        };
+    }
     return {
         token,
         tensorZeroBaseUrl,
         diffSummaryPath: coreExports.getInput('diff-summary-path')?.trim(),
         fullDiffPath: coreExports.getInput('full-diff-path')?.trim(),
         inputLogsDir: coreExports.getInput('input-logs-dir')?.trim(),
-        outputArtifactsDir: coreExports.getInput('output-artifacts-dir')?.trim()
+        outputArtifactsDir: coreExports.getInput('output-artifacts-dir')?.trim(),
+        clickHouseConfig
     };
 }
 /**
@@ -46862,7 +46922,7 @@ function parseAndValidateActionInputs() {
  */
 async function run() {
     const inputs = parseAndValidateActionInputs();
-    const { token, tensorZeroBaseUrl, diffSummaryPath, fullDiffPath, inputLogsDir, outputArtifactsDir } = inputs;
+    const { token, tensorZeroBaseUrl, diffSummaryPath, fullDiffPath, inputLogsDir, outputArtifactsDir, clickHouseConfig } = inputs;
     // Prepare artifact directory
     coreExports.info(`Action running in directory ${process.cwd()}`);
     const outputDir = outputArtifactsDir
@@ -47019,7 +47079,23 @@ async function run() {
             repo,
             pullRequest,
             diff: trimmedDiff
-        });
+        }, outputDir);
+    }
+    // TODO: Associate response with the follow-up PR.
+    const tensorZeroResponse = response;
+    const inferenceId = tensorZeroResponse.inference_id;
+    if (followupPr && clickHouseConfig) {
+        try {
+            await recordInferenceInClickHouse(clickHouseConfig, {
+                inferenceId,
+                pullRequestNumber: followupPr.number
+            });
+            coreExports.info(`Recorded inference ${inferenceId} for follow-up PR #${followupPr.number} in ClickHouse.`);
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : `${error}`;
+            coreExports.warning(`Failed to record inference ${inferenceId} in ClickHouse: ${errorMessage}`);
+        }
     }
     let commentBody = comments.trim();
     if (followupPr) {

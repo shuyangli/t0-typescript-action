@@ -20,6 +20,9 @@ If you are new, there's also a simpler introduction in the
 - Prepare a Clickhouse Cloud database
   - We need to add a table for Inference => PR association; assuming one
     inference per PR. Might be able to iterate.
+  - Configure the action inputs `clickhouse-url`, `clickhouse-table`, and
+    optional authentication parameters so the action can write inference to PR
+    mappings after creating follow-up pull requests.
 
 ## When might this fail over?
 

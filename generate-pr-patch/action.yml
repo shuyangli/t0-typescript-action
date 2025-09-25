@@ -26,10 +26,23 @@ inputs:
     required: true
   output-artifacts-dir:
     description: Directory to store output artifacts for debugging purposes.
+  clickhouse-url:
+    description:
+      Base URL for ClickHouse HTTP interface (e.g. https://<host>:8443/).
+  clickhouse-table:
+    description: Table where inference to PR associations should be recorded.
+  clickhouse-username:
+    description: Username for ClickHouse basic authentication.
+  clickhouse-password:
+    description: Password for ClickHouse basic authentication.
+  clickhouse-database:
+    description: Database that contains the ClickHouse table.
 
 outputs:
   comment:
     description: The comment string that will be posted to the PR
+  pull-request-patch:
+    description: The patch string that will be generated in a new pull request
 
 runs:
   using: node24
