@@ -18,7 +18,8 @@ If you are new, there's also a simpler introduction in the
 
 - `npm run bundle` will build the action.
 - Prepare a Clickhouse Cloud database
-  * We need to add a table for Inference => PR association; assuming one inference per PR. Might be able to iterate.
+  - We need to add a table for Inference => PR association; assuming one
+    inference per PR. Might be able to iterate.
 
 ## When might this fail over?
 
@@ -26,7 +27,7 @@ If you are new, there's also a simpler introduction in the
 
 ## TODOs
 
-- This currently hard-codes a 
+- This currently hard-codes a
 
 ## Update the Action Code
 
