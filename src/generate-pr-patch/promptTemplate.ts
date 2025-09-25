@@ -19,6 +19,7 @@ export interface PrPatchPromptContext {
   diffSummary?: string
   fullDiff?: string
   artifactNames: string[]
+  artifactContents: string[]
   failedJobs: FailedJobSummary[]
 }
 
@@ -56,6 +57,16 @@ No failing jobs were detected in the most recent run.
 {{#each artifactNames}}
 - {{this}}
 {{/each}}
+
+{{#if artifactContents.length}}
+## Artifact Contents
+{{#each artifactContents}}
+{{this}}
+
+{{/each}}
+{{else}}
+No artifact contents were available.
+{{/if}}
 {{else}}
 ## Available Artifacts
 No artifacts were collected from the failing run.
@@ -79,6 +90,8 @@ Verbatim diff that you generated that can be applied as a patch to the original 
 </diff>
 
 If there is nothing to fix, only write a comment about the failure.
+
+IMPORTANT: You are not allowed to modify any GitHub actions. You can only modify the code in the repository.
 `
 
 const prPatchTemplate = Handlebars.compile<PrPatchPromptContext>(
@@ -87,4 +100,14 @@ const prPatchTemplate = Handlebars.compile<PrPatchPromptContext>(
 
 export function renderPrPatchPrompt(context: PrPatchPromptContext): string {
   return prPatchTemplate(context).trim()
+}
+
+export function extractCommentsFromLlmResponse(response: string): string {
+  const comments = response.match(/<comments>(.*?)<\/comments>/s)
+  return comments ? comments[1] : ''
+}
+
+export function extractDiffFromLlmResponse(response: string): string {
+  const diff = response.match(/<diff>(.*?)<\/diff>/s)
+  return diff ? diff[1] : ''
 }

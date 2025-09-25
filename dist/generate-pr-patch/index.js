@@ -1,4 +1,5 @@
-import require$$0 from 'os';
+import * as require$$0 from 'os';
+import require$$0__default from 'os';
 import require$$0$1 from 'crypto';
 import * as fs from 'fs';
 import fs__default from 'fs';
@@ -10,7 +11,7 @@ import require$$0$4 from 'net';
 import require$$1 from 'tls';
 import require$$4$1 from 'events';
 import require$$0$3 from 'assert';
-import require$$0$2 from 'util';
+import require$$0$2, { promisify } from 'util';
 import require$$0$5 from 'stream';
 import require$$7 from 'buffer';
 import require$$8 from 'querystring';
@@ -27,8 +28,9 @@ import require$$1$3 from 'url';
 import require$$3$2 from 'zlib';
 import require$$6 from 'string_decoder';
 import require$$0$9 from 'diagnostics_channel';
-import require$$2$3 from 'child_process';
+import require$$2$3, { execFile } from 'child_process';
 import require$$6$1 from 'timers';
+import * as fsPromises from 'fs/promises';
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -148,7 +150,7 @@ function requireCommand () {
 	};
 	Object.defineProperty(command, "__esModule", { value: true });
 	command.issue = command.issueCommand = void 0;
-	const os = __importStar(require$$0);
+	const os = __importStar(require$$0__default);
 	const utils_1 = requireUtils$4();
 	/**
 	 * Commands
@@ -258,7 +260,7 @@ function requireFileCommand () {
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	const crypto = __importStar(require$$0$1);
 	const fs = __importStar(fs__default);
-	const os = __importStar(require$$0);
+	const os = __importStar(require$$0__default);
 	const utils_1 = requireUtils$4();
 	function issueFileCommand(command, message) {
 	    const filePath = process.env[`GITHUB_${command}`];
@@ -25234,7 +25236,7 @@ function requireSummary () {
 		};
 		Object.defineProperty(exports, "__esModule", { value: true });
 		exports.summary = exports.markdownSummary = exports.SUMMARY_DOCS_URL = exports.SUMMARY_ENV_VAR = void 0;
-		const os_1 = require$$0;
+		const os_1 = require$$0__default;
 		const fs_1 = fs__default;
 		const { access, appendFile, writeFile } = fs_1.promises;
 		exports.SUMMARY_ENV_VAR = 'GITHUB_STEP_SUMMARY';
@@ -26123,7 +26125,7 @@ function requireToolrunner () {
 	};
 	Object.defineProperty(toolrunner, "__esModule", { value: true });
 	toolrunner.argStringToArray = toolrunner.ToolRunner = void 0;
-	const os = __importStar(require$$0);
+	const os = __importStar(require$$0__default);
 	const events = __importStar(require$$4$1);
 	const child = __importStar(require$$2$3);
 	const path = __importStar(path__default);
@@ -26866,7 +26868,7 @@ function requirePlatform () {
 		};
 		Object.defineProperty(exports, "__esModule", { value: true });
 		exports.getDetails = exports.isLinux = exports.isMacOS = exports.isWindows = exports.arch = exports.platform = void 0;
-		const os_1 = __importDefault(require$$0);
+		const os_1 = __importDefault(require$$0__default);
 		const exec = __importStar(requireExec());
 		const getWindowsInfo = () => __awaiter(void 0, void 0, void 0, function* () {
 		    const { stdout: version } = yield exec.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Version"', undefined, {
@@ -26969,7 +26971,7 @@ function requireCore () {
 		const command_1 = requireCommand();
 		const file_command_1 = requireFileCommand();
 		const utils_1 = requireUtils$4();
-		const os = __importStar(require$$0);
+		const os = __importStar(require$$0__default);
 		const path = __importStar(path__default);
 		const oidc_utils_1 = requireOidcUtils();
 		/**
@@ -27293,7 +27295,7 @@ function requireContext () {
 	Object.defineProperty(context, "__esModule", { value: true });
 	context.Context = void 0;
 	const fs_1 = fs__default;
-	const os_1 = require$$0;
+	const os_1 = require$$0__default;
 	class Context {
 	    /**
 	     * Hydrate the context from the environment
@@ -46599,6 +46601,16 @@ No failing jobs were detected in the most recent run.
 {{#each artifactNames}}
 - {{this}}
 {{/each}}
+
+{{#if artifactContents.length}}
+## Artifact Contents
+{{#each artifactContents}}
+{{this}}
+
+{{/each}}
+{{else}}
+No artifact contents were available.
+{{/if}}
 {{else}}
 ## Available Artifacts
 No artifacts were collected from the failing run.
@@ -46622,12 +46634,153 @@ Verbatim diff that you generated that can be applied as a patch to the original 
 </diff>
 
 If there is nothing to fix, only write a comment about the failure.
+
+IMPORTANT: You are not allowed to modify any GitHub actions. You can only modify the code in the repository.
 `;
 const prPatchTemplate = Handlebars.compile(prPatchTemplateSource.trim());
 function renderPrPatchPrompt(context) {
     return prPatchTemplate(context).trim();
 }
+function extractCommentsFromLlmResponse(response) {
+    const comments = response.match(/<comments>(.*?)<\/comments>/s);
+    return comments ? comments[1] : '';
+}
+function extractDiffFromLlmResponse(response) {
+    const diff = response.match(/<diff>(.*?)<\/diff>/s);
+    return diff ? diff[1] : '';
+}
 
+const execFileAsync = promisify(execFile);
+function maskSecret(value, secret) {
+    if (!secret || !value) {
+        return value;
+    }
+    return value.split(secret).join('***');
+}
+async function execGit(args, options = {}) {
+    const { cwd, token } = options;
+    const commandString = maskSecret(`git ${args.join(' ')}`, token);
+    coreExports.info(commandString);
+    try {
+        const result = await execFileAsync('git', args, {
+            cwd,
+            env: {
+                ...process.env,
+                GIT_TERMINAL_PROMPT: '0'
+            },
+            maxBuffer: 10 * 1024 * 1024,
+            encoding: 'utf-8'
+        });
+        return {
+            stdout: result.stdout ?? '',
+            stderr: result.stderr ?? ''
+        };
+    }
+    catch (error) {
+        const err = error;
+        const stderr = err.stderr || err.stdout || err.message;
+        throw new Error(`${commandString} failed: ${maskSecret(stderr, token)}`);
+    }
+}
+async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff }) {
+    const normalizedDiff = diff.trim();
+    if (!normalizedDiff) {
+        coreExports.info('Diff content empty after trimming; skipping follow-up PR creation.');
+        return undefined;
+    }
+    if (!pullRequest.head.repo ||
+        pullRequest.head.repo.full_name !== `${owner}/${repo}`) {
+        coreExports.warning('Original PR branch lives in a fork; skipping follow-up PR creation.');
+        return undefined;
+    }
+    const tempBaseDir = await fsPromises.mkdtemp(path$1.join(require$$0.tmpdir(), 'tensorzero-pr-'));
+    const repoDir = path$1.join(tempBaseDir, 'repo');
+    const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`;
+    const maskedRemoteUrl = maskSecret(remoteUrl, token);
+    try {
+        await execGit([
+            'clone',
+            '--origin',
+            'origin',
+            '--branch',
+            pullRequest.head.ref,
+            remoteUrl,
+            repoDir
+        ], {
+            token
+        });
+        const fixBranchName = `tensorzero/pr-${pullRequest.number}-${Date.now()}`;
+        await execGit(['checkout', '-b', fixBranchName], { cwd: repoDir, token });
+        const patchPath = path$1.join(repoDir, 'tensorzero.patch');
+        await fsPromises.writeFile(patchPath, `${normalizedDiff}
+`, { encoding: 'utf-8' });
+        try {
+            await execGit(['apply', '--whitespace=nowarn', patchPath], {
+                cwd: repoDir,
+                token
+            });
+        }
+        finally {
+            await fsPromises.rm(patchPath, { force: true });
+        }
+        const status = await execGit(['status', '--porcelain'], {
+            cwd: repoDir,
+            token
+        });
+        if (!status.stdout.trim()) {
+            coreExports.warning('Diff did not produce any changes; skipping follow-up PR creation.');
+            return undefined;
+        }
+        await execGit([
+            'config',
+            'user.email',
+            '41898282+github-actions[bot]@users.noreply.github.com'
+        ], {
+            cwd: repoDir,
+            token
+        });
+        await execGit(['config', 'user.name', 'github-actions[bot]'], {
+            cwd: repoDir,
+            token
+        });
+        await execGit(['add', '--all'], { cwd: repoDir, token });
+        await execGit(['commit', '-m', `chore: automated fix for PR #${pullRequest.number}`], {
+            cwd: repoDir,
+            token
+        });
+        await execGit(['push', '--set-upstream', 'origin', fixBranchName], {
+            cwd: repoDir,
+            token
+        });
+        const prTitle = `Automated follow-up for #${pullRequest.number}`;
+        const prBodyLines = [
+            `This pull request was generated automatically in response to failing CI on #${pullRequest.number}.`,
+            '',
+            'The proposed changes were produced from an LLM-provided diff.'
+        ];
+        const prBody = prBodyLines.join('\n');
+        const createdPr = await octokit.rest.pulls.create({
+            owner,
+            repo,
+            base: pullRequest.head.ref,
+            head: fixBranchName,
+            title: prTitle,
+            body: prBody
+        });
+        return {
+            number: createdPr.data.number,
+            htmlUrl: createdPr.data.html_url
+        };
+    }
+    catch (error) {
+        const maskedMessage = maskSecret(error.message, token);
+        coreExports.error(`Failed to create follow-up PR using remote ${maskedRemoteUrl}: ${maskedMessage}`);
+        return undefined;
+    }
+    finally {
+        await fsPromises.rm(tempBaseDir, { recursive: true, force: true });
+    }
+}
 function getFileContentFromInput(inputName) {
     const filepath = coreExports.getInput(inputName)?.trim();
     if (!filepath) {
@@ -46727,15 +46880,36 @@ async function run() {
         per_page: 100
     });
     coreExports.startGroup(`Artifacts for workflow run ${runId}`);
-    // TODO: read from local filesystem instead of fetching from GitHub.
-    // let allArtifactContents: string[] = []
-    if (!artifacts.length) {
-        coreExports.warning('No artifacts found for the failing workflow run.');
+    // Read failure logs from local filesystem
+    // TODO: specify the API for passing files.
+    const failureLogsDir = path$1.join(process.cwd(), 'failure-logs');
+    let artifactContents = [];
+    try {
+        if (fs.existsSync(failureLogsDir)) {
+            const files = fs.readdirSync(failureLogsDir);
+            coreExports.info(`Found ${files.length} files in failure-logs directory: ${files.join(', ')}`);
+            for (const file of files) {
+                const filePath = path$1.join(failureLogsDir, file);
+                const stat = fs.statSync(filePath);
+                if (stat.isFile()) {
+                    try {
+                        const content = fs.readFileSync(filePath, 'utf-8');
+                        artifactContents.push(`## ${file}\n\n${content}`);
+                        coreExports.info(`Read content from ${file} (${content.length} characters)`);
+                    }
+                    catch (error) {
+                        coreExports.warning(`Failed to read ${file}: ${error}`);
+                    }
+                }
+            }
+        }
+        else {
+            coreExports.warning(`Failure logs directory not found: ${failureLogsDir}`);
+        }
     }
-    // else {
-    //   for (const artifact of artifacts) {
-    //   }
-    // }
+    catch (error) {
+        coreExports.warning(`Error reading failure logs directory: ${error}`);
+    }
     coreExports.endGroup();
     const prompt = renderPrPatchPrompt({
         repoFullName: `${owner}/${repo}`,
@@ -46744,6 +46918,7 @@ async function run() {
         diffSummary,
         fullDiff,
         artifactNames: artifacts.map((artifact) => artifact.name),
+        artifactContents,
         failedJobs
     });
     coreExports.info(prompt);
@@ -46772,6 +46947,64 @@ async function run() {
     fs.writeFileSync(path$1.join(outputArtifactDir, 'llm-response.json'), JSON.stringify(response, null, 2));
     fs.writeFileSync(path$1.join(outputArtifactDir, 'artifacts.json'), JSON.stringify(artifacts, null, 2));
     fs.writeFileSync(path$1.join(outputArtifactDir, 'artifact-names.txt'), artifacts.map((artifact) => artifact.name).join('\n'));
+    fs.writeFileSync(path$1.join(outputArtifactDir, 'artifact-contents.txt'), artifactContents.join('\n\n' + '='.repeat(80) + '\n\n'));
+    // Get the LLM response from `response`
+    const llmResponse = response.choices[0].message.content;
+    if (!llmResponse) {
+        throw new Error('No LLM response found, failing the action.');
+    }
+    const comments = extractCommentsFromLlmResponse(llmResponse);
+    const diff = extractDiffFromLlmResponse(llmResponse);
+    if (comments) {
+        coreExports.setOutput('comment', comments);
+    }
+    else {
+        coreExports.setOutput('comment', '');
+    }
+    if (!comments && !diff) {
+        coreExports.info('LLM response contained neither comments nor diff; finishing without changes.');
+        return;
+    }
+    const prNumber = workflow_run_payload.pull_requests?.[0]?.number;
+    if (!prNumber) {
+        coreExports.warning('Unable to identify the original pull request; skipping comment and follow-up PR creation.');
+        return;
+    }
+    const { data: pullRequest } = await octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: prNumber
+    });
+    const trimmedDiff = diff.trim();
+    let followupPr;
+    if (trimmedDiff) {
+        followupPr = await createFollowupPr({
+            octokit,
+            token,
+            owner,
+            repo,
+            pullRequest,
+            diff: trimmedDiff
+        });
+    }
+    let commentBody = comments.trim();
+    if (followupPr) {
+        const prLink = `[#${followupPr.number}](${followupPr.htmlUrl})`;
+        if (commentBody) {
+            commentBody += `\n\nI've also opened an automated follow-up PR ${prLink} with proposed fixes.`;
+        }
+        else {
+            commentBody = `I've opened an automated follow-up PR ${prLink} with proposed fixes.`;
+        }
+    }
+    if (commentBody) {
+        await octokit.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: prNumber,
+            body: commentBody
+        });
+    }
 }
 
 /**

@@ -1,10 +1,19 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import * as fs from 'fs'
+import * as fsPromises from 'fs/promises'
+import * as os from 'os'
 import * as path from 'path'
+import { execFile } from 'child_process'
 import { OpenAI } from 'openai'
+import { promisify } from 'util'
 
-import { renderPrPatchPrompt, type FailedJobSummary } from './promptTemplate.js'
+import {
+  extractCommentsFromLlmResponse,
+  extractDiffFromLlmResponse,
+  renderPrPatchPrompt,
+  type FailedJobSummary
+} from './promptTemplate.js'
 
 interface WorkflowJobStep {
   name: string
@@ -24,6 +33,200 @@ interface WorkflowJob {
 interface WorkflowJobsResponse {
   total_count: number
   jobs: WorkflowJob[]
+}
+
+const execFileAsync = promisify(execFile)
+
+type OctokitInstance = ReturnType<typeof github.getOctokit>
+type PullRequestData = Awaited<
+  ReturnType<OctokitInstance['rest']['pulls']['get']>
+>['data']
+
+interface FollowupPrResult {
+  number: number
+  htmlUrl: string
+}
+
+interface CreateFollowupPrOptions {
+  octokit: OctokitInstance
+  token: string
+  owner: string
+  repo: string
+  pullRequest: PullRequestData
+  diff: string
+}
+
+function maskSecret(value: string, secret: string | undefined): string {
+  if (!secret || !value) {
+    return value
+  }
+  return value.split(secret).join('***')
+}
+
+async function execGit(
+  args: string[],
+  options: { cwd?: string; token?: string } = {}
+): Promise<{ stdout: string; stderr: string }> {
+  const { cwd, token } = options
+  const commandString = maskSecret(`git ${args.join(' ')}`, token)
+  core.info(commandString)
+  try {
+    const result = await execFileAsync('git', args, {
+      cwd,
+      env: {
+        ...process.env,
+        GIT_TERMINAL_PROMPT: '0'
+      },
+      maxBuffer: 10 * 1024 * 1024,
+      encoding: 'utf-8'
+    })
+    return {
+      stdout: result.stdout ?? '',
+      stderr: result.stderr ?? ''
+    }
+  } catch (error) {
+    const err = error as { message: string; stdout?: string; stderr?: string }
+    const stderr = err.stderr || err.stdout || err.message
+    throw new Error(`${commandString} failed: ${maskSecret(stderr, token)}`)
+  }
+}
+
+async function createFollowupPr({
+  octokit,
+  token,
+  owner,
+  repo,
+  pullRequest,
+  diff
+}: CreateFollowupPrOptions): Promise<FollowupPrResult | undefined> {
+  const normalizedDiff = diff.trim()
+  if (!normalizedDiff) {
+    core.info(
+      'Diff content empty after trimming; skipping follow-up PR creation.'
+    )
+    return undefined
+  }
+
+  if (
+    !pullRequest.head.repo ||
+    pullRequest.head.repo.full_name !== `${owner}/${repo}`
+  ) {
+    core.warning(
+      'Original PR branch lives in a fork; skipping follow-up PR creation.'
+    )
+    return undefined
+  }
+
+  const tempBaseDir = await fsPromises.mkdtemp(
+    path.join(os.tmpdir(), 'tensorzero-pr-')
+  )
+  const repoDir = path.join(tempBaseDir, 'repo')
+  const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`
+  const maskedRemoteUrl = maskSecret(remoteUrl, token)
+  try {
+    await execGit(
+      [
+        'clone',
+        '--origin',
+        'origin',
+        '--branch',
+        pullRequest.head.ref,
+        remoteUrl,
+        repoDir
+      ],
+      {
+        token
+      }
+    )
+
+    const fixBranchName = `tensorzero/pr-${pullRequest.number}-${Date.now()}`
+    await execGit(['checkout', '-b', fixBranchName], { cwd: repoDir, token })
+
+    const patchPath = path.join(repoDir, 'tensorzero.patch')
+    await fsPromises.writeFile(
+      patchPath,
+      `${normalizedDiff}
+`,
+      { encoding: 'utf-8' }
+    )
+    try {
+      await execGit(['apply', '--whitespace=nowarn', patchPath], {
+        cwd: repoDir,
+        token
+      })
+    } finally {
+      await fsPromises.rm(patchPath, { force: true })
+    }
+
+    const status = await execGit(['status', '--porcelain'], {
+      cwd: repoDir,
+      token
+    })
+    if (!status.stdout.trim()) {
+      core.warning(
+        'Diff did not produce any changes; skipping follow-up PR creation.'
+      )
+      return undefined
+    }
+
+    await execGit(
+      [
+        'config',
+        'user.email',
+        '41898282+github-actions[bot]@users.noreply.github.com'
+      ],
+      {
+        cwd: repoDir,
+        token
+      }
+    )
+    await execGit(['config', 'user.name', 'github-actions[bot]'], {
+      cwd: repoDir,
+      token
+    })
+    await execGit(['add', '--all'], { cwd: repoDir, token })
+    await execGit(
+      ['commit', '-m', `chore: automated fix for PR #${pullRequest.number}`],
+      {
+        cwd: repoDir,
+        token
+      }
+    )
+    await execGit(['push', '--set-upstream', 'origin', fixBranchName], {
+      cwd: repoDir,
+      token
+    })
+
+    const prTitle = `Automated follow-up for #${pullRequest.number}`
+    const prBodyLines = [
+      `This pull request was generated automatically in response to failing CI on #${pullRequest.number}.`,
+      '',
+      'The proposed changes were produced from an LLM-provided diff.'
+    ]
+    const prBody = prBodyLines.join('\n')
+
+    const createdPr = await octokit.rest.pulls.create({
+      owner,
+      repo,
+      base: pullRequest.head.ref,
+      head: fixBranchName,
+      title: prTitle,
+      body: prBody
+    })
+
+    return {
+      number: createdPr.data.number,
+      htmlUrl: createdPr.data.html_url
+    }
+  } catch (error) {
+    const maskedMessage = maskSecret((error as Error).message, token)
+    core.error(
+      `Failed to create follow-up PR using remote ${maskedRemoteUrl}: ${maskedMessage}`
+    )
+    return undefined
+  } finally {
+    await fsPromises.rm(tempBaseDir, { recursive: true, force: true })
+  }
 }
 
 function getFileContentFromInput(inputName: string): string | undefined {
@@ -155,15 +358,41 @@ export async function run(): Promise<void> {
   )
 
   core.startGroup(`Artifacts for workflow run ${runId}`)
-  // TODO: read from local filesystem instead of fetching from GitHub.
-  // let allArtifactContents: string[] = []
-  if (!artifacts.length) {
-    core.warning('No artifacts found for the failing workflow run.')
+
+  // Read failure logs from local filesystem
+  // TODO: specify the API for passing files.
+  const failureLogsDir = path.join(process.cwd(), 'failure-logs')
+  let artifactContents: string[] = []
+  try {
+    if (fs.existsSync(failureLogsDir)) {
+      const files = fs.readdirSync(failureLogsDir)
+      core.info(
+        `Found ${files.length} files in failure-logs directory: ${files.join(', ')}`
+      )
+
+      for (const file of files) {
+        const filePath = path.join(failureLogsDir, file)
+        const stat = fs.statSync(filePath)
+
+        if (stat.isFile()) {
+          try {
+            const content = fs.readFileSync(filePath, 'utf-8')
+            artifactContents.push(`## ${file}\n\n${content}`)
+            core.info(
+              `Read content from ${file} (${content.length} characters)`
+            )
+          } catch (error) {
+            core.warning(`Failed to read ${file}: ${error}`)
+          }
+        }
+      }
+    } else {
+      core.warning(`Failure logs directory not found: ${failureLogsDir}`)
+    }
+  } catch (error) {
+    core.warning(`Error reading failure logs directory: ${error}`)
   }
-  // else {
-  //   for (const artifact of artifacts) {
-  //   }
-  // }
+
   core.endGroup()
 
   const prompt = renderPrPatchPrompt({
@@ -173,6 +402,7 @@ export async function run(): Promise<void> {
     diffSummary,
     fullDiff,
     artifactNames: artifacts.map((artifact) => artifact.name),
+    artifactContents,
     failedJobs
   })
   core.info(prompt)
@@ -216,4 +446,77 @@ export async function run(): Promise<void> {
     path.join(outputArtifactDir, 'artifact-names.txt'),
     artifacts.map((artifact) => artifact.name).join('\n')
   )
+
+  fs.writeFileSync(
+    path.join(outputArtifactDir, 'artifact-contents.txt'),
+    artifactContents.join('\n\n' + '='.repeat(80) + '\n\n')
+  )
+
+  // Get the LLM response from `response`
+  const llmResponse = response.choices[0].message.content
+  if (!llmResponse) {
+    throw new Error('No LLM response found, failing the action.')
+  }
+
+  const comments = extractCommentsFromLlmResponse(llmResponse)
+  const diff = extractDiffFromLlmResponse(llmResponse)
+
+  if (comments) {
+    core.setOutput('comment', comments)
+  } else {
+    core.setOutput('comment', '')
+  }
+
+  if (!comments && !diff) {
+    core.info(
+      'LLM response contained neither comments nor diff; finishing without changes.'
+    )
+    return
+  }
+
+  const prNumber = workflow_run_payload.pull_requests?.[0]?.number
+  if (!prNumber) {
+    core.warning(
+      'Unable to identify the original pull request; skipping comment and follow-up PR creation.'
+    )
+    return
+  }
+
+  const { data: pullRequest } = await octokit.rest.pulls.get({
+    owner,
+    repo,
+    pull_number: prNumber
+  })
+
+  const trimmedDiff = diff.trim()
+  let followupPr: FollowupPrResult | undefined
+  if (trimmedDiff) {
+    followupPr = await createFollowupPr({
+      octokit,
+      token,
+      owner,
+      repo,
+      pullRequest,
+      diff: trimmedDiff
+    })
+  }
+
+  let commentBody = comments.trim()
+  if (followupPr) {
+    const prLink = `[#${followupPr.number}](${followupPr.htmlUrl})`
+    if (commentBody) {
+      commentBody += `\n\nI've also opened an automated follow-up PR ${prLink} with proposed fixes.`
+    } else {
+      commentBody = `I've opened an automated follow-up PR ${prLink} with proposed fixes.`
+    }
+  }
+
+  if (commentBody) {
+    await octokit.rest.issues.createComment({
+      owner,
+      repo,
+      issue_number: prNumber,
+      body: commentBody
+    })
+  }
 }

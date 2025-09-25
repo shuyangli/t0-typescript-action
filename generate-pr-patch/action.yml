@@ -26,7 +26,9 @@ inputs:
     required: false
     default: 'artifacts'
 
-outputs: {}
+outputs:
+  comment:
+    description: The comment string that will be posted to the PR
 
 runs:
   using: node24
