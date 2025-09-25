@@ -249,11 +249,17 @@ function isPrEligibleForFix(): boolean {
     github.context.payload.pull_request?.head?.repo?.full_name !==
     github.context.payload.repository?.full_name
   ) {
+    core.warning(
+      `PR originates from a fork: base repo is ${github.context.payload.repository?.full_name}, but PR branch is from ${github.context.payload.pull_request?.head?.repo?.full_name}; skipping action.`
+    )
     return false
   }
 
   // If the workflow run did not fail, we don't want to fix it.
   if (github.context.payload.workflow_run.conclusion !== 'failure') {
+    core.warning(
+      `Workflow run did not fail (conclusion ${github.context.payload.workflow_run.conclusion}); skipping action.`
+    )
     return false
   }
 
@@ -262,6 +268,9 @@ function isPrEligibleForFix(): boolean {
     github.context.payload.pull_request?.head?.ref !==
     github.context.payload.repository?.default_branch
   ) {
+    core.warning(
+      `PR is not targeting the main branch: PR branch is ${github.context.payload.pull_request?.head?.ref}, but main branch is ${github.context.payload.repository?.default_branch}; skipping action.`
+    )
     return false
   }
 

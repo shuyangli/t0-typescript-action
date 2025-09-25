@@ -46811,15 +46811,18 @@ function isPrEligibleForFix() {
     // If the pull request originates from a fork, we don't want to fix it.
     if (githubExports.context.payload.pull_request?.head?.repo?.full_name !==
         githubExports.context.payload.repository?.full_name) {
+        coreExports.warning(`PR originates from a fork: base repo is ${githubExports.context.payload.repository?.full_name}, but PR branch is from ${githubExports.context.payload.pull_request?.head?.repo?.full_name}; skipping action.`);
         return false;
     }
     // If the workflow run did not fail, we don't want to fix it.
     if (githubExports.context.payload.workflow_run.conclusion !== 'failure') {
+        coreExports.warning(`Workflow run did not fail (conclusion ${githubExports.context.payload.workflow_run.conclusion}); skipping action.`);
         return false;
     }
     // If the pull request is not targeting the main branch, we don't want to fix it.
     if (githubExports.context.payload.pull_request?.head?.ref !==
         githubExports.context.payload.repository?.default_branch) {
+        coreExports.warning(`PR is not targeting the main branch: PR branch is ${githubExports.context.payload.pull_request?.head?.ref}, but main branch is ${githubExports.context.payload.repository?.default_branch}; skipping action.`);
         return false;
     }
     return true;
