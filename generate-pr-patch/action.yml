@@ -17,14 +17,15 @@ inputs:
     required: true
   diff-summary-path:
     description: File path for diff summary.
-    required: false
+    required: true
   full-diff-path:
     description: File path for full diff.
-    required: false
-  artifacts-dir:
-    description: The directory to store the artifacts.
-    required: false
-    default: 'artifacts'
+    required: true
+  input-logs-dir:
+    description: Directory containing workflow failure logs.
+    required: true
+  output-artifacts-dir:
+    description: Directory to store output artifacts for debugging purposes.
 
 outputs:
   comment:

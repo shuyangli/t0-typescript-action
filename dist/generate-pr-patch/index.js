@@ -46596,24 +46596,14 @@ No failing jobs were detected in the most recent run.
 ## Full Diff
 {{#if fullDiff}}{{fullDiff}}{{else}}Full diff not supplied.{{/if}}
 
-{{#if artifactNames.length}}
-## Available Artifacts
-{{#each artifactNames}}
-- {{this}}
-{{/each}}
-
 {{#if artifactContents.length}}
-## Artifact Contents
+## Available Artifacts
 {{#each artifactContents}}
 {{this}}
 
 {{/each}}
 {{else}}
-No artifact contents were available.
-{{/if}}
-{{else}}
-## Available Artifacts
-No artifacts were collected from the failing run.
+No artifact were available from the failing run.
 {{/if}}
 
 Your response should contain the following:
@@ -46781,15 +46771,6 @@ async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff
         await fsPromises.rm(tempBaseDir, { recursive: true, force: true });
     }
 }
-function getFileContentFromInput(inputName) {
-    const filepath = coreExports.getInput(inputName)?.trim();
-    if (!filepath) {
-        return undefined;
-    }
-    return fs.readFileSync(filepath, {
-        encoding: 'utf-8'
-    });
-}
 async function getJobStatus(jobsUrl, token) {
     // Fetch jobs from the workflow run
     const jobsResponse = await fetch(jobsUrl, {
@@ -46820,15 +46801,47 @@ function getAllFailedJobs(workflowJobsStatus) {
         }))
     }));
 }
-function getOpenAiCompatibleUrl() {
-    let tensorZeroBaseUrl = coreExports.getInput('tensorzero-base-url')?.trim();
+function getOpenAiCompatibleUrl(baseUrl) {
+    if (baseUrl[baseUrl.length - 1] === '/') {
+        baseUrl = baseUrl.slice(0, -1);
+    }
+    return `${baseUrl}/openai/v1`;
+}
+function isPrEligibleForFix() {
+    // If the pull request originates from a fork, we don't want to fix it.
+    if (githubExports.context.payload.pull_request?.head?.repo?.full_name !==
+        githubExports.context.payload.repository?.full_name) {
+        return false;
+    }
+    // If the workflow run did not fail, we don't want to fix it.
+    if (githubExports.context.payload.workflow_run.conclusion !== 'failure') {
+        return false;
+    }
+    // If the pull request is not targeting the main branch, we don't want to fix it.
+    if (githubExports.context.payload.pull_request?.head?.ref !==
+        githubExports.context.payload.repository?.default_branch) {
+        return false;
+    }
+    return true;
+}
+// Parse action inputs
+function parseAndValidateActionInputs() {
+    const token = coreExports.getInput('token')?.trim() || process.env.GITHUB_TOKEN;
+    if (!token) {
+        throw new Error('A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.');
+    }
+    const tensorZeroBaseUrl = coreExports.getInput('tensorzero-base-url')?.trim();
     if (!tensorZeroBaseUrl) {
         throw new Error('TensorZero base url is required; provide one via the `tensorzero-base-url` input.');
     }
-    if (tensorZeroBaseUrl[tensorZeroBaseUrl.length - 1] === '/') {
-        tensorZeroBaseUrl = tensorZeroBaseUrl.slice(0, -1);
-    }
-    return `${tensorZeroBaseUrl}/openai/v1`;
+    return {
+        token,
+        tensorZeroBaseUrl,
+        diffSummaryPath: coreExports.getInput('diff-summary-path')?.trim(),
+        fullDiffPath: coreExports.getInput('full-diff-path')?.trim(),
+        inputLogsDir: coreExports.getInput('input-logs-dir')?.trim(),
+        outputArtifactsDir: coreExports.getInput('output-artifacts-dir')?.trim()
+    };
 }
 /**
  * Collects artifacts, builds a prompt to an LLM, then
@@ -46836,17 +46849,24 @@ function getOpenAiCompatibleUrl() {
  * @returns Resolves when the action is complete.
  */
 async function run() {
-    const token = coreExports.getInput('token')?.trim() || process.env.GITHUB_TOKEN;
-    if (!token) {
-        throw new Error('A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.');
+    const inputs = parseAndValidateActionInputs();
+    const { token, tensorZeroBaseUrl, diffSummaryPath, fullDiffPath, inputLogsDir, outputArtifactsDir } = inputs;
+    if (!isPrEligibleForFix()) {
+        coreExports.warning(`Pull request is not eligible for fix. Skipping action.`);
+        return;
     }
     // Prepare artifact directory
     coreExports.info(`Action running in directory ${process.cwd()}`);
-    const artifactsDirInput = coreExports.getInput('artifacts-dir')?.trim() || 'artifacts';
-    const outputArtifactDir = path$1.join(process.cwd(), artifactsDirInput);
-    coreExports.info(`Output artifact directory: ${outputArtifactDir}`);
-    fs.mkdirSync(outputArtifactDir, { recursive: true });
-    const octokit = githubExports.getOctokit(token);
+    const outputDir = outputArtifactsDir
+        ? path$1.join(process.cwd(), outputArtifactsDir)
+        : undefined;
+    if (outputDir) {
+        coreExports.info(`Output artifact directory: ${outputDir}`);
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
+    else {
+        coreExports.warning(`Not creating output artifacts.`);
+    }
     const workflow_run_payload = githubExports.context.payload['workflow_run'];
     const runId = workflow_run_payload.id;
     if (!runId) {
@@ -46864,25 +46884,21 @@ async function run() {
     }
     coreExports.info(`Fetching jobs from: ${jobsUrl}`);
     const workflowJobsStatus = await getJobStatus(jobsUrl, token);
-    fs.writeFileSync(path$1.join(outputArtifactDir, 'workflow-jobs.json'), JSON.stringify(workflowJobsStatus, null, 2));
-    coreExports.info('Jobs data written to workflow-jobs.json');
+    if (outputDir) {
+        fs.writeFileSync(path$1.join(outputDir, 'workflow-jobs.json'), JSON.stringify(workflowJobsStatus, null, 2));
+        coreExports.info('Jobs data written to workflow-jobs.json');
+    }
     // Load diff summary and full diff.
     // TODO: consider loading pull request diff here using github REST APIs.
-    const diffSummary = getFileContentFromInput('diff-summary-path');
-    const fullDiff = getFileContentFromInput('full-diff-path');
+    const diffSummary = fs.readFileSync(diffSummaryPath, { encoding: 'utf-8' });
+    const fullDiff = fs.readFileSync(fullDiffPath, { encoding: 'utf-8' });
     const failedJobs = getAllFailedJobs(workflowJobsStatus);
     // Collect artifacts from failed workflow run
     const { owner, repo } = githubExports.context.repo;
-    const artifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {
-        owner,
-        repo,
-        run_id: Number(runId),
-        per_page: 100
-    });
-    coreExports.startGroup(`Artifacts for workflow run ${runId}`);
+    const octokit = githubExports.getOctokit(token);
     // Read failure logs from local filesystem
     // TODO: specify the API for passing files.
-    const failureLogsDir = path$1.join(process.cwd(), 'failure-logs');
+    const failureLogsDir = path$1.join(process.cwd(), inputLogsDir);
     let artifactContents = [];
     try {
         if (fs.existsSync(failureLogsDir)) {
@@ -46908,7 +46924,7 @@ async function run() {
         }
     }
     catch (error) {
-        coreExports.warning(`Error reading failure logs directory: ${error}`);
+        coreExports.warning(`Error reading failure logs directory ${failureLogsDir}: ${error}`);
     }
     coreExports.endGroup();
     const prompt = renderPrPatchPrompt({
@@ -46917,16 +46933,17 @@ async function run() {
         prNumber: workflow_run_payload.pull_requests?.[0]?.number,
         diffSummary,
         fullDiff,
-        artifactNames: artifacts.map((artifact) => artifact.name),
         artifactContents,
         failedJobs
     });
     coreExports.info(prompt);
-    const llmPromptPath = path$1.join(outputArtifactDir, 'llm-prompt.txt');
-    fs.writeFileSync(llmPromptPath, prompt);
-    coreExports.info(`Prompt written to ${llmPromptPath}`);
+    if (outputDir) {
+        const llmPromptPath = path$1.join(outputDir, 'llm-prompt.txt');
+        fs.writeFileSync(llmPromptPath, prompt);
+        coreExports.info(`Prompt written to ${llmPromptPath}`);
+    }
     // Construct a prompt to call an LLM.
-    const tensorZeroOpenAiEndpointUrl = getOpenAiCompatibleUrl();
+    const tensorZeroOpenAiEndpointUrl = getOpenAiCompatibleUrl(tensorZeroBaseUrl);
     const client = new OpenAI({
         baseURL: tensorZeroOpenAiEndpointUrl,
         apiKey: 'dummy'
@@ -46944,10 +46961,10 @@ async function run() {
             }
         ]
     });
-    fs.writeFileSync(path$1.join(outputArtifactDir, 'llm-response.json'), JSON.stringify(response, null, 2));
-    fs.writeFileSync(path$1.join(outputArtifactDir, 'artifacts.json'), JSON.stringify(artifacts, null, 2));
-    fs.writeFileSync(path$1.join(outputArtifactDir, 'artifact-names.txt'), artifacts.map((artifact) => artifact.name).join('\n'));
-    fs.writeFileSync(path$1.join(outputArtifactDir, 'artifact-contents.txt'), artifactContents.join('\n\n' + '='.repeat(80) + '\n\n'));
+    if (outputDir) {
+        fs.writeFileSync(path$1.join(outputDir, 'llm-response.json'), JSON.stringify(response, null, 2));
+        fs.writeFileSync(path$1.join(outputDir, 'artifact-contents.txt'), artifactContents.join('\n\n' + '='.repeat(80) + '\n\n'));
+    }
     // Get the LLM response from `response`
     const llmResponse = response.choices[0].message.content;
     if (!llmResponse) {

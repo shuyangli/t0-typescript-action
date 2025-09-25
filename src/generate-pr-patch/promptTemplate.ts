@@ -1,27 +1,6 @@
 import Handlebars from 'handlebars'
 
-export interface FailedStepSummary {
-  name: string
-  status: string
-  conclusion: string | null
-}
-
-export interface FailedJobSummary {
-  name: string
-  conclusion: string | null
-  failedSteps: FailedStepSummary[]
-}
-
-export interface PrPatchPromptContext {
-  repoFullName: string
-  branch?: string
-  prNumber?: number
-  diffSummary?: string
-  fullDiff?: string
-  artifactNames: string[]
-  artifactContents: string[]
-  failedJobs: FailedJobSummary[]
-}
+import { type PrPatchPromptContext } from './types.js'
 
 const prPatchTemplateSource = `You are an expert software engineer helping to craft a follow-up pull request that fixes CI failures in the original PR.
 
@@ -52,24 +31,14 @@ No failing jobs were detected in the most recent run.
 ## Full Diff
 {{#if fullDiff}}{{fullDiff}}{{else}}Full diff not supplied.{{/if}}
 
-{{#if artifactNames.length}}
-## Available Artifacts
-{{#each artifactNames}}
-- {{this}}
-{{/each}}
-
 {{#if artifactContents.length}}
-## Artifact Contents
+## Available Artifacts
 {{#each artifactContents}}
 {{this}}
 
 {{/each}}
 {{else}}
-No artifact contents were available.
-{{/if}}
-{{else}}
-## Available Artifacts
-No artifacts were collected from the failing run.
+No artifact were available from the failing run.
 {{/if}}
 
 Your response should contain the following:

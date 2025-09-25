@@ -11,50 +11,18 @@ import { promisify } from 'util'
 import {
   extractCommentsFromLlmResponse,
   extractDiffFromLlmResponse,
-  renderPrPatchPrompt,
-  type FailedJobSummary
+  renderPrPatchPrompt
 } from './promptTemplate.js'
 
-interface WorkflowJobStep {
-  name: string
-  status: string
-  conclusion: string | null
-}
-
-interface WorkflowJob {
-  id: number
-  name: string
-  conclusion: string | null
-  status: string
-  html_url?: string
-  steps?: WorkflowJobStep[]
-}
-
-interface WorkflowJobsResponse {
-  total_count: number
-  jobs: WorkflowJob[]
-}
+import {
+  type WorkflowJobsResponse,
+  type FollowupPrResult,
+  type CreateFollowupPrOptions,
+  type FailedJobSummary,
+  GeneratePrPatchActionInput
+} from './types.js'
 
 const execFileAsync = promisify(execFile)
-
-type OctokitInstance = ReturnType<typeof github.getOctokit>
-type PullRequestData = Awaited<
-  ReturnType<OctokitInstance['rest']['pulls']['get']>
->['data']
-
-interface FollowupPrResult {
-  number: number
-  htmlUrl: string
-}
-
-interface CreateFollowupPrOptions {
-  octokit: OctokitInstance
-  token: string
-  owner: string
-  repo: string
-  pullRequest: PullRequestData
-  diff: string
-}
 
 function maskSecret(value: string, secret: string | undefined): string {
   if (!secret || !value) {
@@ -229,17 +197,6 @@ async function createFollowupPr({
   }
 }
 
-function getFileContentFromInput(inputName: string): string | undefined {
-  const filepath = core.getInput(inputName)?.trim()
-  if (!filepath) {
-    return undefined
-  }
-
-  return fs.readFileSync(filepath, {
-    encoding: 'utf-8'
-  })
-}
-
 async function getJobStatus(
   jobsUrl: string,
   token: string
@@ -279,17 +236,61 @@ function getAllFailedJobs(
     }))
 }
 
-function getOpenAiCompatibleUrl(): string {
-  let tensorZeroBaseUrl = core.getInput('tensorzero-base-url')?.trim()
+function getOpenAiCompatibleUrl(baseUrl: string): string {
+  if (baseUrl[baseUrl.length - 1] === '/') {
+    baseUrl = baseUrl.slice(0, -1)
+  }
+  return `${baseUrl}/openai/v1`
+}
+
+function isPrEligibleForFix(): boolean {
+  // If the pull request originates from a fork, we don't want to fix it.
+  if (
+    github.context.payload.pull_request?.head?.repo?.full_name !==
+    github.context.payload.repository?.full_name
+  ) {
+    return false
+  }
+
+  // If the workflow run did not fail, we don't want to fix it.
+  if (github.context.payload.workflow_run.conclusion !== 'failure') {
+    return false
+  }
+
+  // If the pull request is not targeting the main branch, we don't want to fix it.
+  if (
+    github.context.payload.pull_request?.head?.ref !==
+    github.context.payload.repository?.default_branch
+  ) {
+    return false
+  }
+
+  return true
+}
+
+// Parse action inputs
+function parseAndValidateActionInputs(): GeneratePrPatchActionInput {
+  const token = core.getInput('token')?.trim() || process.env.GITHUB_TOKEN
+  if (!token) {
+    throw new Error(
+      'A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.'
+    )
+  }
+  const tensorZeroBaseUrl = core.getInput('tensorzero-base-url')?.trim()
   if (!tensorZeroBaseUrl) {
     throw new Error(
       'TensorZero base url is required; provide one via the `tensorzero-base-url` input.'
     )
   }
-  if (tensorZeroBaseUrl[tensorZeroBaseUrl.length - 1] === '/') {
-    tensorZeroBaseUrl = tensorZeroBaseUrl.slice(0, -1)
+
+  return {
+    token,
+    tensorZeroBaseUrl,
+    diffSummaryPath: core.getInput('diff-summary-path')?.trim(),
+    fullDiffPath: core.getInput('full-diff-path')?.trim(),
+    inputLogsDir: core.getInput('input-logs-dir')?.trim(),
+    outputArtifactsDir: core.getInput('output-artifacts-dir')?.trim()
   }
-  return `${tensorZeroBaseUrl}/openai/v1`
 }
 
 /**
@@ -298,22 +299,34 @@ function getOpenAiCompatibleUrl(): string {
  * @returns Resolves when the action is complete.
  */
 export async function run(): Promise<void> {
-  const token = core.getInput('token')?.trim() || process.env.GITHUB_TOKEN
-  if (!token) {
-    throw new Error(
-      'A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.'
-    )
+  const inputs = parseAndValidateActionInputs()
+  const {
+    token,
+    tensorZeroBaseUrl,
+    diffSummaryPath,
+    fullDiffPath,
+    inputLogsDir,
+    outputArtifactsDir
+  } = inputs
+
+  if (!isPrEligibleForFix()) {
+    core.warning(`Pull request is not eligible for fix. Skipping action.`)
+    return
   }
 
   // Prepare artifact directory
   core.info(`Action running in directory ${process.cwd()}`)
-  const artifactsDirInput =
-    core.getInput('artifacts-dir')?.trim() || 'artifacts'
-  const outputArtifactDir = path.join(process.cwd(), artifactsDirInput)
-  core.info(`Output artifact directory: ${outputArtifactDir}`)
-  fs.mkdirSync(outputArtifactDir, { recursive: true })
 
-  const octokit = github.getOctokit(token)
+  const outputDir = outputArtifactsDir
+    ? path.join(process.cwd(), outputArtifactsDir)
+    : undefined
+  if (outputDir) {
+    core.info(`Output artifact directory: ${outputDir}`)
+    fs.mkdirSync(outputDir, { recursive: true })
+  } else {
+    core.warning(`Not creating output artifacts.`)
+  }
+
   const workflow_run_payload = github.context.payload['workflow_run']
   const runId = workflow_run_payload.id
   if (!runId) {
@@ -333,35 +346,28 @@ export async function run(): Promise<void> {
   }
   core.info(`Fetching jobs from: ${jobsUrl}`)
   const workflowJobsStatus = await getJobStatus(jobsUrl, token)
-  fs.writeFileSync(
-    path.join(outputArtifactDir, 'workflow-jobs.json'),
-    JSON.stringify(workflowJobsStatus, null, 2)
-  )
-  core.info('Jobs data written to workflow-jobs.json')
+
+  if (outputDir) {
+    fs.writeFileSync(
+      path.join(outputDir, 'workflow-jobs.json'),
+      JSON.stringify(workflowJobsStatus, null, 2)
+    )
+    core.info('Jobs data written to workflow-jobs.json')
+  }
 
   // Load diff summary and full diff.
   // TODO: consider loading pull request diff here using github REST APIs.
-  const diffSummary = getFileContentFromInput('diff-summary-path')
-  const fullDiff = getFileContentFromInput('full-diff-path')
+  const diffSummary = fs.readFileSync(diffSummaryPath, { encoding: 'utf-8' })
+  const fullDiff = fs.readFileSync(fullDiffPath, { encoding: 'utf-8' })
   const failedJobs: FailedJobSummary[] = getAllFailedJobs(workflowJobsStatus)
 
   // Collect artifacts from failed workflow run
   const { owner, repo } = github.context.repo
-  const artifacts = await octokit.paginate(
-    octokit.rest.actions.listWorkflowRunArtifacts,
-    {
-      owner,
-      repo,
-      run_id: Number(runId),
-      per_page: 100
-    }
-  )
-
-  core.startGroup(`Artifacts for workflow run ${runId}`)
+  const octokit = github.getOctokit(token)
 
   // Read failure logs from local filesystem
   // TODO: specify the API for passing files.
-  const failureLogsDir = path.join(process.cwd(), 'failure-logs')
+  const failureLogsDir = path.join(process.cwd(), inputLogsDir)
   let artifactContents: string[] = []
   try {
     if (fs.existsSync(failureLogsDir)) {
@@ -390,7 +396,9 @@ export async function run(): Promise<void> {
       core.warning(`Failure logs directory not found: ${failureLogsDir}`)
     }
   } catch (error) {
-    core.warning(`Error reading failure logs directory: ${error}`)
+    core.warning(
+      `Error reading failure logs directory ${failureLogsDir}: ${error}`
+    )
   }
 
   core.endGroup()
@@ -401,18 +409,19 @@ export async function run(): Promise<void> {
     prNumber: workflow_run_payload.pull_requests?.[0]?.number,
     diffSummary,
     fullDiff,
-    artifactNames: artifacts.map((artifact) => artifact.name),
     artifactContents,
     failedJobs
   })
   core.info(prompt)
 
-  const llmPromptPath = path.join(outputArtifactDir, 'llm-prompt.txt')
-  fs.writeFileSync(llmPromptPath, prompt)
-  core.info(`Prompt written to ${llmPromptPath}`)
+  if (outputDir) {
+    const llmPromptPath = path.join(outputDir, 'llm-prompt.txt')
+    fs.writeFileSync(llmPromptPath, prompt)
+    core.info(`Prompt written to ${llmPromptPath}`)
+  }
 
   // Construct a prompt to call an LLM.
-  const tensorZeroOpenAiEndpointUrl = getOpenAiCompatibleUrl()
+  const tensorZeroOpenAiEndpointUrl = getOpenAiCompatibleUrl(tensorZeroBaseUrl)
   const client = new OpenAI({
     baseURL: tensorZeroOpenAiEndpointUrl,
     apiKey: 'dummy'
@@ -432,25 +441,17 @@ export async function run(): Promise<void> {
     ]
   })
 
-  fs.writeFileSync(
-    path.join(outputArtifactDir, 'llm-response.json'),
-    JSON.stringify(response, null, 2)
-  )
+  if (outputDir) {
+    fs.writeFileSync(
+      path.join(outputDir, 'llm-response.json'),
+      JSON.stringify(response, null, 2)
+    )
 
-  fs.writeFileSync(
-    path.join(outputArtifactDir, 'artifacts.json'),
-    JSON.stringify(artifacts, null, 2)
-  )
-
-  fs.writeFileSync(
-    path.join(outputArtifactDir, 'artifact-names.txt'),
-    artifacts.map((artifact) => artifact.name).join('\n')
-  )
-
-  fs.writeFileSync(
-    path.join(outputArtifactDir, 'artifact-contents.txt'),
-    artifactContents.join('\n\n' + '='.repeat(80) + '\n\n')
-  )
+    fs.writeFileSync(
+      path.join(outputDir, 'artifact-contents.txt'),
+      artifactContents.join('\n\n' + '='.repeat(80) + '\n\n')
+    )
+  }
 
   // Get the LLM response from `response`
   const llmResponse = response.choices[0].message.content
