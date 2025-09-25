@@ -1,0 +1,23 @@
+name: create-pr-feedback
+description: Prepare and surface pull request feedback from workflow data.
+author: shuyangli
+
+branding:
+  icon: compose
+  color: blue
+
+inputs:
+  feedback-body:
+    description: Inline markdown content to use as the feedback body.
+    required: false
+  feedback-file:
+    description: Path to a file containing markdown feedback content.
+    required: false
+
+outputs:
+  feedback-body:
+    description: The feedback body that was generated for downstream steps.
+
+runs:
+  using: node24
+  main: ../../dist/create-pr-feedback/index.js

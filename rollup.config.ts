@@ -4,15 +4,18 @@ import commonjs from '@rollup/plugin-commonjs'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
 
-const config = {
-  input: 'src/index.ts',
+const createConfig = (actionName) => ({
+  input: `src/${actionName}/index.ts`,
   output: {
     esModule: true,
-    file: 'dist/index.js',
+    file: `dist/${actionName}/index.js`,
     format: 'es',
     sourcemap: true
   },
   plugins: [typescript(), nodeResolve({ preferBuiltins: true }), commonjs()]
-}
+})
 
-export default config
+export default [
+  createConfig('generate-pr-patch'),
+  createConfig('create-pr-feedback')
+]

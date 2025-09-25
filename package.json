@@ -17,7 +17,9 @@
     "actions"
   ],
   "exports": {
-    ".": "./dist/index.js"
+    "./generate-pr-patch": "./dist/generate-pr-patch/index.js",
+    "./create-pr-feedback": "./dist/create-pr-feedback/index.js",
+    ".": "./dist/generate-pr-patch/index.js"
   },
   "engines": {
     "node": ">=24.0.0"

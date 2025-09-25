@@ -48,7 +48,7 @@ function getOpenAiCompatibleUrl(): string {
 }
 
 /**
- * The main function for the action.
+ * Collects artifacts, builds a prompt to an LLM, then
  *
  * @returns Resolves when the action is complete.
  */

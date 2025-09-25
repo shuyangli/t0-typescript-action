@@ -1,4 +1,4 @@
-name: t0-typescript-action
+name: generate-pr-patch
 description:
   Download failed workflow artifacts, emit their contents, and prepare for
   automated diagnosis.
@@ -30,4 +30,4 @@ outputs: {}
 
 runs:
   using: node24
-  main: dist/index.js
+  main: ../../dist/generate-pr-patch/index.js
