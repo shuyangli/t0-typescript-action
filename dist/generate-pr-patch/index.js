@@ -46807,11 +46807,20 @@ function getOpenAiCompatibleUrl(baseUrl) {
     }
     return `${baseUrl}/openai/v1`;
 }
-function isPrEligibleForFix() {
+function isPullRequestEligibleForFix() {
+    // If the workflow run is not associated with a single pull request, we don't want to fix it.
+    if (githubExports.context.payload.workflow_run?.pull_requests?.length !== 1) {
+        coreExports.warning(`Workflow run is not associated with a single pull request; skipping action.`);
+        return false;
+    }
+    const pullRequest = githubExports.context.payload.workflow_run.pull_requests[0];
+    if (!pullRequest) {
+        coreExports.warning(`Workflow run is not associated with a pull request; skipping action.`);
+        return false;
+    }
     // If the pull request originates from a fork, we don't want to fix it.
-    if (githubExports.context.payload.pull_request?.head?.repo?.full_name !==
-        githubExports.context.payload.repository?.full_name) {
-        coreExports.warning(`PR originates from a fork: base repo is ${githubExports.context.payload.repository?.full_name}, but PR branch is from ${githubExports.context.payload.pull_request?.head?.repo?.full_name}; skipping action.`);
+    if (pullRequest.head.repo?.id !== pullRequest.base.repo?.id) {
+        coreExports.warning(`PR originates from a fork: base repo is ${pullRequest.base.repo?.name}, but PR branch is from ${pullRequest.head.repo?.name}; skipping action.`);
         return false;
     }
     // If the workflow run did not fail, we don't want to fix it.
@@ -46820,11 +46829,12 @@ function isPrEligibleForFix() {
         return false;
     }
     // If the pull request is not targeting the main branch, we don't want to fix it.
-    if (githubExports.context.payload.pull_request?.head?.ref !==
+    if (githubExports.context.payload.pull_request?.base?.ref !==
         githubExports.context.payload.repository?.default_branch) {
-        coreExports.warning(`PR is not targeting the main branch: PR branch is ${githubExports.context.payload.pull_request?.head?.ref}, but main branch is ${githubExports.context.payload.repository?.default_branch}; skipping action.`);
+        coreExports.warning(`PR is not targeting the main branch: PR branch is ${githubExports.context.payload.pull_request?.base?.ref}, but main branch is ${githubExports.context.payload.repository?.default_branch}; skipping action.`);
         return false;
     }
+    coreExports.info(`PR is eligible for fix.`);
     return true;
 }
 // Parse action inputs
@@ -46871,7 +46881,7 @@ async function run() {
         fs.writeFileSync(path$1.join(outputDir, 'payload.json'), JSON.stringify(githubExports.context.payload, null, 2));
         coreExports.info('Payload written to payload.json');
     }
-    if (!isPrEligibleForFix()) {
+    if (!isPullRequestEligibleForFix()) {
         coreExports.warning(`Pull request is not eligible for fix. Skipping action.`);
         return;
     }

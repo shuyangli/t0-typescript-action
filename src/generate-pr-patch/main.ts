@@ -243,14 +243,27 @@ function getOpenAiCompatibleUrl(baseUrl: string): string {
   return `${baseUrl}/openai/v1`
 }
 
-function isPrEligibleForFix(): boolean {
-  // If the pull request originates from a fork, we don't want to fix it.
-  if (
-    github.context.payload.pull_request?.head?.repo?.full_name !==
-    github.context.payload.repository?.full_name
-  ) {
+function isPullRequestEligibleForFix(): boolean {
+  // If the workflow run is not associated with a single pull request, we don't want to fix it.
+  if (github.context.payload.workflow_run?.pull_requests?.length !== 1) {
     core.warning(
-      `PR originates from a fork: base repo is ${github.context.payload.repository?.full_name}, but PR branch is from ${github.context.payload.pull_request?.head?.repo?.full_name}; skipping action.`
+      `Workflow run is not associated with a single pull request; skipping action.`
+    )
+    return false
+  }
+
+  const pullRequest = github.context.payload.workflow_run.pull_requests[0]
+  if (!pullRequest) {
+    core.warning(
+      `Workflow run is not associated with a pull request; skipping action.`
+    )
+    return false
+  }
+
+  // If the pull request originates from a fork, we don't want to fix it.
+  if (pullRequest.head.repo?.id !== pullRequest.base.repo?.id) {
+    core.warning(
+      `PR originates from a fork: base repo is ${pullRequest.base.repo?.name}, but PR branch is from ${pullRequest.head.repo?.name}; skipping action.`
     )
     return false
   }
@@ -265,15 +278,16 @@ function isPrEligibleForFix(): boolean {
 
   // If the pull request is not targeting the main branch, we don't want to fix it.
   if (
-    github.context.payload.pull_request?.head?.ref !==
+    github.context.payload.pull_request?.base?.ref !==
     github.context.payload.repository?.default_branch
   ) {
     core.warning(
-      `PR is not targeting the main branch: PR branch is ${github.context.payload.pull_request?.head?.ref}, but main branch is ${github.context.payload.repository?.default_branch}; skipping action.`
+      `PR is not targeting the main branch: PR branch is ${github.context.payload.pull_request?.base?.ref}, but main branch is ${github.context.payload.repository?.default_branch}; skipping action.`
     )
     return false
   }
 
+  core.info(`PR is eligible for fix.`)
   return true
 }
 
@@ -338,7 +352,7 @@ export async function run(): Promise<void> {
     core.info('Payload written to payload.json')
   }
 
-  if (!isPrEligibleForFix()) {
+  if (!isPullRequestEligibleForFix()) {
     core.warning(`Pull request is not eligible for fix. Skipping action.`)
     return
   }
