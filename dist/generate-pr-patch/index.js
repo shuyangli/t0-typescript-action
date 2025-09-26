@@ -6,31 +6,32 @@ import fs__default from 'fs';
 import * as path$1 from 'path';
 import path__default from 'path';
 import require$$2$1 from 'http';
-import require$$3$1 from 'https';
+import require$$1 from 'https';
 import require$$0$4 from 'net';
-import require$$1 from 'tls';
+import require$$1$1 from 'tls';
 import require$$4$1 from 'events';
 import require$$0$3 from 'assert';
 import require$$0$2, { promisify } from 'util';
 import require$$0$5 from 'stream';
-import require$$7 from 'buffer';
+import require$$1$2 from 'buffer';
 import require$$8 from 'querystring';
 import require$$14 from 'stream/web';
 import require$$0$7 from 'node:stream';
-import require$$1$1 from 'node:util';
+import require$$1$3 from 'node:util';
 import require$$0$6 from 'node:events';
 import require$$0$8 from 'worker_threads';
 import require$$2$2 from 'perf_hooks';
 import require$$5 from 'util/types';
 import require$$4$2 from 'async_hooks';
-import require$$1$2 from 'console';
-import require$$1$3 from 'url';
-import require$$3$2 from 'zlib';
+import require$$1$4 from 'console';
+import require$$1$5 from 'url';
+import require$$3$1 from 'zlib';
 import require$$6 from 'string_decoder';
 import require$$0$9 from 'diagnostics_channel';
 import require$$2$3, { execFile } from 'child_process';
 import require$$6$1 from 'timers';
 import * as fsPromises from 'fs/promises';
+import require$$0$a from 'node:os';
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -71,17 +72,17 @@ var core = {};
 
 var command = {};
 
-var utils$4 = {};
+var utils$6 = {};
 
-var hasRequiredUtils$4;
+var hasRequiredUtils$6;
 
-function requireUtils$4 () {
-	if (hasRequiredUtils$4) return utils$4;
-	hasRequiredUtils$4 = 1;
+function requireUtils$6 () {
+	if (hasRequiredUtils$6) return utils$6;
+	hasRequiredUtils$6 = 1;
 	// We use any as a valid input type
 	/* eslint-disable @typescript-eslint/no-explicit-any */
-	Object.defineProperty(utils$4, "__esModule", { value: true });
-	utils$4.toCommandProperties = utils$4.toCommandValue = void 0;
+	Object.defineProperty(utils$6, "__esModule", { value: true });
+	utils$6.toCommandProperties = utils$6.toCommandValue = void 0;
 	/**
 	 * Sanitizes an input into a string so it can be passed into issueCommand safely
 	 * @param input input to sanitize into a string
@@ -95,7 +96,7 @@ function requireUtils$4 () {
 	    }
 	    return JSON.stringify(input);
 	}
-	utils$4.toCommandValue = toCommandValue;
+	utils$6.toCommandValue = toCommandValue;
 	/**
 	 *
 	 * @param annotationProperties
@@ -115,9 +116,9 @@ function requireUtils$4 () {
 	        endColumn: annotationProperties.endColumn
 	    };
 	}
-	utils$4.toCommandProperties = toCommandProperties;
+	utils$6.toCommandProperties = toCommandProperties;
 	
-	return utils$4;
+	return utils$6;
 }
 
 var hasRequiredCommand;
@@ -151,7 +152,7 @@ function requireCommand () {
 	Object.defineProperty(command, "__esModule", { value: true });
 	command.issue = command.issueCommand = void 0;
 	const os = __importStar(require$$0__default);
-	const utils_1 = requireUtils$4();
+	const utils_1 = requireUtils$6();
 	/**
 	 * Commands
 	 *
@@ -261,7 +262,7 @@ function requireFileCommand () {
 	const crypto = __importStar(require$$0$1);
 	const fs = __importStar(fs__default);
 	const os = __importStar(require$$0__default);
-	const utils_1 = requireUtils$4();
+	const utils_1 = requireUtils$6();
 	function issueFileCommand(command, message) {
 	    const filePath = process.env[`GITHUB_${command}`];
 	    if (!filePath) {
@@ -409,9 +410,9 @@ var hasRequiredTunnel$1;
 function requireTunnel$1 () {
 	if (hasRequiredTunnel$1) return tunnel$1;
 	hasRequiredTunnel$1 = 1;
-	var tls = require$$1;
+	var tls = require$$1$1;
 	var http = require$$2$1;
-	var https = require$$3$1;
+	var https = require$$1;
 	var events = require$$4$1;
 	var util = require$$0$2;
 
@@ -1133,7 +1134,7 @@ function requireUtil$7 () {
 	const stream = require$$0$5;
 	const net = require$$0$4;
 	const { InvalidArgumentError } = requireErrors();
-	const { Blob } = require$$7;
+	const { Blob } = require$$1$2;
 	const nodeUtil = require$$0$2;
 	const { stringify } = require$$8;
 	const { headerNameLowerCasedRecord } = requireConstants$4();
@@ -1791,7 +1792,7 @@ function requireSbmh () {
 	 * by Hongli Lai at: https://github.com/FooBarWidget/boyer-moore-horspool
 	 */
 	const EventEmitter = require$$0$6.EventEmitter;
-	const inherits = require$$1$1.inherits;
+	const inherits = require$$1$3.inherits;
 
 	function SBMH (needle) {
 	  if (typeof needle === 'string') {
@@ -2000,7 +2001,7 @@ function requirePartStream () {
 	if (hasRequiredPartStream) return PartStream_1;
 	hasRequiredPartStream = 1;
 
-	const inherits = require$$1$1.inherits;
+	const inherits = require$$1$3.inherits;
 	const ReadableStream = require$$0$7.Readable;
 
 	function PartStream (opts) {
@@ -2046,7 +2047,7 @@ function requireHeaderParser () {
 	hasRequiredHeaderParser = 1;
 
 	const EventEmitter = require$$0$6.EventEmitter;
-	const inherits = require$$1$1.inherits;
+	const inherits = require$$1$3.inherits;
 	const getLimit = requireGetLimit();
 
 	const StreamSearch = requireSbmh();
@@ -2154,7 +2155,7 @@ function requireDicer () {
 	hasRequiredDicer = 1;
 
 	const WritableStream = require$$0$7.Writable;
-	const inherits = require$$1$1.inherits;
+	const inherits = require$$1$3.inherits;
 
 	const StreamSearch = requireSbmh();
 
@@ -2731,7 +2732,7 @@ function requireMultipart () {
 	//     -- this will require modifications to utils.parseParams
 
 	const { Readable } = require$$0$7;
-	const { inherits } = require$$1$1;
+	const { inherits } = require$$1$3;
 
 	const Dicer = requireDicer();
 
@@ -3297,7 +3298,7 @@ function requireMain () {
 	hasRequiredMain = 1;
 
 	const WritableStream = require$$0$7.Writable;
-	const { inherits } = require$$1$1;
+	const { inherits } = require$$1$3;
 	const Dicer = requireDicer();
 
 	const MultipartParser = requireMultipart();
@@ -5419,7 +5420,7 @@ function requireDataURL () {
 	if (hasRequiredDataURL) return dataURL;
 	hasRequiredDataURL = 1;
 	const assert = require$$0$3;
-	const { atob } = require$$7;
+	const { atob } = require$$1$2;
 	const { isomorphicDecode } = requireUtil$6();
 
 	const encoder = new TextEncoder();
@@ -6055,7 +6056,7 @@ function requireFile () {
 	if (hasRequiredFile) return file;
 	hasRequiredFile = 1;
 
-	const { Blob, File: NativeFile } = require$$7;
+	const { Blob, File: NativeFile } = require$$1$2;
 	const { types } = require$$0$2;
 	const { kState } = requireSymbols$3();
 	const { isBlobLike } = requireUtil$6();
@@ -6411,7 +6412,7 @@ function requireFormdata () {
 	const { kState } = requireSymbols$3();
 	const { File: UndiciFile, FileLike, isFileLike } = requireFile();
 	const { webidl } = requireWebidl();
-	const { Blob, File: NativeFile } = require$$7;
+	const { Blob, File: NativeFile } = require$$1$2;
 
 	/** @type {globalThis['File']} */
 	const File = NativeFile ?? UndiciFile;
@@ -6694,7 +6695,7 @@ function requireBody () {
 	const { kState } = requireSymbols$3();
 	const { webidl } = requireWebidl();
 	const { DOMException, structuredClone } = requireConstants$3();
-	const { Blob, File: NativeFile } = require$$7;
+	const { Blob, File: NativeFile } = require$$1$2;
 	const { kBodyUsed } = requireSymbols$4();
 	const assert = require$$0$3;
 	const { isErrored } = requireUtil$7();
@@ -8121,7 +8122,7 @@ function requireConnect () {
 	    let socket;
 	    if (protocol === 'https:') {
 	      if (!tls) {
-	        tls = require$$1;
+	        tls = require$$1$1;
 	      }
 	      servername = servername || options.servername || util.getServerName(host) || null;
 
@@ -8227,15 +8228,15 @@ function requireConnect () {
 
 var constants$2 = {};
 
-var utils$3 = {};
+var utils$5 = {};
 
-var hasRequiredUtils$3;
+var hasRequiredUtils$5;
 
-function requireUtils$3 () {
-	if (hasRequiredUtils$3) return utils$3;
-	hasRequiredUtils$3 = 1;
-	Object.defineProperty(utils$3, "__esModule", { value: true });
-	utils$3.enumToMap = void 0;
+function requireUtils$5 () {
+	if (hasRequiredUtils$5) return utils$5;
+	hasRequiredUtils$5 = 1;
+	Object.defineProperty(utils$5, "__esModule", { value: true });
+	utils$5.enumToMap = void 0;
 	function enumToMap(obj) {
 	    const res = {};
 	    Object.keys(obj).forEach((key) => {
@@ -8246,9 +8247,9 @@ function requireUtils$3 () {
 	    });
 	    return res;
 	}
-	utils$3.enumToMap = enumToMap;
+	utils$5.enumToMap = enumToMap;
 	
-	return utils$3;
+	return utils$5;
 }
 
 var hasRequiredConstants$2;
@@ -8259,7 +8260,7 @@ function requireConstants$2 () {
 	(function (exports) {
 		Object.defineProperty(exports, "__esModule", { value: true });
 		exports.SPECIAL_HEADERS = exports.HEADER_STATE = exports.MINOR = exports.MAJOR = exports.CONNECTION_TOKEN_CHARS = exports.HEADER_CHARS = exports.TOKEN = exports.STRICT_TOKEN = exports.HEX = exports.URL_CHAR = exports.STRICT_URL_CHAR = exports.USERINFO_CHARS = exports.MARK = exports.ALPHANUM = exports.NUM = exports.HEX_MAP = exports.NUM_MAP = exports.ALPHA = exports.FINISH = exports.H_METHOD_MAP = exports.METHOD_MAP = exports.METHODS_RTSP = exports.METHODS_ICE = exports.METHODS_HTTP = exports.METHODS = exports.LENIENT_FLAGS = exports.FLAGS = exports.TYPE = exports.ERROR = void 0;
-		const utils_1 = requireUtils$3();
+		const utils_1 = requireUtils$5();
 		(function (ERROR) {
 		    ERROR[ERROR["OK"] = 0] = "OK";
 		    ERROR[ERROR["INTERNAL"] = 1] = "INTERNAL";
@@ -8792,12 +8793,12 @@ function requireLlhttp_simdWasm () {
 	return llhttp_simdWasm;
 }
 
-var client;
-var hasRequiredClient;
+var client$2;
+var hasRequiredClient$2;
 
-function requireClient () {
-	if (hasRequiredClient) return client;
-	hasRequiredClient = 1;
+function requireClient$2 () {
+	if (hasRequiredClient$2) return client$2;
+	hasRequiredClient$2 = 1;
 
 	/* global WebAssembly */
 
@@ -11075,8 +11076,8 @@ function requireClient () {
 	  }
 	}
 
-	client = Client;
-	return client;
+	client$2 = Client;
+	return client$2;
 }
 
 /* eslint-disable */
@@ -11463,7 +11464,7 @@ function requirePool () {
 	  kAddClient,
 	  kGetDispatcher
 	} = requirePoolBase();
-	const Client = requireClient();
+	const Client = requireClient$2();
 	const {
 	  InvalidArgumentError
 	} = requireErrors();
@@ -11830,7 +11831,7 @@ function requireAgent () {
 	const { kClients, kRunning, kClose, kDestroy, kDispatch, kInterceptors } = requireSymbols$4();
 	const DispatcherBase = requireDispatcherBase();
 	const Pool = requirePool();
-	const Client = requireClient();
+	const Client = requireClient$2();
 	const util = requireUtil$7();
 	const createRedirectInterceptor = requireRedirectInterceptor();
 	const { WeakRef, FinalizationRegistry } = requireDispatcherWeakref()();
@@ -13974,7 +13975,7 @@ function requireMockClient () {
 	hasRequiredMockClient = 1;
 
 	const { promisify } = require$$0$2;
-	const Client = requireClient();
+	const Client = requireClient$2();
 	const { buildMockDispatch } = requireMockUtils();
 	const {
 	  kDispatches,
@@ -14145,7 +14146,7 @@ function requirePendingInterceptorsFormatter () {
 	hasRequiredPendingInterceptorsFormatter = 1;
 
 	const { Transform } = require$$0$5;
-	const { Console } = require$$1$2;
+	const { Console } = require$$1$4;
 
 	/**
 	 * Gets the output of `console.table(…)` as a string.
@@ -14372,7 +14373,7 @@ function requireProxyAgent () {
 	hasRequiredProxyAgent = 1;
 
 	const { kProxy, kClose, kDestroy, kInterceptors } = requireSymbols$4();
-	const { URL } = require$$1$3;
+	const { URL } = require$$1$5;
 	const Agent = requireAgent();
 	const Pool = requirePool();
 	const DispatcherBase = requireDispatcherBase();
@@ -17130,7 +17131,7 @@ function requireFetch () {
 	} = requireResponse();
 	const { Headers } = requireHeaders();
 	const { Request, makeRequest } = requireRequest();
-	const zlib = require$$3$2;
+	const zlib = require$$3$1;
 	const {
 	  bytesMatch,
 	  makePolicyContainer,
@@ -17907,7 +17908,7 @@ function requireFetch () {
 	    }
 	    case 'blob:': {
 	      if (!resolveObjectURL) {
-	        resolveObjectURL = require$$7.resolveObjectURL;
+	        resolveObjectURL = require$$1$2.resolveObjectURL;
 	      }
 
 	      // 1. Let blobURLEntry be request’s current URL’s blob URL entry.
@@ -19616,7 +19617,7 @@ function requireUtil$4 () {
 	const { serializeAMimeType, parseMIMEType } = requireDataURL();
 	const { types } = require$$0$2;
 	const { StringDecoder } = require$$6;
-	const { btoa } = require$$7;
+	const { btoa } = require$$1$2;
 
 	/** @type {PropertyDescriptor} */
 	const staticPropertyDescriptors = {
@@ -21718,12 +21719,12 @@ function requireUtil$2 () {
 	return util$2;
 }
 
-var parse$1;
-var hasRequiredParse;
+var parse$2;
+var hasRequiredParse$1;
 
-function requireParse () {
-	if (hasRequiredParse) return parse$1;
-	hasRequiredParse = 1;
+function requireParse$1 () {
+	if (hasRequiredParse$1) return parse$2;
+	hasRequiredParse$1 = 1;
 
 	const { maxNameValuePairSize, maxAttributeValueSize } = requireConstants$1();
 	const { isCTLExcludingHtab } = requireUtil$2();
@@ -22036,11 +22037,11 @@ function requireParse () {
 	  return parseUnparsedAttributes(unparsedAttributes, cookieAttributeList)
 	}
 
-	parse$1 = {
+	parse$2 = {
 	  parseSetCookie,
 	  parseUnparsedAttributes
 	};
-	return parse$1;
+	return parse$2;
 }
 
 var cookies;
@@ -22050,7 +22051,7 @@ function requireCookies () {
 	if (hasRequiredCookies) return cookies;
 	hasRequiredCookies = 1;
 
-	const { parseSetCookie } = requireParse();
+	const { parseSetCookie } = requireParse$1();
 	const { stringify } = requireUtil$2();
 	const { webidl } = requireWebidl();
 	const { Headers } = requireHeaders();
@@ -22832,12 +22833,12 @@ function requireUtil$1 () {
 	return util$1;
 }
 
-var connection;
-var hasRequiredConnection;
+var connection$2;
+var hasRequiredConnection$2;
 
-function requireConnection () {
-	if (hasRequiredConnection) return connection;
-	hasRequiredConnection = 1;
+function requireConnection$2 () {
+	if (hasRequiredConnection$2) return connection$2;
+	hasRequiredConnection$2 = 1;
 
 	const diagnosticsChannel = require$$0$9;
 	const { uid, states } = requireConstants();
@@ -23125,10 +23126,10 @@ function requireConnection () {
 	  this.destroy();
 	}
 
-	connection = {
+	connection$2 = {
 	  establishWebSocketConnection
 	};
-	return connection;
+	return connection$2;
 }
 
 var frame;
@@ -23586,7 +23587,7 @@ function requireWebsocket () {
 	  kByteParser
 	} = requireSymbols();
 	const { isEstablished, isClosing, isValidSubprotocol, failWebsocketConnection, fireEvent } = requireUtil$1();
-	const { establishWebSocketConnection } = requireConnection();
+	const { establishWebSocketConnection } = requireConnection$2();
 	const { WebsocketFrameSend } = requireFrame();
 	const { ByteParser } = requireReceiver();
 	const { kEnumerableProperty, isBlobLike } = requireUtil$7();
@@ -24216,7 +24217,7 @@ function requireUndici () {
 	if (hasRequiredUndici) return undici;
 	hasRequiredUndici = 1;
 
-	const Client = requireClient();
+	const Client = requireClient$2();
 	const Dispatcher = requireDispatcher();
 	const errors = requireErrors();
 	const Pool = requirePool();
@@ -24425,7 +24426,7 @@ function requireLib$1 () {
 	Object.defineProperty(lib$1, "__esModule", { value: true });
 	lib$1.HttpClient = lib$1.isHttps = lib$1.HttpClientResponse = lib$1.HttpClientError = lib$1.getProxyUrl = lib$1.MediaTypes = lib$1.Headers = lib$1.HttpCodes = void 0;
 	const http = __importStar(require$$2$1);
-	const https = __importStar(require$$3$1);
+	const https = __importStar(require$$1);
 	const pm = __importStar(requireProxy());
 	const tunnel = __importStar(requireTunnel());
 	const undici_1 = requireUndici();
@@ -26970,7 +26971,7 @@ function requireCore () {
 		exports.platform = exports.toPlatformPath = exports.toWin32Path = exports.toPosixPath = exports.markdownSummary = exports.summary = exports.getIDToken = exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.notice = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
 		const command_1 = requireCommand();
 		const file_command_1 = requireFileCommand();
-		const utils_1 = requireUtils$4();
+		const utils_1 = requireUtils$6();
 		const os = __importStar(require$$0__default);
 		const path = __importStar(path__default);
 		const oidc_utils_1 = requireOidcUtils();
@@ -27350,16 +27351,16 @@ function requireContext () {
 	return context;
 }
 
-var utils$2 = {};
+var utils$4 = {};
 
-var utils$1 = {};
+var utils$3 = {};
 
-var hasRequiredUtils$2;
+var hasRequiredUtils$4;
 
-function requireUtils$2 () {
-	if (hasRequiredUtils$2) return utils$1;
-	hasRequiredUtils$2 = 1;
-	var __createBinding = (utils$1 && utils$1.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+function requireUtils$4 () {
+	if (hasRequiredUtils$4) return utils$3;
+	hasRequiredUtils$4 = 1;
+	var __createBinding = (utils$3 && utils$3.__createBinding) || (Object.create ? (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
 	    var desc = Object.getOwnPropertyDescriptor(m, k);
 	    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
@@ -27370,19 +27371,19 @@ function requireUtils$2 () {
 	    if (k2 === undefined) k2 = k;
 	    o[k2] = m[k];
 	}));
-	var __setModuleDefault = (utils$1 && utils$1.__setModuleDefault) || (Object.create ? (function(o, v) {
+	var __setModuleDefault = (utils$3 && utils$3.__setModuleDefault) || (Object.create ? (function(o, v) {
 	    Object.defineProperty(o, "default", { enumerable: true, value: v });
 	}) : function(o, v) {
 	    o["default"] = v;
 	});
-	var __importStar = (utils$1 && utils$1.__importStar) || function (mod) {
+	var __importStar = (utils$3 && utils$3.__importStar) || function (mod) {
 	    if (mod && mod.__esModule) return mod;
 	    var result = {};
 	    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
 	    __setModuleDefault(result, mod);
 	    return result;
 	};
-	var __awaiter = (utils$1 && utils$1.__awaiter) || function (thisArg, _arguments, P, generator) {
+	var __awaiter = (utils$3 && utils$3.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
 	    return new (P || (P = Promise))(function (resolve, reject) {
 	        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -27391,8 +27392,8 @@ function requireUtils$2 () {
 	        step((generator = generator.apply(thisArg, _arguments || [])).next());
 	    });
 	};
-	Object.defineProperty(utils$1, "__esModule", { value: true });
-	utils$1.getApiBaseUrl = utils$1.getProxyFetch = utils$1.getProxyAgentDispatcher = utils$1.getProxyAgent = utils$1.getAuthString = void 0;
+	Object.defineProperty(utils$3, "__esModule", { value: true });
+	utils$3.getApiBaseUrl = utils$3.getProxyFetch = utils$3.getProxyAgentDispatcher = utils$3.getProxyAgent = utils$3.getAuthString = void 0;
 	const httpClient = __importStar(requireLib$1());
 	const undici_1 = requireUndici();
 	function getAuthString(token, options) {
@@ -27404,17 +27405,17 @@ function requireUtils$2 () {
 	    }
 	    return typeof options.auth === 'string' ? options.auth : `token ${token}`;
 	}
-	utils$1.getAuthString = getAuthString;
+	utils$3.getAuthString = getAuthString;
 	function getProxyAgent(destinationUrl) {
 	    const hc = new httpClient.HttpClient();
 	    return hc.getAgent(destinationUrl);
 	}
-	utils$1.getProxyAgent = getProxyAgent;
+	utils$3.getProxyAgent = getProxyAgent;
 	function getProxyAgentDispatcher(destinationUrl) {
 	    const hc = new httpClient.HttpClient();
 	    return hc.getAgentDispatcher(destinationUrl);
 	}
-	utils$1.getProxyAgentDispatcher = getProxyAgentDispatcher;
+	utils$3.getProxyAgentDispatcher = getProxyAgentDispatcher;
 	function getProxyFetch(destinationUrl) {
 	    const httpDispatcher = getProxyAgentDispatcher(destinationUrl);
 	    const proxyFetch = (url, opts) => __awaiter(this, void 0, void 0, function* () {
@@ -27422,13 +27423,13 @@ function requireUtils$2 () {
 	    });
 	    return proxyFetch;
 	}
-	utils$1.getProxyFetch = getProxyFetch;
+	utils$3.getProxyFetch = getProxyFetch;
 	function getApiBaseUrl() {
 	    return process.env['GITHUB_API_URL'] || 'https://api.github.com';
 	}
-	utils$1.getApiBaseUrl = getApiBaseUrl;
+	utils$3.getApiBaseUrl = getApiBaseUrl;
 	
-	return utils$1;
+	return utils$3;
 }
 
 function getUserAgent() {
@@ -27883,7 +27884,7 @@ function expand(template, context) {
   }
 }
 
-function parse(options) {
+function parse$1(options) {
   let method = options.method.toUpperCase();
   let url = (options.url || "/").replace(/:([a-z]\w+)/g, "{$1}");
   let headers = Object.assign({}, options.headers);
@@ -27948,7 +27949,7 @@ function parse(options) {
 }
 
 function endpointWithDefaults(defaults, route, options) {
-  return parse(merge(defaults, route, options));
+  return parse$1(merge(defaults, route, options));
 }
 
 function withDefaults$2(oldDefaults, newDefaults) {
@@ -27958,7 +27959,7 @@ function withDefaults$2(oldDefaults, newDefaults) {
     DEFAULTS,
     defaults: withDefaults$2.bind(null, DEFAULTS),
     merge: merge.bind(null, DEFAULTS),
-    parse
+    parse: parse$1
   });
 }
 
@@ -31127,13 +31128,13 @@ var distWeb = /*#__PURE__*/Object.freeze({
 
 var require$$4 = /*@__PURE__*/getAugmentedNamespace(distWeb);
 
-var hasRequiredUtils$1;
+var hasRequiredUtils$3;
 
-function requireUtils$1 () {
-	if (hasRequiredUtils$1) return utils$2;
-	hasRequiredUtils$1 = 1;
+function requireUtils$3 () {
+	if (hasRequiredUtils$3) return utils$4;
+	hasRequiredUtils$3 = 1;
 	(function (exports) {
-		var __createBinding = (utils$2 && utils$2.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+		var __createBinding = (utils$4 && utils$4.__createBinding) || (Object.create ? (function(o, m, k, k2) {
 		    if (k2 === undefined) k2 = k;
 		    var desc = Object.getOwnPropertyDescriptor(m, k);
 		    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
@@ -31144,12 +31145,12 @@ function requireUtils$1 () {
 		    if (k2 === undefined) k2 = k;
 		    o[k2] = m[k];
 		}));
-		var __setModuleDefault = (utils$2 && utils$2.__setModuleDefault) || (Object.create ? (function(o, v) {
+		var __setModuleDefault = (utils$4 && utils$4.__setModuleDefault) || (Object.create ? (function(o, v) {
 		    Object.defineProperty(o, "default", { enumerable: true, value: v });
 		}) : function(o, v) {
 		    o["default"] = v;
 		});
-		var __importStar = (utils$2 && utils$2.__importStar) || function (mod) {
+		var __importStar = (utils$4 && utils$4.__importStar) || function (mod) {
 		    if (mod && mod.__esModule) return mod;
 		    var result = {};
 		    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
@@ -31159,7 +31160,7 @@ function requireUtils$1 () {
 		Object.defineProperty(exports, "__esModule", { value: true });
 		exports.getOctokitOptions = exports.GitHub = exports.defaults = exports.context = void 0;
 		const Context = __importStar(requireContext());
-		const Utils = __importStar(requireUtils$2());
+		const Utils = __importStar(requireUtils$4());
 		// octokit + plugins
 		const core_1 = require$$2;
 		const plugin_rest_endpoint_methods_1 = require$$3;
@@ -31191,8 +31192,8 @@ function requireUtils$1 () {
 		}
 		exports.getOctokitOptions = getOctokitOptions;
 		
-	} (utils$2));
-	return utils$2;
+	} (utils$4));
+	return utils$4;
 }
 
 var hasRequiredGithub;
@@ -31226,7 +31227,7 @@ function requireGithub () {
 	Object.defineProperty(github, "__esModule", { value: true });
 	github.getOctokit = github.context = void 0;
 	const Context = __importStar(requireContext());
-	const utils_1 = requireUtils$1();
+	const utils_1 = requireUtils$3();
 	github.context = new Context.Context();
 	/**
 	 * Returns a hydrated octokit ready to use for GitHub Actions
@@ -31474,7 +31475,7 @@ const safeJSON = (text) => {
 };
 
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep$1 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const VERSION = '5.23.0'; // x-release-please-version
 
@@ -35693,7 +35694,7 @@ let Runs$1 = class Runs extends APIResource {
                             }
                         }
                     }
-                    await sleep(sleepInterval);
+                    await sleep$1(sleepInterval);
                     break;
                 //We return the run in any terminal state.
                 case 'requires_action':
@@ -36230,7 +36231,7 @@ let Files$1 = class Files extends APIResource {
         const start = Date.now();
         let file = await this.retrieve(id);
         while (!file.status || !TERMINAL_STATES.has(file.status)) {
-            await sleep(pollInterval);
+            await sleep$1(pollInterval);
             file = await this.retrieve(id);
             if (Date.now() - start > maxWait) {
                 throw new APIConnectionTimeoutError({
@@ -37264,7 +37265,7 @@ class FileBatches extends APIResource {
                             }
                         }
                     }
-                    await sleep(sleepInterval);
+                    await sleep$1(sleepInterval);
                     break;
                 case 'failed':
                 case 'cancelled':
@@ -37405,7 +37406,7 @@ class Files extends APIResource {
                             }
                         }
                     }
-                    await sleep(sleepInterval);
+                    await sleep$1(sleepInterval);
                     break;
                 case 'failed':
                 case 'completed':
@@ -37985,7 +37986,7 @@ class OpenAI {
             const maxRetries = options.maxRetries ?? this.maxRetries;
             timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
         }
-        await sleep(timeoutMillis);
+        await sleep$1(timeoutMillis);
         return this.makeRequest(options, retriesRemaining - 1, requestLogID);
     }
     calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
@@ -38129,22 +38130,22 @@ var handlebars_runtime = {exports: {}};
 
 var base$1 = {};
 
-var utils = {};
+var utils$2 = {};
 
-var hasRequiredUtils;
+var hasRequiredUtils$2;
 
-function requireUtils () {
-	if (hasRequiredUtils) return utils;
-	hasRequiredUtils = 1;
+function requireUtils$2 () {
+	if (hasRequiredUtils$2) return utils$2;
+	hasRequiredUtils$2 = 1;
 
-	utils.__esModule = true;
-	utils.extend = extend;
-	utils.indexOf = indexOf;
-	utils.escapeExpression = escapeExpression;
-	utils.isEmpty = isEmpty;
-	utils.createFrame = createFrame;
-	utils.blockParams = blockParams;
-	utils.appendContextPath = appendContextPath;
+	utils$2.__esModule = true;
+	utils$2.extend = extend;
+	utils$2.indexOf = indexOf;
+	utils$2.escapeExpression = escapeExpression;
+	utils$2.isEmpty = isEmpty;
+	utils$2.createFrame = createFrame;
+	utils$2.blockParams = blockParams;
+	utils$2.appendContextPath = appendContextPath;
 	var escape = {
 	  '&': '&amp;',
 	  '<': '&lt;',
@@ -38176,7 +38177,7 @@ function requireUtils () {
 
 	var toString = Object.prototype.toString;
 
-	utils.toString = toString;
+	utils$2.toString = toString;
 	// Sourced from lodash
 	// https://github.com/bestiejs/lodash/blob/master/LICENSE.txt
 	/* eslint-disable func-style */
@@ -38186,11 +38187,11 @@ function requireUtils () {
 	// fallback for older versions of Chrome and Safari
 	/* istanbul ignore next */
 	if (isFunction(/x/)) {
-	  utils.isFunction = isFunction = function (value) {
+	  utils$2.isFunction = isFunction = function (value) {
 	    return typeof value === 'function' && toString.call(value) === '[object Function]';
 	  };
 	}
-	utils.isFunction = isFunction;
+	utils$2.isFunction = isFunction;
 
 	/* eslint-enable func-style */
 
@@ -38199,7 +38200,7 @@ function requireUtils () {
 	  return value && typeof value === 'object' ? toString.call(value) === '[object Array]' : false;
 	};
 
-	utils.isArray = isArray;
+	utils$2.isArray = isArray;
 	// Older IE versions do not directly support indexOf so we must implement our own, sadly.
 
 	function indexOf(array, value) {
@@ -38259,7 +38260,7 @@ function requireUtils () {
 	  return (contextPath ? contextPath + '.' : '') + id;
 	}
 	
-	return utils;
+	return utils$2;
 }
 
 var exception = {exports: {}};
@@ -38350,7 +38351,7 @@ function requireBlockHelperMissing () {
 
 		exports.__esModule = true;
 
-		var _utils = requireUtils();
+		var _utils = requireUtils$2();
 
 		exports['default'] = function (instance) {
 		  instance.registerHelper('blockHelperMissing', function (context, options) {
@@ -38403,7 +38404,7 @@ function requireEach () {
 
 		function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-		var _utils = requireUtils();
+		var _utils = requireUtils$2();
 
 		var _exception = requireException();
 
@@ -38554,7 +38555,7 @@ function require_if () {
 
 		function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-		var _utils = requireUtils();
+		var _utils = requireUtils$2();
 
 		var _exception = requireException();
 
@@ -38675,7 +38676,7 @@ function require_with () {
 
 		function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-		var _utils = requireUtils();
+		var _utils = requireUtils$2();
 
 		var _exception = requireException();
 
@@ -38791,7 +38792,7 @@ function requireInline () {
 
 		exports.__esModule = true;
 
-		var _utils = requireUtils();
+		var _utils = requireUtils$2();
 
 		exports['default'] = function (instance) {
 		  instance.registerDecorator('inline', function (fn, props, container, options) {
@@ -38843,18 +38844,18 @@ function requireDecorators () {
 	return decorators;
 }
 
-var logger = {exports: {}};
+var logger$1 = {exports: {}};
 
-var hasRequiredLogger;
+var hasRequiredLogger$1;
 
-function requireLogger () {
-	if (hasRequiredLogger) return logger.exports;
-	hasRequiredLogger = 1;
+function requireLogger$1 () {
+	if (hasRequiredLogger$1) return logger$1.exports;
+	hasRequiredLogger$1 = 1;
 	(function (module, exports) {
 
 		exports.__esModule = true;
 
-		var _utils = requireUtils();
+		var _utils = requireUtils$2();
 
 		var logger = {
 		  methodMap: ['debug', 'info', 'warn', 'error'],
@@ -38897,8 +38898,8 @@ function requireLogger () {
 		exports['default'] = logger;
 		module.exports = exports['default'];
 		
-	} (logger, logger.exports));
-	return logger.exports;
+	} (logger$1, logger$1.exports));
+	return logger$1.exports;
 }
 
 var protoAccess = {};
@@ -38914,7 +38915,7 @@ function requireCreateNewLookupObject () {
 	createNewLookupObject.__esModule = true;
 	createNewLookupObject.createNewLookupObject = createNewLookupObject$1;
 
-	var _utils = requireUtils();
+	var _utils = requireUtils$2();
 
 	/**
 	 * Create a new object with "null"-prototype to avoid truthy results on prototype properties.
@@ -38950,7 +38951,7 @@ function requireProtoAccess () {
 
 	var _createNewLookupObject = requireCreateNewLookupObject();
 
-	var _logger = requireLogger();
+	var _logger = requireLogger$1();
 
 	var _logger2 = _interopRequireDefault(_logger);
 
@@ -39026,7 +39027,7 @@ function requireBase$1 () {
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var _utils = requireUtils();
+	var _utils = requireUtils$2();
 
 	var _exception = requireException();
 
@@ -39036,7 +39037,7 @@ function requireBase$1 () {
 
 	var _decorators = requireDecorators();
 
-	var _logger = requireLogger();
+	var _logger = requireLogger$1();
 
 	var _logger2 = _interopRequireDefault(_logger);
 
@@ -39162,7 +39163,7 @@ function requireSafeString () {
 	return safeString.exports;
 }
 
-var runtime = {};
+var runtime$1 = {};
 
 var wrapHelper = {};
 
@@ -39192,19 +39193,19 @@ function requireWrapHelper () {
 	return wrapHelper;
 }
 
-var hasRequiredRuntime;
+var hasRequiredRuntime$1;
 
-function requireRuntime () {
-	if (hasRequiredRuntime) return runtime;
-	hasRequiredRuntime = 1;
+function requireRuntime$1 () {
+	if (hasRequiredRuntime$1) return runtime$1;
+	hasRequiredRuntime$1 = 1;
 
-	runtime.__esModule = true;
-	runtime.checkRevision = checkRevision;
-	runtime.template = template;
-	runtime.wrapProgram = wrapProgram;
-	runtime.resolvePartial = resolvePartial;
-	runtime.invokePartial = invokePartial;
-	runtime.noop = noop;
+	runtime$1.__esModule = true;
+	runtime$1.checkRevision = checkRevision;
+	runtime$1.template = template;
+	runtime$1.wrapProgram = wrapProgram;
+	runtime$1.resolvePartial = resolvePartial;
+	runtime$1.invokePartial = invokePartial;
+	runtime$1.noop = noop;
 	// istanbul ignore next
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
@@ -39213,7 +39214,7 @@ function requireRuntime () {
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
 
-	var _utils = requireUtils();
+	var _utils = requireUtils$2();
 
 	var Utils = _interopRequireWildcard(_utils);
 
@@ -39568,7 +39569,7 @@ function requireRuntime () {
 	  });
 	}
 	
-	return runtime;
+	return runtime$1;
 }
 
 var noConflict = {exports: {}};
@@ -39644,11 +39645,11 @@ function requireHandlebars_runtime () {
 
 		var _handlebarsException2 = _interopRequireDefault(_handlebarsException);
 
-		var _handlebarsUtils = requireUtils();
+		var _handlebarsUtils = requireUtils$2();
 
 		var Utils = _interopRequireWildcard(_handlebarsUtils);
 
-		var _handlebarsRuntime = requireRuntime();
+		var _handlebarsRuntime = requireRuntime$1();
 
 		var runtime = _interopRequireWildcard(_handlebarsRuntime);
 
@@ -41063,7 +41064,7 @@ function requireBase () {
 
 	var Helpers = _interopRequireWildcard(_helpers);
 
-	var _utils = requireUtils();
+	var _utils = requireUtils$2();
 
 	base.parser = _parser2['default'];
 
@@ -41120,7 +41121,7 @@ function requireCompiler () {
 
 	var _exception2 = _interopRequireDefault(_exception);
 
-	var _utils = requireUtils();
+	var _utils = requireUtils$2();
 
 	var _ast = requireAst();
 
@@ -44924,7 +44925,7 @@ function requireCodeGen () {
 
 		exports.__esModule = true;
 
-		var _utils = requireUtils();
+		var _utils = requireUtils$2();
 
 		var SourceNode = undefined;
 
@@ -45109,7 +45110,7 @@ function requireJavascriptCompiler () {
 
 		var _exception2 = _interopRequireDefault(_exception);
 
-		var _utils = requireUtils();
+		var _utils = requireUtils$2();
 
 		var _codeGen = requireCodeGen();
 
@@ -46640,6 +46641,3653 @@ function extractDiffFromLlmResponse(response) {
     return diff ? diff[1] : '';
 }
 
+var dist$1 = {};
+
+var client$1 = {};
+
+var dist = {};
+
+var client = {};
+
+var config$1 = {};
+
+var logger = {};
+
+var hasRequiredLogger;
+
+function requireLogger () {
+	if (hasRequiredLogger) return logger;
+	hasRequiredLogger = 1;
+	Object.defineProperty(logger, "__esModule", { value: true });
+	logger.ClickHouseLogLevel = logger.LogWriter = logger.DefaultLogger = void 0;
+	class DefaultLogger {
+	    trace({ module, message, args }) {
+	        const params = [
+	            formatMessage({ module, message, level: 'TRACE' }),
+	        ];
+	        if (args) {
+	            params.push('\nArguments:', args);
+	        }
+	        console.debug(...params);
+	    }
+	    debug({ module, message, args }) {
+	        const params = [
+	            formatMessage({ module, message, level: 'DEBUG' }),
+	        ];
+	        if (args) {
+	            params.push('\nArguments:', args);
+	        }
+	        console.debug(...params);
+	    }
+	    info({ module, message, args }) {
+	        const params = [
+	            formatMessage({ module, message, level: 'INFO' }),
+	        ];
+	        if (args) {
+	            params.push('\nArguments:', args);
+	        }
+	        console.info(...params);
+	    }
+	    warn({ module, message, args, err }) {
+	        const params = [
+	            formatMessage({ module, message, level: 'WARN' }),
+	        ];
+	        if (args) {
+	            params.push('\nArguments:', args);
+	        }
+	        if (err) {
+	            params.push('\nCaused by:', err);
+	        }
+	        console.warn(...params);
+	    }
+	    error({ module, message, args, err }) {
+	        const params = [
+	            formatMessage({ module, message, level: 'ERROR' }),
+	        ];
+	        if (args) {
+	            params.push('\nArguments:', args);
+	        }
+	        params.push('\nCaused by:', err);
+	        console.error(...params);
+	    }
+	}
+	logger.DefaultLogger = DefaultLogger;
+	class LogWriter {
+	    constructor(logger, module, logLevel) {
+	        Object.defineProperty(this, "logger", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: logger
+	        });
+	        Object.defineProperty(this, "module", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: module
+	        });
+	        Object.defineProperty(this, "logLevel", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        this.logLevel = logLevel ?? ClickHouseLogLevel.OFF;
+	        this.info({
+	            message: `Log level is set to ${ClickHouseLogLevel[this.logLevel]}`,
+	        });
+	    }
+	    trace(params) {
+	        if (this.logLevel <= ClickHouseLogLevel.TRACE) {
+	            this.logger.trace({
+	                ...params,
+	                module: params.module ?? this.module,
+	            });
+	        }
+	    }
+	    debug(params) {
+	        if (this.logLevel <= ClickHouseLogLevel.DEBUG) {
+	            this.logger.debug({
+	                ...params,
+	                module: params.module ?? this.module,
+	            });
+	        }
+	    }
+	    info(params) {
+	        if (this.logLevel <= ClickHouseLogLevel.INFO) {
+	            this.logger.info({
+	                ...params,
+	                module: params.module ?? this.module,
+	            });
+	        }
+	    }
+	    warn(params) {
+	        if (this.logLevel <= ClickHouseLogLevel.WARN) {
+	            this.logger.warn({
+	                ...params,
+	                module: params.module ?? this.module,
+	            });
+	        }
+	    }
+	    error(params) {
+	        if (this.logLevel <= ClickHouseLogLevel.ERROR) {
+	            this.logger.error({
+	                ...params,
+	                module: params.module ?? this.module,
+	            });
+	        }
+	    }
+	}
+	logger.LogWriter = LogWriter;
+	var ClickHouseLogLevel;
+	(function (ClickHouseLogLevel) {
+	    ClickHouseLogLevel[ClickHouseLogLevel["TRACE"] = 0] = "TRACE";
+	    ClickHouseLogLevel[ClickHouseLogLevel["DEBUG"] = 1] = "DEBUG";
+	    ClickHouseLogLevel[ClickHouseLogLevel["INFO"] = 2] = "INFO";
+	    ClickHouseLogLevel[ClickHouseLogLevel["WARN"] = 3] = "WARN";
+	    ClickHouseLogLevel[ClickHouseLogLevel["ERROR"] = 4] = "ERROR";
+	    ClickHouseLogLevel[ClickHouseLogLevel["OFF"] = 127] = "OFF";
+	})(ClickHouseLogLevel || (logger.ClickHouseLogLevel = ClickHouseLogLevel = {}));
+	function formatMessage({ level, module, message, }) {
+	    const ts = new Date().toISOString();
+	    return `[${ts}][${level}][@clickhouse/client][${module}] ${message}`;
+	}
+	
+	return logger;
+}
+
+var hasRequiredConfig$1;
+
+function requireConfig$1 () {
+	if (hasRequiredConfig$1) return config$1;
+	hasRequiredConfig$1 = 1;
+	Object.defineProperty(config$1, "__esModule", { value: true });
+	config$1.prepareConfigWithURL = prepareConfigWithURL;
+	config$1.getConnectionParams = getConnectionParams;
+	config$1.mergeConfigs = mergeConfigs;
+	config$1.createUrl = createUrl;
+	config$1.loadConfigOptionsFromURL = loadConfigOptionsFromURL;
+	config$1.booleanConfigURLValue = booleanConfigURLValue;
+	config$1.numberConfigURLValue = numberConfigURLValue;
+	config$1.enumConfigURLValue = enumConfigURLValue;
+	const logger_1 = requireLogger();
+	/**
+	 * Validates and normalizes the provided "base" config.
+	 * Warns about deprecated configuration parameters usage.
+	 * Parses the common URL parameters into the configuration parameters (these are the same for all implementations).
+	 * Parses implementation-specific URL parameters using the handler provided by that implementation.
+	 * Merges these parameters with the base config and implementation-specific defaults.
+	 * Enforces certain defaults in case of deprecated keys or readonly mode.
+	 */
+	function prepareConfigWithURL(baseConfigOptions, logger, handleImplURLParams) {
+	    const baseConfig = { ...baseConfigOptions };
+	    if (baseConfig.additional_headers !== undefined) {
+	        logger.warn({
+	            module: 'Config',
+	            message: '"additional_headers" is deprecated. Use "http_headers" instead.',
+	        });
+	        baseConfig.http_headers = baseConfig.additional_headers;
+	        delete baseConfig.additional_headers;
+	    }
+	    let configURL;
+	    if (baseConfig.host !== undefined) {
+	        logger.warn({
+	            module: 'Config',
+	            message: '"host" is deprecated. Use "url" instead.',
+	        });
+	        configURL = createUrl(baseConfig.host);
+	        delete baseConfig.host;
+	    }
+	    else {
+	        configURL = createUrl(baseConfig.url);
+	    }
+	    const [url, configFromURL] = loadConfigOptionsFromURL(configURL, handleImplURLParams);
+	    const config = mergeConfigs(baseConfig, configFromURL, logger);
+	    if (config.pathname !== undefined) {
+	        url.pathname = config.pathname;
+	    }
+	    config.url = url;
+	    return config;
+	}
+	function getConnectionParams(config, logger) {
+	    let auth;
+	    if (config.access_token !== undefined) {
+	        if (config.username !== undefined || config.password !== undefined) {
+	            throw new Error('Both access token and username/password are provided in the configuration. Please use only one authentication method.');
+	        }
+	        auth = { access_token: config.access_token, type: 'JWT' };
+	    }
+	    else {
+	        auth = {
+	            username: config.username ?? 'default',
+	            password: config.password ?? '',
+	            type: 'Credentials',
+	        };
+	    }
+	    return {
+	        auth,
+	        url: config.url,
+	        application_id: config.application,
+	        request_timeout: config.request_timeout ?? 30000,
+	        max_open_connections: config.max_open_connections ?? 10,
+	        compression: {
+	            decompress_response: config.compression?.response ?? false,
+	            compress_request: config.compression?.request ?? false,
+	        },
+	        database: config.database ?? 'default',
+	        log_writer: new logger_1.LogWriter(logger, 'Connection', config.log?.level),
+	        keep_alive: { enabled: config.keep_alive?.enabled ?? true },
+	        clickhouse_settings: config.clickhouse_settings ?? {},
+	        http_headers: config.http_headers ?? {},
+	    };
+	}
+	/**
+	 * Merge two versions of the config: base (hardcoded) from the instance creation and the URL parsed one.
+	 * URL config takes priority and overrides the base config parameters.
+	 * If a value is overridden, then a warning will be logged (even if the log level is OFF).
+	 */
+	function mergeConfigs(baseConfig, configFromURL, logger) {
+	    function deepMerge(base, fromURL, path = []) {
+	        for (const key of Object.keys(fromURL)) {
+	            if (typeof fromURL[key] === 'object') {
+	                deepMerge(base, fromURL[key], path.concat(key));
+	            }
+	            else {
+	                let baseAtPath = base;
+	                for (const key of path) {
+	                    if (baseAtPath[key] === undefined) {
+	                        baseAtPath[key] = {};
+	                    }
+	                    baseAtPath = baseAtPath[key];
+	                }
+	                const baseAtKey = baseAtPath[key];
+	                if (baseAtKey !== undefined) {
+	                    const fullPath = path.concat(key).join('.');
+	                    logger.warn({
+	                        module: 'Config',
+	                        message: `"${fullPath}" is overridden by a URL parameter.`,
+	                    });
+	                }
+	                baseAtPath[key] = fromURL[key];
+	            }
+	        }
+	    }
+	    const config = { ...baseConfig };
+	    deepMerge(config, configFromURL);
+	    return config;
+	}
+	function createUrl(configURL) {
+	    let url;
+	    try {
+	        if (typeof configURL === 'string' || configURL instanceof URL) {
+	            url = new URL(configURL);
+	        }
+	        else {
+	            return new URL('http://localhost:8123');
+	        }
+	    }
+	    catch (err) {
+	        throw new Error('ClickHouse URL is malformed. Expected format: http[s]://[username:password@]hostname:port[/database][?param1=value1&param2=value2]', { cause: err });
+	    }
+	    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+	        throw new Error(`ClickHouse URL protocol must be either http or https. Got: ${url.protocol}`);
+	    }
+	    return url;
+	}
+	/**
+	 * @param url potentially contains auth, database and URL params to parse the configuration from
+	 * @param handleExtraURLParams some platform-specific URL params might be unknown by the common package;
+	 * use this function defined in the implementation to handle them. Logs warnings in case of hardcode overrides.
+	 */
+	function loadConfigOptionsFromURL(url, handleExtraURLParams) {
+	    let config = {};
+	    // trim is not needed, cause space is not allowed in the URL basic auth and should be encoded as %20
+	    if (url.username !== '') {
+	        config.username = decodeURIComponent(url.username);
+	    }
+	    if (url.password !== '') {
+	        config.password = decodeURIComponent(url.password);
+	    }
+	    if (url.pathname.trim().length > 1) {
+	        config.database = url.pathname.slice(1);
+	    }
+	    const urlSearchParamsKeys = [...url.searchParams.keys()];
+	    if (urlSearchParamsKeys.length > 0) {
+	        const unknownParams = new Set();
+	        const settingPrefix = 'clickhouse_setting_';
+	        const settingShortPrefix = 'ch_';
+	        const httpHeaderPrefix = 'http_header_';
+	        urlSearchParamsKeys.forEach((key) => {
+	            let paramWasProcessed = true;
+	            const value = url.searchParams.get(key);
+	            if (key.startsWith(settingPrefix)) {
+	                // clickhouse_settings_*
+	                const settingKey = key.slice(settingPrefix.length);
+	                if (config.clickhouse_settings === undefined) {
+	                    config.clickhouse_settings = {};
+	                }
+	                config.clickhouse_settings[settingKey] = value;
+	            }
+	            else if (key.startsWith(settingShortPrefix)) {
+	                // ch_*
+	                const settingKey = key.slice(settingShortPrefix.length);
+	                if (config.clickhouse_settings === undefined) {
+	                    config.clickhouse_settings = {};
+	                }
+	                config.clickhouse_settings[settingKey] = value;
+	            }
+	            else if (key.startsWith(httpHeaderPrefix)) {
+	                // http_headers_*
+	                const headerKey = key.slice(httpHeaderPrefix.length);
+	                if (config.http_headers === undefined) {
+	                    config.http_headers = {};
+	                }
+	                config.http_headers[headerKey] = value;
+	            }
+	            else {
+	                // static known parameters
+	                switch (key) {
+	                    case 'application':
+	                        config.application = value;
+	                        break;
+	                    case 'pathname':
+	                        config.pathname = value;
+	                        break;
+	                    case 'session_id':
+	                        config.session_id = value;
+	                        break;
+	                    case 'request_timeout':
+	                        config.request_timeout = numberConfigURLValue({
+	                            key,
+	                            value,
+	                            min: 0,
+	                        });
+	                        break;
+	                    case 'max_open_connections':
+	                        config.max_open_connections = numberConfigURLValue({
+	                            key,
+	                            value,
+	                            min: 1,
+	                        });
+	                        break;
+	                    case 'compression_request':
+	                        if (config.compression === undefined) {
+	                            config.compression = {};
+	                        }
+	                        config.compression.request = booleanConfigURLValue({ key, value });
+	                        break;
+	                    case 'compression_response':
+	                        if (config.compression === undefined) {
+	                            config.compression = {};
+	                        }
+	                        config.compression.response = booleanConfigURLValue({
+	                            key,
+	                            value,
+	                        });
+	                        break;
+	                    case 'log_level':
+	                        if (config.log === undefined) {
+	                            config.log = {};
+	                        }
+	                        config.log.level = enumConfigURLValue({
+	                            key,
+	                            value,
+	                            enumObject: logger_1.ClickHouseLogLevel,
+	                        });
+	                        break;
+	                    case 'keep_alive_enabled':
+	                        if (config.keep_alive === undefined) {
+	                            config.keep_alive = {};
+	                        }
+	                        config.keep_alive.enabled = booleanConfigURLValue({ key, value });
+	                        break;
+	                    case 'access_token':
+	                        config.access_token = value;
+	                        break;
+	                    default:
+	                        paramWasProcessed = false;
+	                        unknownParams.add(key);
+	                        break;
+	                }
+	            }
+	            if (paramWasProcessed) {
+	                // so it won't be passed to the impl URL params handler
+	                url.searchParams.delete(key);
+	            }
+	        });
+	        if (handleExtraURLParams !== null) {
+	            const res = handleExtraURLParams(config, url);
+	            config = res.config;
+	            if (unknownParams.size > 0) {
+	                res.handled_params.forEach((k) => unknownParams.delete(k));
+	            }
+	            if (res.unknown_params.size > 0) {
+	                res.unknown_params.forEach((k) => unknownParams.add(k));
+	            }
+	        }
+	        if (unknownParams.size > 0) {
+	            throw new Error(`Unknown URL parameters: ${Array.from(unknownParams).join(', ')}`);
+	        }
+	    }
+	    // clean up the final ClickHouse URL to be used in the connection
+	    const clickHouseURL = new URL(`${url.protocol}//${url.host}`);
+	    return [clickHouseURL, config];
+	}
+	function booleanConfigURLValue({ key, value, }) {
+	    const trimmed = value.trim();
+	    if (trimmed === 'true' || trimmed === '1')
+	        return true;
+	    if (trimmed === 'false' || trimmed === '0')
+	        return false;
+	    throw new Error(`"${key}" has invalid boolean value: ${trimmed}. Expected one of: 0, 1, true, false.`);
+	}
+	function numberConfigURLValue({ key, value, min, max, }) {
+	    const trimmed = value.trim();
+	    const number = Number(trimmed);
+	    if (isNaN(number))
+	        throw new Error(`"${key}" has invalid numeric value: ${trimmed}`);
+	    if (min !== undefined && number < min) {
+	        throw new Error(`"${key}" value ${trimmed} is less than min allowed ${min}`);
+	    }
+	    if (max !== undefined && number > max) {
+	        throw new Error(`"${key}" value ${trimmed} is greater than max allowed ${max}`);
+	    }
+	    return number;
+	}
+	function enumConfigURLValue({ key, value, enumObject, }) {
+	    const values = Object.keys(enumObject).filter((item) => isNaN(Number(item)));
+	    const trimmed = value.trim();
+	    if (!values.includes(trimmed)) {
+	        const expected = values.join(', ');
+	        throw new Error(`"${key}" has invalid value: ${trimmed}. Expected one of: ${expected}.`);
+	    }
+	    return enumObject[trimmed];
+	}
+	
+	return config$1;
+}
+
+var hasRequiredClient$1;
+
+function requireClient$1 () {
+	if (hasRequiredClient$1) return client;
+	hasRequiredClient$1 = 1;
+	Object.defineProperty(client, "__esModule", { value: true });
+	client.ClickHouseClient = void 0;
+	const client_common_1 = requireDist$1();
+	const config_1 = requireConfig$1();
+	class ClickHouseClient {
+	    constructor(config) {
+	        Object.defineProperty(this, "clientClickHouseSettings", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "connectionParams", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "connection", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "makeResultSet", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "valuesEncoder", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "sessionId", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "role", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "logWriter", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        const logger = config?.log?.LoggerClass
+	            ? new config.log.LoggerClass()
+	            : new client_common_1.DefaultLogger();
+	        const configWithURL = (0, config_1.prepareConfigWithURL)(config, logger, config.impl.handle_specific_url_params ?? null);
+	        this.connectionParams = (0, config_1.getConnectionParams)(configWithURL, logger);
+	        this.logWriter = this.connectionParams.log_writer;
+	        this.clientClickHouseSettings = this.connectionParams.clickhouse_settings;
+	        this.sessionId = config.session_id;
+	        this.role = config.role;
+	        this.connection = config.impl.make_connection(configWithURL, this.connectionParams);
+	        this.makeResultSet = config.impl.make_result_set;
+	        this.valuesEncoder = config.impl.values_encoder;
+	    }
+	    /**
+	     * Used for most statements that can have a response, such as `SELECT`.
+	     * FORMAT clause should be specified separately via {@link QueryParams.format} (default is `JSON`).
+	     * Consider using {@link ClickHouseClient.insert} for data insertion, or {@link ClickHouseClient.command} for DDLs.
+	     * Returns an implementation of {@link BaseResultSet}.
+	     *
+	     * See {@link DataFormat} for the formats supported by the client.
+	     */
+	    async query(params) {
+	        const format = params.format ?? 'JSON';
+	        const query = formatQuery(params.query, format);
+	        const queryParams = this.withClientQueryParams(params);
+	        const { stream, query_id, response_headers } = await this.connection.query({
+	            query,
+	            ...queryParams,
+	        });
+	        return this.makeResultSet(stream, format, query_id, (err) => {
+	            this.logWriter.error({
+	                err,
+	                module: 'Client',
+	                message: 'Error while processing the ResultSet.',
+	                args: {
+	                    session_id: queryParams.session_id,
+	                    role: queryParams.role,
+	                    query,
+	                    query_id,
+	                },
+	            });
+	        }, response_headers);
+	    }
+	    /**
+	     * It should be used for statements that do not have any output,
+	     * when the format clause is not applicable, or when you are not interested in the response at all.
+	     * The response stream is destroyed immediately as we do not expect useful information there.
+	     * Examples of such statements are DDLs or custom inserts.
+	     *
+	     * @note if you have a custom query that does not work with {@link ClickHouseClient.query},
+	     * and you are interested in the response data, consider using {@link ClickHouseClient.exec}.
+	     */
+	    async command(params) {
+	        const query = removeTrailingSemi(params.query.trim());
+	        return await this.connection.command({
+	            query,
+	            ...this.withClientQueryParams(params),
+	        });
+	    }
+	    /**
+	     * Similar to {@link ClickHouseClient.command}, but for the cases where the output _is expected_,
+	     * but format clause is not applicable. The caller of this method _must_ consume the stream,
+	     * as the underlying socket will not be released until then, and the request will eventually be timed out.
+	     *
+	     * @note it is not intended to use this method to execute the DDLs, such as `CREATE TABLE` or similar;
+	     * use {@link ClickHouseClient.command} instead.
+	     */
+	    async exec(params) {
+	        const query = removeTrailingSemi(params.query.trim());
+	        const values = 'values' in params ? params.values : undefined;
+	        const decompress_response_stream = params.decompress_response_stream ?? true;
+	        return await this.connection.exec({
+	            query,
+	            values,
+	            decompress_response_stream,
+	            ...this.withClientQueryParams(params),
+	        });
+	    }
+	    /**
+	     * The primary method for data insertion. It is recommended to avoid arrays in case of large inserts
+	     * to reduce application memory consumption and consider streaming for most of such use cases.
+	     * As the insert operation does not provide any output, the response stream is immediately destroyed.
+	     *
+	     * @note in case of a custom insert operation (e.g., `INSERT FROM SELECT`),
+	     * consider using {@link ClickHouseClient.command}, passing the entire raw query there
+	     * (including the `FORMAT` clause).
+	     */
+	    async insert(params) {
+	        if (Array.isArray(params.values) && params.values.length === 0) {
+	            return { executed: false, query_id: '', response_headers: {} };
+	        }
+	        const format = params.format || 'JSONCompactEachRow';
+	        this.valuesEncoder.validateInsertValues(params.values, format);
+	        const query = getInsertQuery(params, format);
+	        const result = await this.connection.insert({
+	            query,
+	            values: this.valuesEncoder.encodeValues(params.values, format),
+	            ...this.withClientQueryParams(params),
+	        });
+	        return { ...result, executed: true };
+	    }
+	    /**
+	     * A health-check request. It does not throw if an error occurs - the error is returned inside the result object.
+	     *
+	     * By default, Node.js version uses the built-in `/ping` endpoint, which does not verify credentials.
+	     * Optionally, it can be switched to a `SELECT` query (see {@link PingParamsWithSelectQuery}).
+	     * In that case, the server will verify the credentials.
+	     *
+	     * **NOTE**: Since the `/ping` endpoint does not support CORS, the Web version always uses a `SELECT` query.
+	     */
+	    async ping(params) {
+	        return await this.connection.ping(params ?? { select: false });
+	    }
+	    /**
+	     * Shuts down the underlying connection.
+	     * This method should ideally be called only once per application lifecycle,
+	     * for example, during the graceful shutdown phase.
+	     */
+	    async close() {
+	        return await this.connection.close();
+	    }
+	    withClientQueryParams(params) {
+	        return {
+	            clickhouse_settings: {
+	                ...this.clientClickHouseSettings,
+	                ...params.clickhouse_settings,
+	            },
+	            query_params: params.query_params,
+	            abort_signal: params.abort_signal,
+	            query_id: params.query_id,
+	            session_id: params.session_id ?? this.sessionId,
+	            role: params.role ?? this.role,
+	            auth: params.auth,
+	            http_headers: params.http_headers,
+	        };
+	    }
+	}
+	client.ClickHouseClient = ClickHouseClient;
+	function formatQuery(query, format) {
+	    query = query.trim();
+	    query = removeTrailingSemi(query);
+	    return query + ' \nFORMAT ' + format;
+	}
+	function removeTrailingSemi(query) {
+	    let lastNonSemiIdx = query.length;
+	    for (let i = lastNonSemiIdx; i > 0; i--) {
+	        if (query[i - 1] !== ';') {
+	            lastNonSemiIdx = i;
+	            break;
+	        }
+	    }
+	    if (lastNonSemiIdx !== query.length) {
+	        return query.slice(0, lastNonSemiIdx);
+	    }
+	    return query;
+	}
+	function isInsertColumnsExcept(obj) {
+	    return (obj !== undefined &&
+	        obj !== null &&
+	        typeof obj === 'object' &&
+	        // Avoiding ESLint no-prototype-builtins error
+	        Object.prototype.hasOwnProperty.call(obj, 'except'));
+	}
+	function getInsertQuery(params, format) {
+	    let columnsPart = '';
+	    if (params.columns !== undefined) {
+	        if (Array.isArray(params.columns) && params.columns.length > 0) {
+	            columnsPart = ` (${params.columns.join(', ')})`;
+	        }
+	        else if (isInsertColumnsExcept(params.columns) &&
+	            params.columns.except.length > 0) {
+	            columnsPart = ` (* EXCEPT (${params.columns.except.join(', ')}))`;
+	        }
+	    }
+	    return `INSERT INTO ${params.table.trim()}${columnsPart} FORMAT ${format}`;
+	}
+	
+	return client;
+}
+
+var data_formatter = {};
+
+var formatter = {};
+
+var hasRequiredFormatter;
+
+function requireFormatter () {
+	if (hasRequiredFormatter) return formatter;
+	hasRequiredFormatter = 1;
+	(function (exports) {
+		Object.defineProperty(exports, "__esModule", { value: true });
+		exports.StreamableFormats = exports.SupportedRawFormats = exports.SupportedJSONFormats = exports.SingleDocumentJSONFormats = exports.RecordsJSONFormats = exports.StreamableJSONFormats = void 0;
+		exports.isNotStreamableJSONFamily = isNotStreamableJSONFamily;
+		exports.isStreamableJSONFamily = isStreamableJSONFamily;
+		exports.isSupportedRawFormat = isSupportedRawFormat;
+		exports.validateStreamFormat = validateStreamFormat;
+		exports.encodeJSON = encodeJSON;
+		exports.StreamableJSONFormats = [
+		    'JSONEachRow',
+		    'JSONStringsEachRow',
+		    'JSONCompactEachRow',
+		    'JSONCompactStringsEachRow',
+		    'JSONCompactEachRowWithNames',
+		    'JSONCompactEachRowWithNamesAndTypes',
+		    'JSONCompactStringsEachRowWithNames',
+		    'JSONCompactStringsEachRowWithNamesAndTypes',
+		    'JSONEachRowWithProgress',
+		];
+		exports.RecordsJSONFormats = ['JSONObjectEachRow'];
+		exports.SingleDocumentJSONFormats = [
+		    'JSON',
+		    'JSONStrings',
+		    'JSONCompact',
+		    'JSONCompactStrings',
+		    'JSONColumnsWithMetadata',
+		];
+		exports.SupportedJSONFormats = [
+		    ...exports.RecordsJSONFormats,
+		    ...exports.SingleDocumentJSONFormats,
+		    ...exports.StreamableJSONFormats,
+		];
+		exports.SupportedRawFormats = [
+		    'CSV',
+		    'CSVWithNames',
+		    'CSVWithNamesAndTypes',
+		    'TabSeparated',
+		    'TabSeparatedRaw',
+		    'TabSeparatedWithNames',
+		    'TabSeparatedWithNamesAndTypes',
+		    'CustomSeparated',
+		    'CustomSeparatedWithNames',
+		    'CustomSeparatedWithNamesAndTypes',
+		    'Parquet',
+		];
+		exports.StreamableFormats = [
+		    ...exports.StreamableJSONFormats,
+		    ...exports.SupportedRawFormats,
+		];
+		function isNotStreamableJSONFamily(format) {
+		    return (exports.SingleDocumentJSONFormats.includes(format) ||
+		        exports.RecordsJSONFormats.includes(format));
+		}
+		function isStreamableJSONFamily(format) {
+		    return exports.StreamableJSONFormats.includes(format);
+		}
+		function isSupportedRawFormat(dataFormat) {
+		    return exports.SupportedRawFormats.includes(dataFormat);
+		}
+		function validateStreamFormat(format) {
+		    if (!exports.StreamableFormats.includes(format)) {
+		        throw new Error(`${format} format is not streamable. Streamable formats: ${exports.StreamableFormats.join(',')}`);
+		    }
+		    return true;
+		}
+		/**
+		 * Encodes a single row of values into a string in a JSON format acceptable by ClickHouse.
+		 * @param value a single value to encode.
+		 * @param format One of the supported JSON formats: https://clickhouse.com/docs/en/interfaces/formats/
+		 * @returns string
+		 */
+		function encodeJSON(value, format) {
+		    if (exports.SupportedJSONFormats.includes(format)) {
+		        return JSON.stringify(value) + '\n';
+		    }
+		    throw new Error(`The client does not support JSON encoding in [${format}] format.`);
+		}
+		
+	} (formatter));
+	return formatter;
+}
+
+var format_query_params = {};
+
+var hasRequiredFormat_query_params;
+
+function requireFormat_query_params () {
+	if (hasRequiredFormat_query_params) return format_query_params;
+	hasRequiredFormat_query_params = 1;
+	Object.defineProperty(format_query_params, "__esModule", { value: true });
+	format_query_params.TupleParam = void 0;
+	format_query_params.formatQueryParams = formatQueryParams;
+	class TupleParam {
+	    constructor(values) {
+	        Object.defineProperty(this, "values", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: values
+	        });
+	    }
+	}
+	format_query_params.TupleParam = TupleParam;
+	function formatQueryParams({ value, wrapStringInQuotes, printNullAsKeyword, }) {
+	    if (value === null || value === undefined) {
+	        if (printNullAsKeyword)
+	            return 'NULL';
+	        return '\\N';
+	    }
+	    if (Number.isNaN(value))
+	        return 'nan';
+	    if (value === Number.POSITIVE_INFINITY)
+	        return '+inf';
+	    if (value === Number.NEGATIVE_INFINITY)
+	        return '-inf';
+	    if (typeof value === 'number')
+	        return String(value);
+	    if (typeof value === 'boolean')
+	        return value ? '1' : '0';
+	    if (typeof value === 'string') {
+	        let result = '';
+	        for (let i = 0; i < value.length; i++) {
+	            switch (value.charCodeAt(i)) {
+	                case TabASCII:
+	                    result += '\\t';
+	                    break;
+	                case NewlineASCII:
+	                    result += '\\n';
+	                    break;
+	                case CarriageReturnASCII:
+	                    result += '\\r';
+	                    break;
+	                case SingleQuoteASCII:
+	                    result += `\\'`;
+	                    break;
+	                case BackslashASCII:
+	                    result += '\\\\';
+	                    break;
+	                default:
+	                    result += value[i];
+	            }
+	        }
+	        return wrapStringInQuotes ? `'${result}'` : result;
+	    }
+	    if (Array.isArray(value)) {
+	        return `[${value
+	            .map((v) => formatQueryParams({
+	            value: v,
+	            wrapStringInQuotes: true,
+	            printNullAsKeyword: true,
+	        }))
+	            .join(',')}]`;
+	    }
+	    if (value instanceof Date) {
+	        // The ClickHouse server parses numbers as time-zone-agnostic Unix timestamps
+	        const unixTimestamp = Math.floor(value.getTime() / 1000)
+	            .toString()
+	            .padStart(10, '0');
+	        const milliseconds = value.getUTCMilliseconds();
+	        return milliseconds === 0
+	            ? unixTimestamp
+	            : `${unixTimestamp}.${milliseconds.toString().padStart(3, '0')}`;
+	    }
+	    // (42,'foo',NULL)
+	    if (value instanceof TupleParam) {
+	        return `(${value.values
+	            .map((v) => formatQueryParams({
+	            value: v,
+	            wrapStringInQuotes: true,
+	            printNullAsKeyword: true,
+	        }))
+	            .join(',')})`;
+	    }
+	    if (value instanceof Map) {
+	        return formatObjectLikeParam(value.entries());
+	    }
+	    // This is only useful for simple maps where the keys are strings
+	    if (typeof value === 'object') {
+	        return formatObjectLikeParam(Object.entries(value));
+	    }
+	    throw new Error(`Unsupported value in query parameters: [${value}].`);
+	}
+	// {'key1':'value1',42:'value2'}
+	function formatObjectLikeParam(entries) {
+	    const formatted = [];
+	    for (const [key, val] of entries) {
+	        formatted.push(`${formatQueryParams({
+	            value: key,
+	            wrapStringInQuotes: true,
+	            printNullAsKeyword: true,
+	        })}:${formatQueryParams({
+	            value: val,
+	            wrapStringInQuotes: true,
+	            printNullAsKeyword: true,
+	        })}`);
+	    }
+	    return `{${formatted.join(',')}}`;
+	}
+	const TabASCII = 9;
+	const NewlineASCII = 10;
+	const CarriageReturnASCII = 13;
+	const SingleQuoteASCII = 39;
+	const BackslashASCII = 92;
+	
+	return format_query_params;
+}
+
+var format_query_settings = {};
+
+var settings = {};
+
+var hasRequiredSettings;
+
+function requireSettings () {
+	if (hasRequiredSettings) return settings;
+	hasRequiredSettings = 1;
+	Object.defineProperty(settings, "__esModule", { value: true });
+	settings.SettingsMap = void 0;
+	class SettingsMap {
+	    constructor(record) {
+	        Object.defineProperty(this, "record", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: record
+	        });
+	    }
+	    toString() {
+	        return `{${Object.entries(this.record)
+	            .map(([k, v]) => `'${k}':'${v}'`)
+	            .join(',')}}`;
+	    }
+	    static from(record) {
+	        return new this(record);
+	    }
+	}
+	settings.SettingsMap = SettingsMap;
+	
+	return settings;
+}
+
+var hasRequiredFormat_query_settings;
+
+function requireFormat_query_settings () {
+	if (hasRequiredFormat_query_settings) return format_query_settings;
+	hasRequiredFormat_query_settings = 1;
+	Object.defineProperty(format_query_settings, "__esModule", { value: true });
+	format_query_settings.formatQuerySettings = formatQuerySettings;
+	const settings_1 = requireSettings();
+	function formatQuerySettings(value) {
+	    if (typeof value === 'boolean')
+	        return value ? '1' : '0';
+	    if (typeof value === 'number')
+	        return String(value);
+	    if (typeof value === 'string')
+	        return value;
+	    // ClickHouse requires a specific, non-JSON format for passing maps
+	    // as a setting value - single quotes instead of double
+	    // Example: {'system.numbers':'number != 3'}
+	    if (value instanceof settings_1.SettingsMap) {
+	        return value.toString();
+	    }
+	    throw new Error(`Unsupported value in query settings: [${value}].`);
+	}
+	
+	return format_query_settings;
+}
+
+var hasRequiredData_formatter;
+
+function requireData_formatter () {
+	if (hasRequiredData_formatter) return data_formatter;
+	hasRequiredData_formatter = 1;
+	(function (exports) {
+		var __createBinding = (data_formatter && data_formatter.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    var desc = Object.getOwnPropertyDescriptor(m, k);
+		    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+		      desc = { enumerable: true, get: function() { return m[k]; } };
+		    }
+		    Object.defineProperty(o, k2, desc);
+		}) : (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    o[k2] = m[k];
+		}));
+		var __exportStar = (data_formatter && data_formatter.__exportStar) || function(m, exports) {
+		    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+		};
+		Object.defineProperty(exports, "__esModule", { value: true });
+		exports.formatQuerySettings = exports.formatQueryParams = exports.TupleParam = void 0;
+		__exportStar(requireFormatter(), exports);
+		var format_query_params_1 = requireFormat_query_params();
+		Object.defineProperty(exports, "TupleParam", { enumerable: true, get: function () { return format_query_params_1.TupleParam; } });
+		Object.defineProperty(exports, "formatQueryParams", { enumerable: true, get: function () { return format_query_params_1.formatQueryParams; } });
+		var format_query_settings_1 = requireFormat_query_settings();
+		Object.defineProperty(exports, "formatQuerySettings", { enumerable: true, get: function () { return format_query_settings_1.formatQuerySettings; } });
+		
+	} (data_formatter));
+	return data_formatter;
+}
+
+var error$1 = {};
+
+var error = {};
+
+var hasRequiredError$1;
+
+function requireError$1 () {
+	if (hasRequiredError$1) return error;
+	hasRequiredError$1 = 1;
+	Object.defineProperty(error, "__esModule", { value: true });
+	error.ClickHouseError = void 0;
+	error.parseError = parseError;
+	error.getCurrentStackTrace = getCurrentStackTrace;
+	error.enhanceStackTrace = enhanceStackTrace;
+	const errorRe = /(Code|Error): (?<code>\d+).*Exception: (?<message>.+)\((?<type>(?=.+[A-Z]{3})[A-Z0-9_]+?)\)/s;
+	/** An error that is thrown by the ClickHouse server. */
+	class ClickHouseError extends Error {
+	    constructor({ message, code, type }) {
+	        super(message);
+	        Object.defineProperty(this, "code", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "type", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        this.code = code;
+	        this.type = type;
+	        // Set the prototype explicitly, see:
+	        // https://github.com/Microsoft/TypeScript/wiki/Breaking-Changes#extending-built-ins-like-error-array-and-map-may-no-longer-work
+	        Object.setPrototypeOf(this, ClickHouseError.prototype);
+	    }
+	}
+	error.ClickHouseError = ClickHouseError;
+	function parseError(input) {
+	    const inputIsError = input instanceof Error;
+	    const message = inputIsError ? input.message : input;
+	    const match = message.match(errorRe);
+	    const groups = match?.groups;
+	    if (groups) {
+	        return new ClickHouseError(groups);
+	    }
+	    else {
+	        return inputIsError ? input : new Error(input);
+	    }
+	}
+	/** Captures the current stack trace from the sync context before going async.
+	 *  It is necessary since the majority of the stack trace is lost when an async callback is called. */
+	function getCurrentStackTrace() {
+	    const stack = new Error().stack;
+	    if (!stack)
+	        return '';
+	    // Skip the first three lines of the stack trace, containing useless information
+	    // - Text `Error`
+	    // - Info about this function call
+	    // - Info about the originator of this function call, e.g., `request`
+	    // Additionally, the original stack trace is, in fact, reversed.
+	    return stack.split('\n').slice(3).reverse().join('\n');
+	}
+	/** Having the stack trace produced by the {@link getCurrentStackTrace} function,
+	 *  add it to an arbitrary error stack trace. No-op if there is no additional stack trace to add.
+	 *  It could happen if this feature was disabled due to its performance overhead. */
+	function enhanceStackTrace(err, stackTrace) {
+	    if (err.stack && stackTrace) {
+	        const firstNewlineIndex = err.stack.indexOf('\n');
+	        const firstLine = err.stack.substring(0, firstNewlineIndex);
+	        const errStack = err.stack.substring(firstNewlineIndex + 1);
+	        err.stack = `${firstLine}\n${stackTrace}\n${errStack}`;
+	    }
+	    return err;
+	}
+	
+	return error;
+}
+
+var hasRequiredError;
+
+function requireError () {
+	if (hasRequiredError) return error$1;
+	hasRequiredError = 1;
+	(function (exports) {
+		var __createBinding = (error$1 && error$1.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    var desc = Object.getOwnPropertyDescriptor(m, k);
+		    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+		      desc = { enumerable: true, get: function() { return m[k]; } };
+		    }
+		    Object.defineProperty(o, k2, desc);
+		}) : (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    o[k2] = m[k];
+		}));
+		var __exportStar = (error$1 && error$1.__exportStar) || function(m, exports) {
+		    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+		};
+		Object.defineProperty(exports, "__esModule", { value: true });
+		__exportStar(requireError$1(), exports);
+		
+	} (error$1));
+	return error$1;
+}
+
+var clickhouse_types = {};
+
+var hasRequiredClickhouse_types;
+
+function requireClickhouse_types () {
+	if (hasRequiredClickhouse_types) return clickhouse_types;
+	hasRequiredClickhouse_types = 1;
+	Object.defineProperty(clickhouse_types, "__esModule", { value: true });
+	clickhouse_types.isProgressRow = isProgressRow;
+	clickhouse_types.isRow = isRow;
+	clickhouse_types.isException = isException;
+	/** Type guard to use with `JSONEachRowWithProgress`, checking if the emitted row is a progress row.
+	 *  @see https://clickhouse.com/docs/en/interfaces/formats#jsoneachrowwithprogress */
+	function isProgressRow(row) {
+	    return (row !== null &&
+	        typeof row === 'object' &&
+	        'progress' in row &&
+	        Object.keys(row).length === 1);
+	}
+	/** Type guard to use with `JSONEachRowWithProgress`, checking if the emitted row is a row with data.
+	 *  @see https://clickhouse.com/docs/en/interfaces/formats#jsoneachrowwithprogress */
+	function isRow(row) {
+	    return (row !== null &&
+	        typeof row === 'object' &&
+	        'row' in row &&
+	        Object.keys(row).length === 1);
+	}
+	/** Type guard to use with `JSONEachRowWithProgress`, checking if the row contains an exception.
+	 *  @see https://clickhouse.com/docs/en/interfaces/formats#jsoneachrowwithprogress */
+	function isException(row) {
+	    return (row !== null &&
+	        typeof row === 'object' &&
+	        'exception' in row &&
+	        Object.keys(row).length === 1);
+	}
+	
+	return clickhouse_types;
+}
+
+var parse = {};
+
+var column_types = {};
+
+var hasRequiredColumn_types;
+
+function requireColumn_types () {
+	if (hasRequiredColumn_types) return column_types;
+	hasRequiredColumn_types = 1;
+	(function (exports) {
+		Object.defineProperty(exports, "__esModule", { value: true });
+		exports.SimpleColumnTypes = exports.ColumnTypeParseError = void 0;
+		exports.parseColumnType = parseColumnType;
+		exports.parseDecimalType = parseDecimalType;
+		exports.parseEnumType = parseEnumType;
+		exports.parseMapType = parseMapType;
+		exports.parseTupleType = parseTupleType;
+		exports.parseArrayType = parseArrayType;
+		exports.parseDateTimeType = parseDateTimeType;
+		exports.parseDateTime64Type = parseDateTime64Type;
+		exports.parseFixedStringType = parseFixedStringType;
+		exports.asNullableType = asNullableType;
+		exports.getElementsTypes = getElementsTypes;
+		class ColumnTypeParseError extends Error {
+		    constructor(message, args) {
+		        super(message);
+		        Object.defineProperty(this, "args", {
+		            enumerable: true,
+		            configurable: true,
+		            writable: true,
+		            value: void 0
+		        });
+		        this.args = args ?? {};
+		        // Set the prototype explicitly, see:
+		        // https://github.com/Microsoft/TypeScript/wiki/Breaking-Changes#extending-built-ins-like-error-array-and-map-may-no-longer-work
+		        Object.setPrototypeOf(this, ColumnTypeParseError.prototype);
+		    }
+		}
+		exports.ColumnTypeParseError = ColumnTypeParseError;
+		exports.SimpleColumnTypes = [
+		    'Bool',
+		    'UInt8',
+		    'Int8',
+		    'UInt16',
+		    'Int16',
+		    'UInt32',
+		    'Int32',
+		    'UInt64',
+		    'Int64',
+		    'UInt128',
+		    'Int128',
+		    'UInt256',
+		    'Int256',
+		    'Float32',
+		    'Float64',
+		    'String',
+		    'UUID',
+		    'Date',
+		    'Date32',
+		    'IPv4',
+		    'IPv6',
+		];
+		/**
+		 * @experimental - incomplete, unstable API;
+		 * originally intended to be used for RowBinary/Native header parsing internally.
+		 * Currently unsupported source types:
+		 * * Geo
+		 * * (Simple)AggregateFunction
+		 * * Nested
+		 * * Old/new JSON
+		 * * Dynamic
+		 * * Variant
+		 */
+		function parseColumnType(sourceType) {
+		    let columnType = sourceType;
+		    let isNullable = false;
+		    if (columnType.startsWith(LowCardinalityPrefix)) {
+		        columnType = columnType.slice(LowCardinalityPrefix.length, -1);
+		    }
+		    if (columnType.startsWith(NullablePrefix)) {
+		        columnType = columnType.slice(NullablePrefix.length, -1);
+		        isNullable = true;
+		    }
+		    let result;
+		    if (exports.SimpleColumnTypes.includes(columnType)) {
+		        result = {
+		            type: 'Simple',
+		            columnType: columnType,
+		            sourceType,
+		        };
+		    }
+		    else if (columnType.startsWith(DecimalPrefix)) {
+		        result = parseDecimalType({
+		            sourceType,
+		            columnType,
+		        });
+		    }
+		    else if (columnType.startsWith(DateTime64Prefix)) {
+		        result = parseDateTime64Type({ sourceType, columnType });
+		    }
+		    else if (columnType.startsWith(DateTimePrefix)) {
+		        result = parseDateTimeType({ sourceType, columnType });
+		    }
+		    else if (columnType.startsWith(FixedStringPrefix)) {
+		        result = parseFixedStringType({ sourceType, columnType });
+		    }
+		    else if (columnType.startsWith(Enum8Prefix) ||
+		        columnType.startsWith(Enum16Prefix)) {
+		        result = parseEnumType({ sourceType, columnType });
+		    }
+		    else if (columnType.startsWith(ArrayPrefix)) {
+		        result = parseArrayType({ sourceType, columnType });
+		    }
+		    else if (columnType.startsWith(MapPrefix)) {
+		        result = parseMapType({ sourceType, columnType });
+		    }
+		    else if (columnType.startsWith(TuplePrefix)) {
+		        result = parseTupleType({ sourceType, columnType });
+		    }
+		    else {
+		        throw new ColumnTypeParseError('Unsupported column type', { columnType });
+		    }
+		    if (isNullable) {
+		        return asNullableType(result, sourceType);
+		    }
+		    else {
+		        return result;
+		    }
+		}
+		function parseDecimalType({ columnType, sourceType, }) {
+		    if (!columnType.startsWith(DecimalPrefix) ||
+		        columnType.length < DecimalPrefix.length + 5 // Decimal(1, 0) is the shortest valid definition
+		    ) {
+		        throw new ColumnTypeParseError('Invalid Decimal type', {
+		            sourceType,
+		            columnType,
+		        });
+		    }
+		    const split = columnType.slice(DecimalPrefix.length, -1).split(', ');
+		    if (split.length !== 2) {
+		        throw new ColumnTypeParseError('Expected Decimal type to have both precision and scale', {
+		            sourceType,
+		            columnType,
+		            split,
+		        });
+		    }
+		    let intSize = 32;
+		    const precision = parseInt(split[0], 10);
+		    if (Number.isNaN(precision) || precision < 1 || precision > 76) {
+		        throw new ColumnTypeParseError('Invalid Decimal precision', {
+		            columnType,
+		            sourceType,
+		            precision,
+		        });
+		    }
+		    const scale = parseInt(split[1], 10);
+		    if (Number.isNaN(scale) || scale < 0 || scale > precision) {
+		        throw new ColumnTypeParseError('Invalid Decimal scale', {
+		            columnType,
+		            sourceType,
+		            precision,
+		            scale,
+		        });
+		    }
+		    if (precision > 38) {
+		        intSize = 256;
+		    }
+		    else if (precision > 18) {
+		        intSize = 128;
+		    }
+		    else if (precision > 9) {
+		        intSize = 64;
+		    }
+		    return {
+		        type: 'Decimal',
+		        params: {
+		            precision,
+		            scale,
+		            intSize,
+		        },
+		        sourceType,
+		    };
+		}
+		function parseEnumType({ columnType, sourceType, }) {
+		    let intSize;
+		    if (columnType.startsWith(Enum8Prefix)) {
+		        columnType = columnType.slice(Enum8Prefix.length, -1);
+		        intSize = 8;
+		    }
+		    else if (columnType.startsWith(Enum16Prefix)) {
+		        columnType = columnType.slice(Enum16Prefix.length, -1);
+		        intSize = 16;
+		    }
+		    else {
+		        throw new ColumnTypeParseError('Expected Enum to be either Enum8 or Enum16', {
+		            columnType,
+		            sourceType,
+		        });
+		    }
+		    // The minimal allowed Enum definition is Enum8('' = 0), i.e. 6 chars inside.
+		    if (columnType.length < 6) {
+		        throw new ColumnTypeParseError('Invalid Enum type values', {
+		            columnType,
+		            sourceType,
+		        });
+		    }
+		    const names = [];
+		    const indices = [];
+		    let parsingName = true; // false when parsing the index
+		    let charEscaped = false; // we should ignore escaped ticks
+		    let startIndex = 1; // Skip the first '
+		    // Should support the most complicated enums, such as Enum8('f\'' = 1, 'x =' = 2, 'b\'\'\'' = 3, '\'c=4=' = 42, '4' = 100)
+		    for (let i = 1; i < columnType.length; i++) {
+		        if (parsingName) {
+		            if (charEscaped) {
+		                charEscaped = false;
+		            }
+		            else {
+		                if (columnType.charCodeAt(i) === BackslashASCII) {
+		                    charEscaped = true;
+		                }
+		                else if (columnType.charCodeAt(i) === SingleQuoteASCII) {
+		                    // non-escaped closing tick - push the name
+		                    const name = columnType.slice(startIndex, i);
+		                    if (names.includes(name)) {
+		                        throw new ColumnTypeParseError('Duplicate Enum name', {
+		                            columnType,
+		                            sourceType,
+		                            name,
+		                            names,
+		                            indices,
+		                        });
+		                    }
+		                    names.push(name);
+		                    i += 4; // skip ` = ` and the first digit, as it will always have at least one.
+		                    startIndex = i;
+		                    parsingName = false;
+		                }
+		            }
+		        }
+		        // Parsing the index, skipping next iterations until the first non-digit one
+		        else if (columnType.charCodeAt(i) < ZeroASCII ||
+		            columnType.charCodeAt(i) > NineASCII) {
+		            pushEnumIndex(startIndex, i);
+		            // the char at this index should be comma.
+		            i += 2; // skip ` '`, but not the first char - ClickHouse allows something like Enum8('foo' = 0, '' = 42)
+		            startIndex = i + 1;
+		            parsingName = true;
+		            charEscaped = false;
+		        }
+		    }
+		    // Push the last index
+		    pushEnumIndex(startIndex, columnType.length);
+		    if (names.length !== indices.length) {
+		        throw new ColumnTypeParseError('Expected Enum to have the same number of names and indices', { columnType, sourceType, names, indices });
+		    }
+		    const values = {};
+		    for (let i = 0; i < names.length; i++) {
+		        values[indices[i]] = names[i];
+		    }
+		    return {
+		        type: 'Enum',
+		        values,
+		        intSize,
+		        sourceType,
+		    };
+		    function pushEnumIndex(start, end) {
+		        const index = parseInt(columnType.slice(start, end), 10);
+		        if (Number.isNaN(index) || index < 0) {
+		            throw new ColumnTypeParseError('Expected Enum index to be a valid number', {
+		                columnType,
+		                sourceType,
+		                names,
+		                indices,
+		                index,
+		                start,
+		                end,
+		            });
+		        }
+		        if (indices.includes(index)) {
+		            throw new ColumnTypeParseError('Duplicate Enum index', {
+		                columnType,
+		                sourceType,
+		                index,
+		                names,
+		                indices,
+		            });
+		        }
+		        indices.push(index);
+		    }
+		}
+		function parseMapType({ columnType, sourceType, }) {
+		    if (!columnType.startsWith(MapPrefix) ||
+		        columnType.length < MapPrefix.length + 11 // the shortest definition seems to be Map(Int8, Int8)
+		    ) {
+		        throw new ColumnTypeParseError('Invalid Map type', {
+		            columnType,
+		            sourceType,
+		        });
+		    }
+		    columnType = columnType.slice(MapPrefix.length, -1);
+		    const [keyType, valueType] = getElementsTypes({ columnType, sourceType }, 2);
+		    const key = parseColumnType(keyType);
+		    if (key.type === 'DateTime64' ||
+		        key.type === 'Nullable' ||
+		        key.type === 'Array' ||
+		        key.type === 'Map' ||
+		        key.type === 'Decimal' ||
+		        key.type === 'Tuple') {
+		        throw new ColumnTypeParseError('Invalid Map key type', {
+		            key,
+		            sourceType,
+		        });
+		    }
+		    const value = parseColumnType(valueType);
+		    return {
+		        type: 'Map',
+		        key,
+		        value,
+		        sourceType,
+		    };
+		}
+		function parseTupleType({ columnType, sourceType, }) {
+		    if (!columnType.startsWith(TuplePrefix) ||
+		        columnType.length < TuplePrefix.length + 5 // Tuple(Int8) is the shortest valid definition
+		    ) {
+		        throw new ColumnTypeParseError('Invalid Tuple type', {
+		            columnType,
+		            sourceType,
+		        });
+		    }
+		    columnType = columnType.slice(TuplePrefix.length, -1);
+		    const elements = getElementsTypes({ columnType, sourceType }, 1).map((type) => parseColumnType(type));
+		    return {
+		        type: 'Tuple',
+		        elements,
+		        sourceType,
+		    };
+		}
+		function parseArrayType({ columnType, sourceType, }) {
+		    if (!columnType.startsWith(ArrayPrefix) ||
+		        columnType.length < ArrayPrefix.length + 5 // Array(Int8) is the shortest valid definition
+		    ) {
+		        throw new ColumnTypeParseError('Invalid Array type', {
+		            columnType,
+		            sourceType,
+		        });
+		    }
+		    let dimensions = 0;
+		    while (columnType.length > 0) {
+		        if (columnType.startsWith(ArrayPrefix)) {
+		            columnType = columnType.slice(ArrayPrefix.length, -1); // Array(T) -> T
+		            dimensions++;
+		        }
+		        else {
+		            break;
+		        }
+		    }
+		    if (dimensions === 0 || dimensions > 10) {
+		        // TODO: check how many we can handle; max 10 seems more than enough.
+		        throw new ColumnTypeParseError('Expected Array to have between 1 and 10 dimensions', { columnType });
+		    }
+		    const value = parseColumnType(columnType);
+		    if (value.type === 'Array') {
+		        throw new ColumnTypeParseError('Unexpected Array as value type', {
+		            columnType,
+		            sourceType,
+		        });
+		    }
+		    return {
+		        type: 'Array',
+		        value,
+		        dimensions,
+		        sourceType,
+		    };
+		}
+		function parseDateTimeType({ columnType, sourceType, }) {
+		    if (columnType.startsWith(DateTimeWithTimezonePrefix) &&
+		        columnType.length > DateTimeWithTimezonePrefix.length + 4 // DateTime('GB') has the least amount of chars
+		    ) {
+		        const timezone = columnType.slice(DateTimeWithTimezonePrefix.length + 1, -2);
+		        return {
+		            type: 'DateTime',
+		            timezone,
+		            sourceType,
+		        };
+		    }
+		    else if (columnType.startsWith(DateTimePrefix) &&
+		        columnType.length === DateTimePrefix.length) {
+		        return {
+		            type: 'DateTime',
+		            timezone: null,
+		            sourceType,
+		        };
+		    }
+		    else {
+		        throw new ColumnTypeParseError('Invalid DateTime type', {
+		            columnType,
+		            sourceType,
+		        });
+		    }
+		}
+		function parseDateTime64Type({ columnType, sourceType, }) {
+		    if (!columnType.startsWith(DateTime64Prefix) ||
+		        columnType.length < DateTime64Prefix.length + 2 // should at least have a precision
+		    ) {
+		        throw new ColumnTypeParseError('Invalid DateTime64 type', {
+		            columnType,
+		            sourceType,
+		        });
+		    }
+		    const precision = parseInt(columnType[DateTime64Prefix.length], 10);
+		    if (Number.isNaN(precision) || precision < 0 || precision > 9) {
+		        throw new ColumnTypeParseError('Invalid DateTime64 precision', {
+		            columnType,
+		            sourceType,
+		            precision,
+		        });
+		    }
+		    let timezone = null;
+		    if (columnType.length > DateTime64Prefix.length + 2) {
+		        // e.g. DateTime64(3, 'UTC') -> UTC
+		        timezone = columnType.slice(DateTime64Prefix.length + 4, -2);
+		    }
+		    return {
+		        type: 'DateTime64',
+		        timezone,
+		        precision,
+		        sourceType,
+		    };
+		}
+		function parseFixedStringType({ columnType, sourceType, }) {
+		    if (!columnType.startsWith(FixedStringPrefix) ||
+		        columnType.length < FixedStringPrefix.length + 2 // i.e. at least FixedString(1)
+		    ) {
+		        throw new ColumnTypeParseError('Invalid FixedString type', {
+		            columnType,
+		            sourceType,
+		        });
+		    }
+		    const sizeBytes = parseInt(columnType.slice(FixedStringPrefix.length, -1), 10);
+		    if (Number.isNaN(sizeBytes) || sizeBytes < 1) {
+		        throw new ColumnTypeParseError('Invalid FixedString size in bytes', {
+		            columnType,
+		            sourceType,
+		            sizeBytes,
+		        });
+		    }
+		    return {
+		        type: 'FixedString',
+		        sizeBytes,
+		        sourceType,
+		    };
+		}
+		function asNullableType(value, sourceType) {
+		    if (value.type === 'Array' ||
+		        value.type === 'Map' ||
+		        value.type === 'Tuple' ||
+		        value.type === 'Nullable') {
+		        throw new ColumnTypeParseError(`${value.type} cannot be Nullable`, {
+		            sourceType,
+		        });
+		    }
+		    if (value.sourceType.startsWith(NullablePrefix)) {
+		        value.sourceType = value.sourceType.slice(NullablePrefix.length, -1);
+		    }
+		    return {
+		        type: 'Nullable',
+		        sourceType,
+		        value,
+		    };
+		}
+		/** Used for Map key/value types and Tuple elements.
+		 *  * `String, UInt8` results in [`String`, `UInt8`].
+		 *  * `String, UInt8, Array(String)` results in [`String`, `UInt8`, `Array(String)`].
+		 *  * Throws if parsed values are below the required minimum. */
+		function getElementsTypes({ columnType, sourceType }, minElements) {
+		    const elements = [];
+		    /** Consider the element type parsed once we reach a comma outside of parens AND after an unescaped tick.
+		     *  The most complicated cases are values names in the self-defined Enum types:
+		     *  * `Tuple(Enum8('f\'()' = 1))`  ->  `f\'()`
+		     *  * `Tuple(Enum8('(' = 1))`      ->  `(`
+		     *  See also: {@link parseEnumType }, which works similarly (but has to deal with the indices following the names). */
+		    let openParens = 0;
+		    let quoteOpen = false;
+		    let charEscaped = false;
+		    let lastElementIndex = 0;
+		    for (let i = 0; i < columnType.length; i++) {
+		        // prettier-ignore
+		        // console.log(i, 'Current char:', columnType[i], 'openParens:', openParens, 'quoteOpen:', quoteOpen, 'charEscaped:', charEscaped)
+		        if (charEscaped) {
+		            charEscaped = false;
+		        }
+		        else if (columnType.charCodeAt(i) === BackslashASCII) {
+		            charEscaped = true;
+		        }
+		        else if (columnType.charCodeAt(i) === SingleQuoteASCII) {
+		            quoteOpen = !quoteOpen; // unescaped quote
+		        }
+		        else {
+		            if (!quoteOpen) {
+		                if (columnType.charCodeAt(i) === LeftParenASCII) {
+		                    openParens++;
+		                }
+		                else if (columnType.charCodeAt(i) === RightParenASCII) {
+		                    openParens--;
+		                }
+		                else if (columnType.charCodeAt(i) === CommaASCII) {
+		                    if (openParens === 0) {
+		                        elements.push(columnType.slice(lastElementIndex, i));
+		                        // console.log('Pushed element:', elements[elements.length - 1])
+		                        i += 2; // skip ', '
+		                        lastElementIndex = i;
+		                    }
+		                }
+		            }
+		        }
+		    }
+		    // prettier-ignore
+		    // console.log('Final elements:', elements, 'nextElementIndex:', lastElementIndex, 'minElements:', minElements, 'openParens:', openParens)
+		    // Push the remaining part of the type if it seems to be valid (at least all parentheses are closed)
+		    if (!openParens && lastElementIndex < columnType.length - 1) {
+		        elements.push(columnType.slice(lastElementIndex));
+		    }
+		    if (elements.length < minElements) {
+		        throw new ColumnTypeParseError('Expected more elements in the type', {
+		            sourceType,
+		            columnType,
+		            elements,
+		            minElements,
+		        });
+		    }
+		    return elements;
+		}
+		const NullablePrefix = 'Nullable(';
+		const LowCardinalityPrefix = 'LowCardinality(';
+		const DecimalPrefix = 'Decimal(';
+		const ArrayPrefix = 'Array(';
+		const MapPrefix = 'Map(';
+		const Enum8Prefix = 'Enum8(';
+		const Enum16Prefix = 'Enum16(';
+		const TuplePrefix = 'Tuple(';
+		const DateTimePrefix = 'DateTime';
+		const DateTimeWithTimezonePrefix = 'DateTime(';
+		const DateTime64Prefix = 'DateTime64(';
+		const FixedStringPrefix = 'FixedString(';
+		const SingleQuoteASCII = 39;
+		const LeftParenASCII = 40;
+		const RightParenASCII = 41;
+		const CommaASCII = 44;
+		const ZeroASCII = 48;
+		const NineASCII = 57;
+		const BackslashASCII = 92;
+		
+	} (column_types));
+	return column_types;
+}
+
+var hasRequiredParse;
+
+function requireParse () {
+	if (hasRequiredParse) return parse;
+	hasRequiredParse = 1;
+	(function (exports) {
+		var __createBinding = (parse && parse.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    var desc = Object.getOwnPropertyDescriptor(m, k);
+		    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+		      desc = { enumerable: true, get: function() { return m[k]; } };
+		    }
+		    Object.defineProperty(o, k2, desc);
+		}) : (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    o[k2] = m[k];
+		}));
+		var __exportStar = (parse && parse.__exportStar) || function(m, exports) {
+		    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+		};
+		Object.defineProperty(exports, "__esModule", { value: true });
+		__exportStar(requireColumn_types(), exports);
+		
+	} (parse));
+	return parse;
+}
+
+var utils$1 = {};
+
+var connection$1 = {};
+
+var hasRequiredConnection$1;
+
+function requireConnection$1 () {
+	if (hasRequiredConnection$1) return connection$1;
+	hasRequiredConnection$1 = 1;
+	Object.defineProperty(connection$1, "__esModule", { value: true });
+	connection$1.withCompressionHeaders = withCompressionHeaders;
+	connection$1.withHttpSettings = withHttpSettings;
+	connection$1.isSuccessfulResponse = isSuccessfulResponse;
+	connection$1.isJWTAuth = isJWTAuth;
+	connection$1.isCredentialsAuth = isCredentialsAuth;
+	function withCompressionHeaders({ headers, enable_request_compression, enable_response_compression, }) {
+	    return {
+	        ...headers,
+	        ...(enable_response_compression ? { 'Accept-Encoding': 'gzip' } : {}),
+	        ...(enable_request_compression ? { 'Content-Encoding': 'gzip' } : {}),
+	    };
+	}
+	function withHttpSettings(clickhouse_settings, compression) {
+	    return {
+	        ...(compression
+	            ? {
+	                enable_http_compression: 1,
+	            }
+	            : {}),
+	        ...clickhouse_settings,
+	    };
+	}
+	function isSuccessfulResponse(statusCode) {
+	    return Boolean(statusCode && 200 <= statusCode && statusCode < 300);
+	}
+	function isJWTAuth(auth) {
+	    return auth !== null && typeof auth === 'object' && 'access_token' in auth;
+	}
+	function isCredentialsAuth(auth) {
+	    return (auth !== null &&
+	        typeof auth === 'object' &&
+	        'username' in auth &&
+	        'password' in auth);
+	}
+	
+	return connection$1;
+}
+
+var sleep = {};
+
+var hasRequiredSleep;
+
+function requireSleep () {
+	if (hasRequiredSleep) return sleep;
+	hasRequiredSleep = 1;
+	Object.defineProperty(sleep, "__esModule", { value: true });
+	sleep.sleep = sleep$1;
+	async function sleep$1(ms) {
+	    await new Promise((resolve) => setTimeout(() => {
+	        resolve(void 0);
+	    }, ms));
+	}
+	
+	return sleep;
+}
+
+var url = {};
+
+var hasRequiredUrl;
+
+function requireUrl () {
+	if (hasRequiredUrl) return url;
+	hasRequiredUrl = 1;
+	Object.defineProperty(url, "__esModule", { value: true });
+	url.transformUrl = transformUrl;
+	url.toSearchParams = toSearchParams;
+	const data_formatter_1 = requireData_formatter();
+	function transformUrl({ url, pathname, searchParams, }) {
+	    const newUrl = new URL(url);
+	    if (pathname) {
+	        // See https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname
+	        // > value for such "special scheme" URLs can never be the empty string,
+	        // > but will instead always have at least one / character.
+	        if (newUrl.pathname === '/') {
+	            newUrl.pathname = pathname;
+	        }
+	        else {
+	            newUrl.pathname += pathname;
+	        }
+	    }
+	    if (searchParams) {
+	        newUrl.search = searchParams?.toString();
+	    }
+	    return newUrl;
+	}
+	// TODO validate max length of the resulting query
+	// https://stackoverflow.com/questions/812925/what-is-the-maximum-possible-length-of-a-query-string
+	function toSearchParams({ database, query, query_params, clickhouse_settings, session_id, query_id, role, }) {
+	    const entries = [['query_id', query_id]];
+	    if (query_params !== undefined) {
+	        for (const [key, value] of Object.entries(query_params)) {
+	            const formattedParam = (0, data_formatter_1.formatQueryParams)({ value });
+	            entries.push([`param_${key}`, formattedParam]);
+	        }
+	    }
+	    if (clickhouse_settings !== undefined) {
+	        for (const [key, value] of Object.entries(clickhouse_settings)) {
+	            if (value !== undefined) {
+	                entries.push([key, (0, data_formatter_1.formatQuerySettings)(value)]);
+	            }
+	        }
+	    }
+	    if (database !== undefined && database !== 'default') {
+	        entries.push(['database', database]);
+	    }
+	    if (query) {
+	        entries.push(['query', query]);
+	    }
+	    if (session_id) {
+	        entries.push(['session_id', session_id]);
+	    }
+	    if (role) {
+	        if (typeof role === 'string') {
+	            entries.push(['role', role]);
+	        }
+	        else if (Array.isArray(role)) {
+	            for (const r of role) {
+	                entries.push(['role', r]);
+	            }
+	        }
+	    }
+	    return new URLSearchParams(entries);
+	}
+	
+	return url;
+}
+
+var hasRequiredUtils$1;
+
+function requireUtils$1 () {
+	if (hasRequiredUtils$1) return utils$1;
+	hasRequiredUtils$1 = 1;
+	(function (exports) {
+		var __createBinding = (utils$1 && utils$1.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    var desc = Object.getOwnPropertyDescriptor(m, k);
+		    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+		      desc = { enumerable: true, get: function() { return m[k]; } };
+		    }
+		    Object.defineProperty(o, k2, desc);
+		}) : (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    o[k2] = m[k];
+		}));
+		var __exportStar = (utils$1 && utils$1.__exportStar) || function(m, exports) {
+		    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+		};
+		Object.defineProperty(exports, "__esModule", { value: true });
+		__exportStar(requireConnection$1(), exports);
+		__exportStar(requireSleep(), exports);
+		__exportStar(requireUrl(), exports);
+		
+	} (utils$1));
+	return utils$1;
+}
+
+var hasRequiredDist$1;
+
+function requireDist$1 () {
+	if (hasRequiredDist$1) return dist;
+	hasRequiredDist$1 = 1;
+	(function (exports) {
+		Object.defineProperty(exports, "__esModule", { value: true });
+		exports.enhanceStackTrace = exports.getCurrentStackTrace = exports.DefaultLogger = exports.LogWriter = exports.isJWTAuth = exports.isCredentialsAuth = exports.withHttpSettings = exports.withCompressionHeaders = exports.transformUrl = exports.toSearchParams = exports.sleep = exports.isSuccessfulResponse = exports.numberConfigURLValue = exports.getConnectionParams = exports.enumConfigURLValue = exports.booleanConfigURLValue = exports.validateStreamFormat = exports.isNotStreamableJSONFamily = exports.isStreamableJSONFamily = exports.isSupportedRawFormat = exports.encodeJSON = exports.formatQueryParams = exports.formatQuerySettings = exports.parseColumnType = exports.SimpleColumnTypes = exports.SettingsMap = exports.isException = exports.isRow = exports.isProgressRow = exports.ClickHouseLogLevel = exports.parseError = exports.ClickHouseError = exports.TupleParam = exports.ClickHouseClient = void 0;
+		/** Should be re-exported by the implementation */
+		var client_1 = requireClient$1();
+		Object.defineProperty(exports, "ClickHouseClient", { enumerable: true, get: function () { return client_1.ClickHouseClient; } });
+		var data_formatter_1 = requireData_formatter();
+		Object.defineProperty(exports, "TupleParam", { enumerable: true, get: function () { return data_formatter_1.TupleParam; } });
+		var error_1 = requireError();
+		Object.defineProperty(exports, "ClickHouseError", { enumerable: true, get: function () { return error_1.ClickHouseError; } });
+		Object.defineProperty(exports, "parseError", { enumerable: true, get: function () { return error_1.parseError; } });
+		var logger_1 = requireLogger();
+		Object.defineProperty(exports, "ClickHouseLogLevel", { enumerable: true, get: function () { return logger_1.ClickHouseLogLevel; } });
+		var clickhouse_types_1 = requireClickhouse_types();
+		Object.defineProperty(exports, "isProgressRow", { enumerable: true, get: function () { return clickhouse_types_1.isProgressRow; } });
+		Object.defineProperty(exports, "isRow", { enumerable: true, get: function () { return clickhouse_types_1.isRow; } });
+		Object.defineProperty(exports, "isException", { enumerable: true, get: function () { return clickhouse_types_1.isException; } });
+		var settings_1 = requireSettings();
+		Object.defineProperty(exports, "SettingsMap", { enumerable: true, get: function () { return settings_1.SettingsMap; } });
+		var parse_1 = requireParse();
+		Object.defineProperty(exports, "SimpleColumnTypes", { enumerable: true, get: function () { return parse_1.SimpleColumnTypes; } });
+		Object.defineProperty(exports, "parseColumnType", { enumerable: true, get: function () { return parse_1.parseColumnType; } });
+		/** For implementation usage only - should not be re-exported */
+		var data_formatter_2 = requireData_formatter();
+		Object.defineProperty(exports, "formatQuerySettings", { enumerable: true, get: function () { return data_formatter_2.formatQuerySettings; } });
+		Object.defineProperty(exports, "formatQueryParams", { enumerable: true, get: function () { return data_formatter_2.formatQueryParams; } });
+		Object.defineProperty(exports, "encodeJSON", { enumerable: true, get: function () { return data_formatter_2.encodeJSON; } });
+		Object.defineProperty(exports, "isSupportedRawFormat", { enumerable: true, get: function () { return data_formatter_2.isSupportedRawFormat; } });
+		Object.defineProperty(exports, "isStreamableJSONFamily", { enumerable: true, get: function () { return data_formatter_2.isStreamableJSONFamily; } });
+		Object.defineProperty(exports, "isNotStreamableJSONFamily", { enumerable: true, get: function () { return data_formatter_2.isNotStreamableJSONFamily; } });
+		Object.defineProperty(exports, "validateStreamFormat", { enumerable: true, get: function () { return data_formatter_2.validateStreamFormat; } });
+		var config_1 = requireConfig$1();
+		Object.defineProperty(exports, "booleanConfigURLValue", { enumerable: true, get: function () { return config_1.booleanConfigURLValue; } });
+		Object.defineProperty(exports, "enumConfigURLValue", { enumerable: true, get: function () { return config_1.enumConfigURLValue; } });
+		Object.defineProperty(exports, "getConnectionParams", { enumerable: true, get: function () { return config_1.getConnectionParams; } });
+		Object.defineProperty(exports, "numberConfigURLValue", { enumerable: true, get: function () { return config_1.numberConfigURLValue; } });
+		var utils_1 = requireUtils$1();
+		Object.defineProperty(exports, "isSuccessfulResponse", { enumerable: true, get: function () { return utils_1.isSuccessfulResponse; } });
+		Object.defineProperty(exports, "sleep", { enumerable: true, get: function () { return utils_1.sleep; } });
+		Object.defineProperty(exports, "toSearchParams", { enumerable: true, get: function () { return utils_1.toSearchParams; } });
+		Object.defineProperty(exports, "transformUrl", { enumerable: true, get: function () { return utils_1.transformUrl; } });
+		Object.defineProperty(exports, "withCompressionHeaders", { enumerable: true, get: function () { return utils_1.withCompressionHeaders; } });
+		Object.defineProperty(exports, "withHttpSettings", { enumerable: true, get: function () { return utils_1.withHttpSettings; } });
+		Object.defineProperty(exports, "isCredentialsAuth", { enumerable: true, get: function () { return utils_1.isCredentialsAuth; } });
+		Object.defineProperty(exports, "isJWTAuth", { enumerable: true, get: function () { return utils_1.isJWTAuth; } });
+		var logger_2 = requireLogger();
+		Object.defineProperty(exports, "LogWriter", { enumerable: true, get: function () { return logger_2.LogWriter; } });
+		Object.defineProperty(exports, "DefaultLogger", { enumerable: true, get: function () { return logger_2.DefaultLogger; } });
+		var error_2 = requireError();
+		Object.defineProperty(exports, "getCurrentStackTrace", { enumerable: true, get: function () { return error_2.getCurrentStackTrace; } });
+		Object.defineProperty(exports, "enhanceStackTrace", { enumerable: true, get: function () { return error_2.enhanceStackTrace; } });
+		
+	} (dist));
+	return dist;
+}
+
+var config = {};
+
+var connection = {};
+
+var node_base_connection = {};
+
+var utils = {};
+
+var stream$1 = {};
+
+var hasRequiredStream$1;
+
+function requireStream$1 () {
+	if (hasRequiredStream$1) return stream$1;
+	hasRequiredStream$1 = 1;
+	var __importDefault = (stream$1 && stream$1.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(stream$1, "__esModule", { value: true });
+	stream$1.isStream = isStream;
+	stream$1.getAsText = getAsText;
+	stream$1.mapStream = mapStream;
+	const stream_1 = __importDefault(require$$0$5);
+	const buffer_1 = require$$1$2;
+	const { MAX_STRING_LENGTH } = buffer_1.constants;
+	function isStream(obj) {
+	    return (typeof obj === 'object' &&
+	        obj !== null &&
+	        'pipe' in obj &&
+	        typeof obj.pipe === 'function' &&
+	        'on' in obj &&
+	        typeof obj.on === 'function');
+	}
+	async function getAsText(stream) {
+	    let text = '';
+	    const textDecoder = new TextDecoder();
+	    for await (const chunk of stream) {
+	        const decoded = textDecoder.decode(chunk, { stream: true });
+	        if (decoded.length + text.length > MAX_STRING_LENGTH) {
+	            throw new Error('The response length exceeds the maximum allowed size of V8 String: ' +
+	                `${MAX_STRING_LENGTH}; consider limiting the amount of requested rows.`);
+	        }
+	        text += decoded;
+	    }
+	    // flush
+	    const last = textDecoder.decode();
+	    if (last) {
+	        text += last;
+	    }
+	    return text;
+	}
+	function mapStream(mapper) {
+	    return new stream_1.default.Transform({
+	        objectMode: true,
+	        transform(chunk, encoding, callback) {
+	            callback(null, mapper(chunk));
+	        },
+	    });
+	}
+	
+	return stream$1;
+}
+
+var encoder = {};
+
+var hasRequiredEncoder;
+
+function requireEncoder () {
+	if (hasRequiredEncoder) return encoder;
+	hasRequiredEncoder = 1;
+	var __importDefault = (encoder && encoder.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(encoder, "__esModule", { value: true });
+	encoder.NodeValuesEncoder = void 0;
+	const client_common_1 = requireDist$1();
+	const stream_1 = __importDefault(require$$0$5);
+	const stream_2 = requireStream$1();
+	class NodeValuesEncoder {
+	    encodeValues(values, format) {
+	        if ((0, stream_2.isStream)(values)) {
+	            // TSV/CSV/CustomSeparated formats don't require additional serialization
+	            if (!values.readableObjectMode) {
+	                return values;
+	            }
+	            // JSON* formats streams
+	            return stream_1.default.pipeline(values, (0, stream_2.mapStream)((value) => (0, client_common_1.encodeJSON)(value, format)), pipelineCb);
+	        }
+	        // JSON* arrays
+	        if (Array.isArray(values)) {
+	            return values.map((value) => (0, client_common_1.encodeJSON)(value, format)).join('');
+	        }
+	        // JSON & JSONObjectEachRow format input
+	        if (typeof values === 'object') {
+	            return (0, client_common_1.encodeJSON)(values, format);
+	        }
+	        throw new Error(`Cannot encode values of type ${typeof values} with ${format} format`);
+	    }
+	    validateInsertValues(values, format) {
+	        if (!Array.isArray(values) &&
+	            !(0, stream_2.isStream)(values) &&
+	            typeof values !== 'object') {
+	            throw new Error('Insert expected "values" to be an array, a stream of values or a JSON object, ' +
+	                `got: ${typeof values}`);
+	        }
+	        if ((0, stream_2.isStream)(values)) {
+	            if ((0, client_common_1.isSupportedRawFormat)(format)) {
+	                if (values.readableObjectMode) {
+	                    throw new Error(`Insert for ${format} expected Readable Stream with disabled object mode.`);
+	                }
+	            }
+	            else if (!values.readableObjectMode) {
+	                throw new Error(`Insert for ${format} expected Readable Stream with enabled object mode.`);
+	            }
+	        }
+	    }
+	}
+	encoder.NodeValuesEncoder = NodeValuesEncoder;
+	function pipelineCb(err) {
+	    if (err) {
+	        // FIXME: use logger instead
+	        // eslint-disable-next-line no-console
+	        console.error(err);
+	    }
+	}
+	
+	return encoder;
+}
+
+var process$1 = {};
+
+var hasRequiredProcess;
+
+function requireProcess () {
+	if (hasRequiredProcess) return process$1;
+	hasRequiredProcess = 1;
+	Object.defineProperty(process$1, "__esModule", { value: true });
+	process$1.getProcessVersion = getProcessVersion;
+	// for easy mocking in the tests
+	function getProcessVersion() {
+	    return process.version;
+	}
+	
+	return process$1;
+}
+
+var user_agent = {};
+
+var runtime = {};
+
+var version = {};
+
+var hasRequiredVersion;
+
+function requireVersion () {
+	if (hasRequiredVersion) return version;
+	hasRequiredVersion = 1;
+	Object.defineProperty(version, "__esModule", { value: true });
+	version.default = '1.12.1';
+	
+	return version;
+}
+
+var hasRequiredRuntime;
+
+function requireRuntime () {
+	if (hasRequiredRuntime) return runtime;
+	hasRequiredRuntime = 1;
+	var __createBinding = (runtime && runtime.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+	    if (k2 === undefined) k2 = k;
+	    var desc = Object.getOwnPropertyDescriptor(m, k);
+	    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+	      desc = { enumerable: true, get: function() { return m[k]; } };
+	    }
+	    Object.defineProperty(o, k2, desc);
+	}) : (function(o, m, k, k2) {
+	    if (k2 === undefined) k2 = k;
+	    o[k2] = m[k];
+	}));
+	var __setModuleDefault = (runtime && runtime.__setModuleDefault) || (Object.create ? (function(o, v) {
+	    Object.defineProperty(o, "default", { enumerable: true, value: v });
+	}) : function(o, v) {
+	    o["default"] = v;
+	});
+	var __importStar = (runtime && runtime.__importStar) || (function () {
+	    var ownKeys = function(o) {
+	        ownKeys = Object.getOwnPropertyNames || function (o) {
+	            var ar = [];
+	            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+	            return ar;
+	        };
+	        return ownKeys(o);
+	    };
+	    return function (mod) {
+	        if (mod && mod.__esModule) return mod;
+	        var result = {};
+	        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+	        __setModuleDefault(result, mod);
+	        return result;
+	    };
+	})();
+	var __importDefault = (runtime && runtime.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(runtime, "__esModule", { value: true });
+	runtime.Runtime = void 0;
+	const os = __importStar(require$$0$a);
+	const version_1 = __importDefault(requireVersion());
+	/** Indirect export of package version and node version for easier mocking since Node.js 22.18 */
+	class Runtime {
+	}
+	runtime.Runtime = Runtime;
+	Object.defineProperty(Runtime, "package", {
+	    enumerable: true,
+	    configurable: true,
+	    writable: true,
+	    value: version_1.default
+	});
+	Object.defineProperty(Runtime, "node", {
+	    enumerable: true,
+	    configurable: true,
+	    writable: true,
+	    value: process.version
+	});
+	Object.defineProperty(Runtime, "os", {
+	    enumerable: true,
+	    configurable: true,
+	    writable: true,
+	    value: os.platform()
+	});
+	
+	return runtime;
+}
+
+var hasRequiredUser_agent;
+
+function requireUser_agent () {
+	if (hasRequiredUser_agent) return user_agent;
+	hasRequiredUser_agent = 1;
+	Object.defineProperty(user_agent, "__esModule", { value: true });
+	user_agent.getUserAgent = getUserAgent;
+	const runtime_1 = requireRuntime();
+	/**
+	 * Generate a user agent string like
+	 * ```
+	 * clickhouse-js/0.0.11 (lv:nodejs/19.0.4; os:linux)
+	 * ```
+	 * or
+	 * ```
+	 * MyApplicationName clickhouse-js/0.0.11 (lv:nodejs/19.0.4; os:linux)
+	 * ```
+	 */
+	function getUserAgent(application_id) {
+	    const defaultUserAgent = `clickhouse-js/${runtime_1.Runtime.package} (lv:nodejs/${runtime_1.Runtime.node}; os:${runtime_1.Runtime.os})`;
+	    return application_id
+	        ? `${application_id} ${defaultUserAgent}`
+	        : defaultUserAgent;
+	}
+	
+	return user_agent;
+}
+
+var hasRequiredUtils;
+
+function requireUtils () {
+	if (hasRequiredUtils) return utils;
+	hasRequiredUtils = 1;
+	(function (exports) {
+		var __createBinding = (utils && utils.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    var desc = Object.getOwnPropertyDescriptor(m, k);
+		    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+		      desc = { enumerable: true, get: function() { return m[k]; } };
+		    }
+		    Object.defineProperty(o, k2, desc);
+		}) : (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    o[k2] = m[k];
+		}));
+		var __exportStar = (utils && utils.__exportStar) || function(m, exports) {
+		    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+		};
+		Object.defineProperty(exports, "__esModule", { value: true });
+		__exportStar(requireStream$1(), exports);
+		__exportStar(requireEncoder(), exports);
+		__exportStar(requireProcess(), exports);
+		__exportStar(requireUser_agent(), exports);
+		
+	} (utils));
+	return utils;
+}
+
+var compression = {};
+
+var hasRequiredCompression;
+
+function requireCompression () {
+	if (hasRequiredCompression) return compression;
+	hasRequiredCompression = 1;
+	var __importDefault = (compression && compression.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(compression, "__esModule", { value: true });
+	compression.decompressResponse = decompressResponse;
+	compression.isDecompressionError = isDecompressionError;
+	const stream_1 = __importDefault(require$$0$5);
+	const zlib_1 = __importDefault(require$$3$1);
+	function decompressResponse(response, logWriter) {
+	    const encoding = response.headers['content-encoding'];
+	    if (encoding === 'gzip') {
+	        return {
+	            response: stream_1.default.pipeline(response, zlib_1.default.createGunzip(), function pipelineCb(err) {
+	                if (err) {
+	                    logWriter.error({
+	                        message: 'An error occurred while decompressing the response',
+	                        err,
+	                    });
+	                }
+	            }),
+	        };
+	    }
+	    else if (encoding !== undefined) {
+	        return {
+	            error: new Error(`Unexpected encoding: ${encoding}`),
+	        };
+	    }
+	    return { response };
+	}
+	function isDecompressionError(result) {
+	    return result.error !== undefined;
+	}
+	
+	return compression;
+}
+
+var stream = {};
+
+var hasRequiredStream;
+
+function requireStream () {
+	if (hasRequiredStream) return stream;
+	hasRequiredStream = 1;
+	Object.defineProperty(stream, "__esModule", { value: true });
+	stream.drainStream = drainStream;
+	/** Drains the response stream, as calling `destroy` on a {@link Stream.Readable} response stream
+	 *  will result in closing the underlying socket, and negate the KeepAlive feature benefits.
+	 *  See https://github.com/ClickHouse/clickhouse-js/pull/203 */
+	async function drainStream(stream) {
+	    return new Promise((resolve, reject) => {
+	        function dropData() {
+	            // used only for the methods without expected response; we don't care about the data here
+	        }
+	        function onEnd() {
+	            removeListeners();
+	            resolve();
+	        }
+	        function onError(err) {
+	            removeListeners();
+	            reject(err);
+	        }
+	        function onClose() {
+	            removeListeners();
+	        }
+	        function removeListeners() {
+	            stream.removeListener('data', dropData);
+	            stream.removeListener('end', onEnd);
+	            stream.removeListener('error', onError);
+	            stream.removeListener('onClose', onClose);
+	        }
+	        stream.on('data', dropData);
+	        stream.on('end', onEnd);
+	        stream.on('error', onError);
+	        stream.on('close', onClose);
+	    });
+	}
+	
+	return stream;
+}
+
+var hasRequiredNode_base_connection;
+
+function requireNode_base_connection () {
+	if (hasRequiredNode_base_connection) return node_base_connection;
+	hasRequiredNode_base_connection = 1;
+	var __importDefault = (node_base_connection && node_base_connection.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(node_base_connection, "__esModule", { value: true });
+	node_base_connection.NodeBaseConnection = void 0;
+	const client_common_1 = requireDist$1();
+	const crypto_1 = __importDefault(require$$0$1);
+	const stream_1 = __importDefault(require$$0$5);
+	const zlib_1 = __importDefault(require$$3$1);
+	const utils_1 = requireUtils();
+	const compression_1 = requireCompression();
+	const stream_2 = requireStream();
+	class NodeBaseConnection {
+	    constructor(params, agent) {
+	        Object.defineProperty(this, "params", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: params
+	        });
+	        Object.defineProperty(this, "agent", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: agent
+	        });
+	        Object.defineProperty(this, "defaultAuthHeader", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "defaultHeaders", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "logger", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "knownSockets", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: new WeakMap()
+	        });
+	        Object.defineProperty(this, "idleSocketTTL", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        if (params.auth.type === 'Credentials') {
+	            this.defaultAuthHeader = `Basic ${Buffer.from(`${params.auth.username}:${params.auth.password}`).toString('base64')}`;
+	        }
+	        else if (params.auth.type === 'JWT') {
+	            this.defaultAuthHeader = `Bearer ${params.auth.access_token}`;
+	        }
+	        else {
+	            throw new Error(`Unknown auth type: ${params.auth.type}`);
+	        }
+	        this.defaultHeaders = {
+	            // Node.js HTTP agent, for some reason, does not set this on its own when KeepAlive is enabled
+	            Connection: this.params.keep_alive.enabled ? 'keep-alive' : 'close',
+	            'User-Agent': (0, utils_1.getUserAgent)(this.params.application_id),
+	        };
+	        this.logger = params.log_writer;
+	        this.idleSocketTTL = params.keep_alive.idle_socket_ttl;
+	    }
+	    async ping(params) {
+	        const query_id = this.getQueryId(params.query_id);
+	        const { controller, controllerCleanup } = this.getAbortController(params);
+	        let result;
+	        try {
+	            if (params.select) {
+	                const searchParams = (0, client_common_1.toSearchParams)({
+	                    database: undefined,
+	                    query: PingQuery,
+	                    query_id,
+	                });
+	                result = await this.request({
+	                    method: 'GET',
+	                    url: (0, client_common_1.transformUrl)({ url: this.params.url, searchParams }),
+	                    query: PingQuery,
+	                    abort_signal: controller.signal,
+	                    headers: this.buildRequestHeaders(),
+	                }, 'Ping');
+	            }
+	            else {
+	                result = await this.request({
+	                    method: 'GET',
+	                    url: (0, client_common_1.transformUrl)({ url: this.params.url, pathname: '/ping' }),
+	                    abort_signal: controller.signal,
+	                    headers: this.buildRequestHeaders(),
+	                    query: 'ping',
+	                }, 'Ping');
+	            }
+	            await (0, stream_2.drainStream)(result.stream);
+	            return { success: true };
+	        }
+	        catch (error) {
+	            // it is used to ensure that the outgoing request is terminated,
+	            // and we don't get unhandled error propagation later
+	            controller.abort('Ping failed');
+	            // not an error, as this might be semi-expected
+	            this.logger.warn({
+	                message: this.httpRequestErrorMessage('Ping'),
+	                err: error,
+	                args: {
+	                    query_id,
+	                },
+	            });
+	            return {
+	                success: false,
+	                error: error, // should NOT be propagated to the user
+	            };
+	        }
+	        finally {
+	            controllerCleanup();
+	        }
+	    }
+	    async query(params) {
+	        const query_id = this.getQueryId(params.query_id);
+	        const clickhouse_settings = (0, client_common_1.withHttpSettings)(params.clickhouse_settings, this.params.compression.decompress_response);
+	        const searchParams = (0, client_common_1.toSearchParams)({
+	            database: this.params.database,
+	            query_params: params.query_params,
+	            session_id: params.session_id,
+	            clickhouse_settings,
+	            query_id,
+	            role: params.role,
+	        });
+	        const { controller, controllerCleanup } = this.getAbortController(params);
+	        // allows enforcing the compression via the settings even if the client instance has it disabled
+	        const enableResponseCompression = clickhouse_settings.enable_http_compression === 1;
+	        try {
+	            const { response_headers, stream } = await this.request({
+	                method: 'POST',
+	                url: (0, client_common_1.transformUrl)({ url: this.params.url, searchParams }),
+	                body: params.query,
+	                abort_signal: controller.signal,
+	                enable_response_compression: enableResponseCompression,
+	                headers: this.buildRequestHeaders(params),
+	                query: params.query,
+	            }, 'Query');
+	            return {
+	                stream,
+	                response_headers,
+	                query_id,
+	            };
+	        }
+	        catch (err) {
+	            controller.abort('Query HTTP request failed');
+	            this.logRequestError({
+	                op: 'Query',
+	                query_id: query_id,
+	                query_params: params,
+	                search_params: searchParams,
+	                err: err,
+	                extra_args: {
+	                    decompress_response: enableResponseCompression,
+	                    clickhouse_settings,
+	                },
+	            });
+	            throw err; // should be propagated to the user
+	        }
+	        finally {
+	            controllerCleanup();
+	        }
+	    }
+	    async insert(params) {
+	        const query_id = this.getQueryId(params.query_id);
+	        const searchParams = (0, client_common_1.toSearchParams)({
+	            database: this.params.database,
+	            clickhouse_settings: params.clickhouse_settings,
+	            query_params: params.query_params,
+	            query: params.query,
+	            session_id: params.session_id,
+	            role: params.role,
+	            query_id,
+	        });
+	        const { controller, controllerCleanup } = this.getAbortController(params);
+	        try {
+	            const { stream, summary, response_headers } = await this.request({
+	                method: 'POST',
+	                url: (0, client_common_1.transformUrl)({ url: this.params.url, searchParams }),
+	                body: params.values,
+	                abort_signal: controller.signal,
+	                enable_request_compression: this.params.compression.compress_request,
+	                parse_summary: true,
+	                headers: this.buildRequestHeaders(params),
+	                query: params.query,
+	            }, 'Insert');
+	            await (0, stream_2.drainStream)(stream);
+	            return { query_id, summary, response_headers };
+	        }
+	        catch (err) {
+	            controller.abort('Insert HTTP request failed');
+	            this.logRequestError({
+	                op: 'Insert',
+	                query_id: query_id,
+	                query_params: params,
+	                search_params: searchParams,
+	                err: err,
+	                extra_args: {
+	                    clickhouse_settings: params.clickhouse_settings ?? {},
+	                },
+	            });
+	            throw err; // should be propagated to the user
+	        }
+	        finally {
+	            controllerCleanup();
+	        }
+	    }
+	    async exec(params) {
+	        return this.runExec({
+	            ...params,
+	            op: 'Exec',
+	        });
+	    }
+	    async command(params) {
+	        const { stream, query_id, summary, response_headers } = await this.runExec({
+	            ...params,
+	            op: 'Command',
+	        });
+	        // ignore the response stream and release the socket immediately
+	        await (0, stream_2.drainStream)(stream);
+	        return { query_id, summary, response_headers };
+	    }
+	    async close() {
+	        if (this.agent !== undefined && this.agent.destroy !== undefined) {
+	            this.agent.destroy();
+	        }
+	    }
+	    defaultHeadersWithOverride(params) {
+	        return {
+	            // Custom HTTP headers from the client configuration
+	            ...(this.params.http_headers ?? {}),
+	            // Custom HTTP headers for this particular request; it will override the client configuration with the same keys
+	            ...(params?.http_headers ?? {}),
+	            // Includes the `Connection` + `User-Agent` headers which we do not allow to override
+	            // An appropriate `Authorization` header might be added later
+	            // It is not always required - see the TLS headers in `node_https_connection.ts`
+	            ...this.defaultHeaders,
+	        };
+	    }
+	    buildRequestHeaders(params) {
+	        const headers = this.defaultHeadersWithOverride(params);
+	        if ((0, client_common_1.isJWTAuth)(params?.auth)) {
+	            return {
+	                ...headers,
+	                Authorization: `Bearer ${params.auth.access_token}`,
+	            };
+	        }
+	        if (this.params.set_basic_auth_header) {
+	            if ((0, client_common_1.isCredentialsAuth)(params?.auth)) {
+	                return {
+	                    ...headers,
+	                    Authorization: `Basic ${Buffer.from(`${params.auth.username}:${params.auth.password}`).toString('base64')}`,
+	                };
+	            }
+	            else {
+	                return {
+	                    ...headers,
+	                    Authorization: this.defaultAuthHeader,
+	                };
+	            }
+	        }
+	        return {
+	            ...headers,
+	        };
+	    }
+	    getQueryId(query_id) {
+	        return query_id || crypto_1.default.randomUUID();
+	    }
+	    // a wrapper over the user's Signal to terminate the failed requests
+	    getAbortController(params) {
+	        const controller = new AbortController();
+	        function onAbort() {
+	            controller.abort();
+	        }
+	        params.abort_signal?.addEventListener('abort', onAbort);
+	        return {
+	            controller,
+	            controllerCleanup: () => {
+	                params.abort_signal?.removeEventListener('abort', onAbort);
+	            },
+	        };
+	    }
+	    logResponse(op, request, params, response, startTimestamp) {
+	        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+	        const { authorization, host, ...headers } = request.getHeaders();
+	        const duration = Date.now() - startTimestamp;
+	        this.params.log_writer.debug({
+	            module: 'HTTP Adapter',
+	            message: `${op}: got a response from ClickHouse`,
+	            args: {
+	                request_method: params.method,
+	                request_path: params.url.pathname,
+	                request_params: params.url.search,
+	                request_headers: headers,
+	                response_status: response.statusCode,
+	                response_headers: response.headers,
+	                response_time_ms: duration,
+	            },
+	        });
+	    }
+	    logRequestError({ op, err, query_id, query_params, search_params, extra_args, }) {
+	        this.logger.error({
+	            message: this.httpRequestErrorMessage(op),
+	            err: err,
+	            args: {
+	                query: query_params.query,
+	                search_params: search_params?.toString() ?? '',
+	                with_abort_signal: query_params.abort_signal !== undefined,
+	                session_id: query_params.session_id,
+	                query_id: query_id,
+	                ...extra_args,
+	            },
+	        });
+	    }
+	    httpRequestErrorMessage(op) {
+	        return `${op}: HTTP request error.`;
+	    }
+	    parseSummary(op, response) {
+	        const summaryHeader = response.headers['x-clickhouse-summary'];
+	        if (typeof summaryHeader === 'string') {
+	            try {
+	                return JSON.parse(summaryHeader);
+	            }
+	            catch (err) {
+	                this.logger.error({
+	                    message: `${op}: failed to parse X-ClickHouse-Summary header.`,
+	                    args: {
+	                        'X-ClickHouse-Summary': summaryHeader,
+	                    },
+	                    err: err,
+	                });
+	            }
+	        }
+	    }
+	    async runExec(params) {
+	        const query_id = this.getQueryId(params.query_id);
+	        const sendQueryInParams = params.values !== undefined;
+	        const clickhouse_settings = (0, client_common_1.withHttpSettings)(params.clickhouse_settings, this.params.compression.decompress_response);
+	        const toSearchParamsOptions = {
+	            query: sendQueryInParams ? params.query : undefined,
+	            database: this.params.database,
+	            query_params: params.query_params,
+	            session_id: params.session_id,
+	            role: params.role,
+	            clickhouse_settings,
+	            query_id,
+	        };
+	        const searchParams = (0, client_common_1.toSearchParams)(toSearchParamsOptions);
+	        const { controller, controllerCleanup } = this.getAbortController(params);
+	        const tryDecompressResponseStream = params.op === 'Exec'
+	            ? // allows disabling stream decompression for the `Exec` operation only
+	                (params.decompress_response_stream ??
+	                    this.params.compression.decompress_response)
+	            : // there is nothing useful in the response stream for the `Command` operation,
+	                // and it is immediately destroyed; never decompress it
+	                false;
+	        try {
+	            const { stream, summary, response_headers } = await this.request({
+	                method: 'POST',
+	                url: (0, client_common_1.transformUrl)({ url: this.params.url, searchParams }),
+	                body: sendQueryInParams ? params.values : params.query,
+	                abort_signal: controller.signal,
+	                parse_summary: true,
+	                enable_request_compression: this.params.compression.compress_request,
+	                enable_response_compression: this.params.compression.decompress_response,
+	                try_decompress_response_stream: tryDecompressResponseStream,
+	                headers: this.buildRequestHeaders(params),
+	                query: params.query,
+	            }, params.op);
+	            return {
+	                stream,
+	                query_id,
+	                summary,
+	                response_headers,
+	            };
+	        }
+	        catch (err) {
+	            controller.abort(`${params.op} HTTP request failed`);
+	            this.logRequestError({
+	                op: params.op,
+	                query_id: query_id,
+	                query_params: params,
+	                search_params: searchParams,
+	                err: err,
+	                extra_args: {
+	                    clickhouse_settings: params.clickhouse_settings ?? {},
+	                },
+	            });
+	            throw err; // should be propagated to the user
+	        }
+	        finally {
+	            controllerCleanup();
+	        }
+	    }
+	    async request(params, op) {
+	        // allows the event loop to process the idle socket timers, if the CPU load is high
+	        // otherwise, we can occasionally get an expired socket, see https://github.com/ClickHouse/clickhouse-js/issues/294
+	        await (0, client_common_1.sleep)(0);
+	        const currentStackTrace = this.params.capture_enhanced_stack_trace
+	            ? (0, client_common_1.getCurrentStackTrace)()
+	            : undefined;
+	        const logger = this.logger;
+	        return new Promise((resolve, reject) => {
+	            const start = Date.now();
+	            const request = this.createClientRequest(params);
+	            function onError(e) {
+	                removeRequestListeners();
+	                const err = (0, client_common_1.enhanceStackTrace)(e, currentStackTrace);
+	                reject(err);
+	            }
+	            let responseStream;
+	            const onResponse = async (_response) => {
+	                this.logResponse(op, request, params, _response, start);
+	                const tryDecompressResponseStream = params.try_decompress_response_stream ?? true;
+	                // even if the stream decompression is disabled, we have to decompress it in case of an error
+	                const isFailedResponse = !(0, client_common_1.isSuccessfulResponse)(_response.statusCode);
+	                if (tryDecompressResponseStream || isFailedResponse) {
+	                    const decompressionResult = (0, compression_1.decompressResponse)(_response, this.logger);
+	                    if ((0, compression_1.isDecompressionError)(decompressionResult)) {
+	                        const err = (0, client_common_1.enhanceStackTrace)(decompressionResult.error, currentStackTrace);
+	                        return reject(err);
+	                    }
+	                    responseStream = decompressionResult.response;
+	                }
+	                else {
+	                    responseStream = _response;
+	                }
+	                if (isFailedResponse) {
+	                    try {
+	                        const errorMessage = await (0, utils_1.getAsText)(responseStream);
+	                        const err = (0, client_common_1.enhanceStackTrace)((0, client_common_1.parseError)(errorMessage), currentStackTrace);
+	                        reject(err);
+	                    }
+	                    catch (e) {
+	                        // If the ClickHouse response is malformed
+	                        const err = (0, client_common_1.enhanceStackTrace)(e, currentStackTrace);
+	                        reject(err);
+	                    }
+	                }
+	                else {
+	                    return resolve({
+	                        stream: responseStream,
+	                        summary: params.parse_summary
+	                            ? this.parseSummary(op, _response)
+	                            : undefined,
+	                        response_headers: { ..._response.headers },
+	                    });
+	                }
+	            };
+	            function onAbort() {
+	                // Prefer 'abort' event since it always triggered unlike 'error' and 'close'
+	                // see the full sequence of events https://nodejs.org/api/http.html#httprequesturl-options-callback
+	                removeRequestListeners();
+	                request.once('error', function () {
+	                    /**
+	                     * catch "Error: ECONNRESET" error which shouldn't be reported to users.
+	                     * see the full sequence of events https://nodejs.org/api/http.html#httprequesturl-options-callback
+	                     * */
+	                });
+	                const err = (0, client_common_1.enhanceStackTrace)(new Error('The user aborted a request.'), currentStackTrace);
+	                reject(err);
+	            }
+	            function onClose() {
+	                // Adapter uses 'close' event to clean up listeners after the successful response.
+	                // It's necessary in order to handle 'abort' and 'timeout' events while response is streamed.
+	                // It's always the last event, according to https://nodejs.org/docs/latest-v14.x/api/http.html#http_http_request_url_options_callback
+	                removeRequestListeners();
+	            }
+	            function pipeStream() {
+	                // if request.end() was called due to no data to send
+	                if (request.writableEnded) {
+	                    return;
+	                }
+	                const bodyStream = (0, utils_1.isStream)(params.body)
+	                    ? params.body
+	                    : stream_1.default.Readable.from([params.body]);
+	                const callback = (e) => {
+	                    if (e) {
+	                        removeRequestListeners();
+	                        const err = (0, client_common_1.enhanceStackTrace)(e, currentStackTrace);
+	                        reject(err);
+	                    }
+	                };
+	                if (params.enable_request_compression) {
+	                    stream_1.default.pipeline(bodyStream, zlib_1.default.createGzip(), request, callback);
+	                }
+	                else {
+	                    stream_1.default.pipeline(bodyStream, request, callback);
+	                }
+	            }
+	            const onSocket = (socket) => {
+	                try {
+	                    if (this.params.keep_alive.enabled &&
+	                        this.params.keep_alive.idle_socket_ttl > 0) {
+	                        const socketInfo = this.knownSockets.get(socket);
+	                        // It is the first time we've encountered this socket,
+	                        // so it doesn't have the idle timeout handler attached to it
+	                        if (socketInfo === undefined) {
+	                            const socketId = crypto_1.default.randomUUID();
+	                            this.logger.trace({
+	                                message: `Using a fresh socket ${socketId}, setting up a new 'free' listener`,
+	                            });
+	                            this.knownSockets.set(socket, {
+	                                id: socketId,
+	                                idle_timeout_handle: undefined,
+	                            });
+	                            // When the request is complete and the socket is released,
+	                            // make sure that the socket is removed after `idleSocketTTL`.
+	                            socket.on('free', () => {
+	                                this.logger.trace({
+	                                    message: `Socket ${socketId} was released`,
+	                                });
+	                                // Avoiding the built-in socket.timeout() method usage here,
+	                                // as we don't want to clash with the actual request timeout.
+	                                const idleTimeoutHandle = setTimeout(() => {
+	                                    this.logger.trace({
+	                                        message: `Removing socket ${socketId} after ${this.idleSocketTTL} ms of idle`,
+	                                    });
+	                                    this.knownSockets.delete(socket);
+	                                    socket.destroy();
+	                                }, this.idleSocketTTL).unref();
+	                                this.knownSockets.set(socket, {
+	                                    id: socketId,
+	                                    idle_timeout_handle: idleTimeoutHandle,
+	                                });
+	                            });
+	                            const cleanup = () => {
+	                                const maybeSocketInfo = this.knownSockets.get(socket);
+	                                // clean up a possibly dangling idle timeout handle (preventing leaks)
+	                                if (maybeSocketInfo?.idle_timeout_handle) {
+	                                    clearTimeout(maybeSocketInfo.idle_timeout_handle);
+	                                }
+	                                this.logger.trace({
+	                                    message: `Socket ${socketId} was closed or ended, 'free' listener removed`,
+	                                });
+	                                if (responseStream && !responseStream.readableEnded) {
+	                                    this.logger.warn({
+	                                        message: `${op}: socket was closed or ended before the response was fully read. ` +
+	                                            'This can potentially result in an uncaught ECONNRESET error! ' +
+	                                            'Consider fully consuming, draining, or destroying the response stream.',
+	                                        args: {
+	                                            query: params.query,
+	                                            query_id: params.url.searchParams.get('query_id') ?? 'unknown',
+	                                        },
+	                                    });
+	                                }
+	                            };
+	                            socket.once('end', cleanup);
+	                            socket.once('close', cleanup);
+	                        }
+	                        else {
+	                            clearTimeout(socketInfo.idle_timeout_handle);
+	                            this.logger.trace({
+	                                message: `Reusing socket ${socketInfo.id}`,
+	                            });
+	                            this.knownSockets.set(socket, {
+	                                ...socketInfo,
+	                                idle_timeout_handle: undefined,
+	                            });
+	                        }
+	                    }
+	                }
+	                catch (e) {
+	                    logger.error({
+	                        message: 'An error occurred while housekeeping the idle sockets',
+	                        err: e,
+	                    });
+	                }
+	                // Socket is "prepared" with idle handlers, continue with our request
+	                pipeStream();
+	                // This is for request timeout only. Surprisingly, it is not always enough to set in the HTTP request.
+	                // The socket won't be destroyed, and it will be returned to the pool.
+	                socket.setTimeout(this.params.request_timeout, onTimeout);
+	            };
+	            function onTimeout() {
+	                const err = (0, client_common_1.enhanceStackTrace)(new Error('Timeout error.'), currentStackTrace);
+	                removeRequestListeners();
+	                try {
+	                    request.destroy();
+	                }
+	                catch (e) {
+	                    logger.error({
+	                        message: 'An error occurred while destroying the request',
+	                        err: e,
+	                    });
+	                }
+	                reject(err);
+	            }
+	            function removeRequestListeners() {
+	                if (request.socket !== null) {
+	                    request.socket.setTimeout(0); // reset previously set timeout
+	                    request.socket.removeListener('timeout', onTimeout);
+	                }
+	                request.removeListener('socket', onSocket);
+	                request.removeListener('response', onResponse);
+	                request.removeListener('error', onError);
+	                request.removeListener('close', onClose);
+	                if (params.abort_signal !== undefined) {
+	                    request.removeListener('abort', onAbort);
+	                }
+	            }
+	            request.on('socket', onSocket);
+	            request.on('response', onResponse);
+	            request.on('error', onError);
+	            request.on('close', onClose);
+	            if (params.abort_signal !== undefined) {
+	                params.abort_signal.addEventListener('abort', onAbort, {
+	                    once: true,
+	                });
+	            }
+	            if (!params.body) {
+	                try {
+	                    return request.end();
+	                }
+	                catch (e) {
+	                    this.logger.error({
+	                        message: 'An error occurred while ending the request without body',
+	                        err: e,
+	                    });
+	                }
+	            }
+	        });
+	    }
+	}
+	node_base_connection.NodeBaseConnection = NodeBaseConnection;
+	const PingQuery = `SELECT 'ping'`;
+	
+	return node_base_connection;
+}
+
+var node_http_connection = {};
+
+var hasRequiredNode_http_connection;
+
+function requireNode_http_connection () {
+	if (hasRequiredNode_http_connection) return node_http_connection;
+	hasRequiredNode_http_connection = 1;
+	var __importDefault = (node_http_connection && node_http_connection.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(node_http_connection, "__esModule", { value: true });
+	node_http_connection.NodeHttpConnection = void 0;
+	const client_common_1 = requireDist$1();
+	const http_1 = __importDefault(require$$2$1);
+	const node_base_connection_1 = requireNode_base_connection();
+	class NodeHttpConnection extends node_base_connection_1.NodeBaseConnection {
+	    constructor(params) {
+	        const agent = new http_1.default.Agent({
+	            keepAlive: params.keep_alive.enabled,
+	            maxSockets: params.max_open_connections,
+	        });
+	        super(params, agent);
+	    }
+	    createClientRequest(params) {
+	        const headers = (0, client_common_1.withCompressionHeaders)({
+	            headers: params.headers,
+	            enable_request_compression: params.enable_request_compression,
+	            enable_response_compression: params.enable_response_compression,
+	        });
+	        return http_1.default.request(params.url, {
+	            method: params.method,
+	            agent: this.agent,
+	            timeout: this.params.request_timeout,
+	            signal: params.abort_signal,
+	            headers,
+	        });
+	    }
+	}
+	node_http_connection.NodeHttpConnection = NodeHttpConnection;
+	
+	return node_http_connection;
+}
+
+var node_https_connection = {};
+
+var hasRequiredNode_https_connection;
+
+function requireNode_https_connection () {
+	if (hasRequiredNode_https_connection) return node_https_connection;
+	hasRequiredNode_https_connection = 1;
+	var __importDefault = (node_https_connection && node_https_connection.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(node_https_connection, "__esModule", { value: true });
+	node_https_connection.NodeHttpsConnection = void 0;
+	const client_common_1 = requireDist$1();
+	const https_1 = __importDefault(require$$1);
+	const node_base_connection_1 = requireNode_base_connection();
+	class NodeHttpsConnection extends node_base_connection_1.NodeBaseConnection {
+	    constructor(params) {
+	        const agent = new https_1.default.Agent({
+	            keepAlive: params.keep_alive.enabled,
+	            maxSockets: params.max_open_connections,
+	            ca: params.tls?.ca_cert,
+	            key: params.tls?.type === 'Mutual' ? params.tls.key : undefined,
+	            cert: params.tls?.type === 'Mutual' ? params.tls.cert : undefined,
+	        });
+	        super(params, agent);
+	    }
+	    buildRequestHeaders(params) {
+	        if (this.params.tls !== undefined) {
+	            if (this.params.auth.type === 'JWT') {
+	                throw new Error('JWT auth is not supported with HTTPS connection using custom certificates');
+	            }
+	            let headers;
+	            if ((0, client_common_1.isCredentialsAuth)(params?.auth)) {
+	                headers = {
+	                    ...this.defaultHeadersWithOverride(params),
+	                    'X-ClickHouse-User': params.auth.username,
+	                    'X-ClickHouse-Key': params.auth.password,
+	                };
+	            }
+	            else {
+	                headers = {
+	                    ...this.defaultHeadersWithOverride(params),
+	                    'X-ClickHouse-User': this.params.auth.username,
+	                    'X-ClickHouse-Key': this.params.auth.password,
+	                };
+	            }
+	            const tlsType = this.params.tls.type;
+	            switch (tlsType) {
+	                case 'Basic':
+	                    return headers;
+	                case 'Mutual':
+	                    return {
+	                        ...headers,
+	                        'X-ClickHouse-SSL-Certificate-Auth': 'on',
+	                    };
+	                default:
+	                    throw new Error(`Unknown TLS type: ${tlsType}`);
+	            }
+	        }
+	        return super.buildRequestHeaders(params);
+	    }
+	    createClientRequest(params) {
+	        const headers = (0, client_common_1.withCompressionHeaders)({
+	            headers: params.headers,
+	            enable_request_compression: params.enable_request_compression,
+	            enable_response_compression: params.enable_response_compression,
+	        });
+	        return https_1.default.request(params.url, {
+	            method: params.method,
+	            agent: this.agent,
+	            timeout: this.params.request_timeout,
+	            signal: params.abort_signal,
+	            headers,
+	        });
+	    }
+	}
+	node_https_connection.NodeHttpsConnection = NodeHttpsConnection;
+	
+	return node_https_connection;
+}
+
+var create_connection = {};
+
+var node_custom_agent_connection = {};
+
+var hasRequiredNode_custom_agent_connection;
+
+function requireNode_custom_agent_connection () {
+	if (hasRequiredNode_custom_agent_connection) return node_custom_agent_connection;
+	hasRequiredNode_custom_agent_connection = 1;
+	var __importDefault = (node_custom_agent_connection && node_custom_agent_connection.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(node_custom_agent_connection, "__esModule", { value: true });
+	node_custom_agent_connection.NodeCustomAgentConnection = void 0;
+	const http_1 = __importDefault(require$$2$1);
+	const https_1 = __importDefault(require$$1);
+	const node_base_connection_1 = requireNode_base_connection();
+	const client_common_1 = requireDist$1();
+	class NodeCustomAgentConnection extends node_base_connection_1.NodeBaseConnection {
+	    constructor(params) {
+	        if (!params.http_agent) {
+	            throw new Error('http_agent is required to create NodeCustomAgentConnection');
+	        }
+	        super(params, params.http_agent);
+	        Object.defineProperty(this, "httpRequestFn", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        // See https://github.com/ClickHouse/clickhouse-js/issues/352
+	        if (params.url.protocol.startsWith('https')) {
+	            this.httpRequestFn = https_1.default.request;
+	        }
+	        else {
+	            this.httpRequestFn = http_1.default.request;
+	        }
+	    }
+	    createClientRequest(params) {
+	        const headers = (0, client_common_1.withCompressionHeaders)({
+	            headers: params.headers,
+	            enable_request_compression: params.enable_request_compression,
+	            enable_response_compression: params.enable_response_compression,
+	        });
+	        return this.httpRequestFn(params.url, {
+	            method: params.method,
+	            agent: this.agent,
+	            timeout: this.params.request_timeout,
+	            signal: params.abort_signal,
+	            headers,
+	        });
+	    }
+	}
+	node_custom_agent_connection.NodeCustomAgentConnection = NodeCustomAgentConnection;
+	
+	return node_custom_agent_connection;
+}
+
+var hasRequiredCreate_connection;
+
+function requireCreate_connection () {
+	if (hasRequiredCreate_connection) return create_connection;
+	hasRequiredCreate_connection = 1;
+	Object.defineProperty(create_connection, "__esModule", { value: true });
+	create_connection.NodeConnectionFactory = void 0;
+	const node_custom_agent_connection_1 = requireNode_custom_agent_connection();
+	const node_http_connection_1 = requireNode_http_connection();
+	const node_https_connection_1 = requireNode_https_connection();
+	/** A factory for easier mocking after Node.js 22.18 */
+	class NodeConnectionFactory {
+	    static create({ connection_params, tls, keep_alive, http_agent, set_basic_auth_header, capture_enhanced_stack_trace, }) {
+	        if (http_agent !== undefined) {
+	            return new node_custom_agent_connection_1.NodeCustomAgentConnection({
+	                ...connection_params,
+	                set_basic_auth_header,
+	                capture_enhanced_stack_trace,
+	                keep_alive, // only used to enforce proper KeepAlive headers
+	                http_agent,
+	            });
+	        }
+	        switch (connection_params.url.protocol) {
+	            case 'http:':
+	                return new node_http_connection_1.NodeHttpConnection({
+	                    ...connection_params,
+	                    set_basic_auth_header,
+	                    capture_enhanced_stack_trace,
+	                    keep_alive,
+	                });
+	            case 'https:':
+	                return new node_https_connection_1.NodeHttpsConnection({
+	                    ...connection_params,
+	                    set_basic_auth_header,
+	                    capture_enhanced_stack_trace,
+	                    keep_alive,
+	                    tls,
+	                });
+	            default:
+	                throw new Error('Only HTTP and HTTPS protocols are supported');
+	        }
+	    }
+	}
+	create_connection.NodeConnectionFactory = NodeConnectionFactory;
+	
+	return create_connection;
+}
+
+var hasRequiredConnection;
+
+function requireConnection () {
+	if (hasRequiredConnection) return connection;
+	hasRequiredConnection = 1;
+	(function (exports) {
+		var __createBinding = (connection && connection.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    var desc = Object.getOwnPropertyDescriptor(m, k);
+		    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+		      desc = { enumerable: true, get: function() { return m[k]; } };
+		    }
+		    Object.defineProperty(o, k2, desc);
+		}) : (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    o[k2] = m[k];
+		}));
+		var __exportStar = (connection && connection.__exportStar) || function(m, exports) {
+		    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+		};
+		Object.defineProperty(exports, "__esModule", { value: true });
+		__exportStar(requireNode_base_connection(), exports);
+		__exportStar(requireNode_http_connection(), exports);
+		__exportStar(requireNode_https_connection(), exports);
+		__exportStar(requireCreate_connection(), exports);
+		
+	} (connection));
+	return connection;
+}
+
+var result_set = {};
+
+var hasRequiredResult_set;
+
+function requireResult_set () {
+	if (hasRequiredResult_set) return result_set;
+	hasRequiredResult_set = 1;
+	var __createBinding = (result_set && result_set.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+	    if (k2 === undefined) k2 = k;
+	    var desc = Object.getOwnPropertyDescriptor(m, k);
+	    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+	      desc = { enumerable: true, get: function() { return m[k]; } };
+	    }
+	    Object.defineProperty(o, k2, desc);
+	}) : (function(o, m, k, k2) {
+	    if (k2 === undefined) k2 = k;
+	    o[k2] = m[k];
+	}));
+	var __setModuleDefault = (result_set && result_set.__setModuleDefault) || (Object.create ? (function(o, v) {
+	    Object.defineProperty(o, "default", { enumerable: true, value: v });
+	}) : function(o, v) {
+	    o["default"] = v;
+	});
+	var __importStar = (result_set && result_set.__importStar) || (function () {
+	    var ownKeys = function(o) {
+	        ownKeys = Object.getOwnPropertyNames || function (o) {
+	            var ar = [];
+	            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+	            return ar;
+	        };
+	        return ownKeys(o);
+	    };
+	    return function (mod) {
+	        if (mod && mod.__esModule) return mod;
+	        var result = {};
+	        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+	        __setModuleDefault(result, mod);
+	        return result;
+	    };
+	})();
+	Object.defineProperty(result_set, "__esModule", { value: true });
+	result_set.ResultSet = void 0;
+	const client_common_1 = requireDist$1();
+	const buffer_1 = require$$1$2;
+	const stream_1 = __importStar(require$$0$5);
+	const utils_1 = requireUtils();
+	const NEWLINE = 0x0a;
+	class ResultSet {
+	    constructor(_stream, format, query_id, log_error, _response_headers) {
+	        Object.defineProperty(this, "_stream", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: _stream
+	        });
+	        Object.defineProperty(this, "format", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: format
+	        });
+	        Object.defineProperty(this, "query_id", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: query_id
+	        });
+	        Object.defineProperty(this, "response_headers", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        Object.defineProperty(this, "log_error", {
+	            enumerable: true,
+	            configurable: true,
+	            writable: true,
+	            value: void 0
+	        });
+	        // eslint-disable-next-line no-console
+	        this.log_error = log_error ?? ((err) => console.error(err));
+	        this.response_headers =
+	            _response_headers !== undefined ? Object.freeze(_response_headers) : {};
+	    }
+	    /** See {@link BaseResultSet.text}. */
+	    async text() {
+	        if (this._stream.readableEnded) {
+	            throw Error(streamAlreadyConsumedMessage);
+	        }
+	        return (await (0, utils_1.getAsText)(this._stream)).toString();
+	    }
+	    /** See {@link BaseResultSet.json}. */
+	    async json() {
+	        if (this._stream.readableEnded) {
+	            throw Error(streamAlreadyConsumedMessage);
+	        }
+	        // JSONEachRow, etc.
+	        if ((0, client_common_1.isStreamableJSONFamily)(this.format)) {
+	            const result = [];
+	            const stream = this.stream();
+	            for await (const rows of stream) {
+	                for (const row of rows) {
+	                    result.push(row.json());
+	                }
+	            }
+	            return result;
+	        }
+	        // JSON, JSONObjectEachRow, etc.
+	        if ((0, client_common_1.isNotStreamableJSONFamily)(this.format)) {
+	            const text = await (0, utils_1.getAsText)(this._stream);
+	            return JSON.parse(text);
+	        }
+	        // should not be called for CSV, etc.
+	        throw new Error(`Cannot decode ${this.format} as JSON`);
+	    }
+	    /** See {@link BaseResultSet.stream}. */
+	    stream() {
+	        // If the underlying stream has already ended by calling `text` or `json`,
+	        // Stream.pipeline will create a new empty stream
+	        // but without "readableEnded" flag set to true
+	        if (this._stream.readableEnded) {
+	            throw Error(streamAlreadyConsumedMessage);
+	        }
+	        (0, client_common_1.validateStreamFormat)(this.format);
+	        let incompleteChunks = [];
+	        const logError = this.log_error;
+	        const toRows = new stream_1.Transform({
+	            transform(chunk, _encoding, callback) {
+	                const rows = [];
+	                let lastIdx = 0;
+	                // first pass on the current chunk
+	                // using the incomplete row from the previous chunks
+	                let idx = chunk.indexOf(NEWLINE);
+	                if (idx !== -1) {
+	                    let text;
+	                    if (incompleteChunks.length > 0) {
+	                        text = buffer_1.Buffer.concat([...incompleteChunks, chunk.subarray(0, idx)], incompleteChunks.reduce((sz, buf) => sz + buf.length, 0) + idx).toString();
+	                        incompleteChunks = [];
+	                    }
+	                    else {
+	                        text = chunk.subarray(0, idx).toString();
+	                    }
+	                    rows.push({
+	                        text,
+	                        json() {
+	                            return JSON.parse(text);
+	                        },
+	                    });
+	                    lastIdx = idx + 1; // skipping newline character
+	                    // consequent passes on the current chunk with at least one row parsed
+	                    // all previous chunks with incomplete rows were already processed
+	                    do {
+	                        idx = chunk.indexOf(NEWLINE, lastIdx);
+	                        if (idx !== -1) {
+	                            const text = chunk.subarray(lastIdx, idx).toString();
+	                            rows.push({
+	                                text,
+	                                json() {
+	                                    return JSON.parse(text);
+	                                },
+	                            });
+	                        }
+	                        else {
+	                            // to be processed during the first pass for the next chunk
+	                            incompleteChunks.push(chunk.subarray(lastIdx));
+	                            this.push(rows);
+	                        }
+	                        lastIdx = idx + 1; // skipping newline character
+	                    } while (idx !== -1);
+	                }
+	                else {
+	                    incompleteChunks.push(chunk); // this chunk does not contain a full row
+	                }
+	                callback();
+	            },
+	            autoDestroy: true,
+	            objectMode: true,
+	        });
+	        const pipeline = stream_1.default.pipeline(this._stream, toRows, function pipelineCb(err) {
+	            if (err &&
+	                err.name !== 'AbortError' &&
+	                err.message !== resultSetClosedMessage) {
+	                logError(err);
+	            }
+	        });
+	        return pipeline;
+	    }
+	    /** See {@link BaseResultSet.close}. */
+	    close() {
+	        this._stream.destroy(new Error(resultSetClosedMessage));
+	    }
+	    static instance({ stream, format, query_id, log_error, response_headers, }) {
+	        return new ResultSet(stream, format, query_id, log_error, response_headers);
+	    }
+	}
+	result_set.ResultSet = ResultSet;
+	const streamAlreadyConsumedMessage = 'Stream has been already consumed';
+	const resultSetClosedMessage = 'ResultSet has been closed';
+	
+	return result_set;
+}
+
+var hasRequiredConfig;
+
+function requireConfig () {
+	if (hasRequiredConfig) return config;
+	hasRequiredConfig = 1;
+	Object.defineProperty(config, "__esModule", { value: true });
+	config.NodeConfigImpl = void 0;
+	const client_common_1 = requireDist$1();
+	const connection_1 = requireConnection();
+	const result_set_1 = requireResult_set();
+	const utils_1 = requireUtils();
+	config.NodeConfigImpl = {
+	    handle_specific_url_params: (config, url) => {
+	        const nodeConfig = { ...config };
+	        const unknownParams = new Set();
+	        const handledParams = new Set();
+	        const urlSearchParamsKeys = [...url.searchParams.keys()];
+	        if (urlSearchParamsKeys.length > 0) {
+	            urlSearchParamsKeys.forEach((key) => {
+	                const value = url.searchParams.get(key);
+	                switch (key) {
+	                    case 'keep_alive_idle_socket_ttl':
+	                        if (nodeConfig.keep_alive === undefined) {
+	                            nodeConfig.keep_alive = {};
+	                        }
+	                        nodeConfig.keep_alive.idle_socket_ttl = (0, client_common_1.numberConfigURLValue)({
+	                            key,
+	                            value,
+	                            min: 0,
+	                        });
+	                        handledParams.add(key);
+	                        break;
+	                    default:
+	                        unknownParams.add(key);
+	                }
+	            });
+	        }
+	        return {
+	            config: nodeConfig,
+	            unknown_params: unknownParams,
+	            handled_params: handledParams,
+	        };
+	    },
+	    make_connection: (nodeConfig, params) => {
+	        let tls = undefined;
+	        if (nodeConfig.tls !== undefined) {
+	            if ('cert' in nodeConfig.tls && 'key' in nodeConfig.tls) {
+	                tls = {
+	                    type: 'Mutual',
+	                    ...nodeConfig.tls,
+	                };
+	            }
+	            else {
+	                tls = {
+	                    type: 'Basic',
+	                    ...nodeConfig.tls,
+	                };
+	            }
+	        }
+	        // normally, it should be already set after processing the config
+	        const keep_alive = {
+	            enabled: nodeConfig?.keep_alive?.enabled ?? true,
+	            idle_socket_ttl: nodeConfig?.keep_alive?.idle_socket_ttl ?? 2500,
+	        };
+	        return connection_1.NodeConnectionFactory.create({
+	            connection_params: params,
+	            set_basic_auth_header: nodeConfig.set_basic_auth_header ?? true,
+	            capture_enhanced_stack_trace: nodeConfig.capture_enhanced_stack_trace ?? false,
+	            http_agent: nodeConfig.http_agent,
+	            keep_alive,
+	            tls,
+	        });
+	    },
+	    values_encoder: new utils_1.NodeValuesEncoder(),
+	    make_result_set: ((stream, format, query_id, log_error, response_headers) => result_set_1.ResultSet.instance({
+	        stream,
+	        format,
+	        query_id,
+	        log_error,
+	        response_headers,
+	    })),
+	};
+	
+	return config;
+}
+
+var hasRequiredClient;
+
+function requireClient () {
+	if (hasRequiredClient) return client$1;
+	hasRequiredClient = 1;
+	Object.defineProperty(client$1, "__esModule", { value: true });
+	client$1.NodeClickHouseClient = void 0;
+	client$1.createClient = createClient;
+	const client_common_1 = requireDist$1();
+	const config_1 = requireConfig();
+	class NodeClickHouseClient extends client_common_1.ClickHouseClient {
+	    /** See {@link ClickHouseClient.query}. */
+	    query(params) {
+	        return super.query(params);
+	    }
+	}
+	client$1.NodeClickHouseClient = NodeClickHouseClient;
+	function createClient(config) {
+	    return new client_common_1.ClickHouseClient({
+	        impl: config_1.NodeConfigImpl,
+	        ...(config || {}),
+	    });
+	}
+	
+	return client$1;
+}
+
+var hasRequiredDist;
+
+function requireDist () {
+	if (hasRequiredDist) return dist$1;
+	hasRequiredDist = 1;
+	(function (exports) {
+		Object.defineProperty(exports, "__esModule", { value: true });
+		exports.TupleParam = exports.isException = exports.isRow = exports.isProgressRow = exports.SimpleColumnTypes = exports.parseColumnType = exports.SettingsMap = exports.ClickHouseLogLevel = exports.parseError = exports.ClickHouseError = exports.drainStream = exports.ResultSet = exports.createClient = exports.ClickHouseClient = void 0;
+		var client_1 = requireClient();
+		Object.defineProperty(exports, "ClickHouseClient", { enumerable: true, get: function () { return client_1.NodeClickHouseClient; } });
+		var client_2 = requireClient();
+		Object.defineProperty(exports, "createClient", { enumerable: true, get: function () { return client_2.createClient; } });
+		var result_set_1 = requireResult_set();
+		Object.defineProperty(exports, "ResultSet", { enumerable: true, get: function () { return result_set_1.ResultSet; } });
+		var stream_1 = requireStream();
+		Object.defineProperty(exports, "drainStream", { enumerable: true, get: function () { return stream_1.drainStream; } });
+		/** Re-export @clickhouse/client-common types */
+		var client_common_1 = requireDist$1();
+		Object.defineProperty(exports, "ClickHouseError", { enumerable: true, get: function () { return client_common_1.ClickHouseError; } });
+		Object.defineProperty(exports, "parseError", { enumerable: true, get: function () { return client_common_1.parseError; } });
+		Object.defineProperty(exports, "ClickHouseLogLevel", { enumerable: true, get: function () { return client_common_1.ClickHouseLogLevel; } });
+		Object.defineProperty(exports, "SettingsMap", { enumerable: true, get: function () { return client_common_1.SettingsMap; } });
+		Object.defineProperty(exports, "parseColumnType", { enumerable: true, get: function () { return client_common_1.parseColumnType; } });
+		Object.defineProperty(exports, "SimpleColumnTypes", { enumerable: true, get: function () { return client_common_1.SimpleColumnTypes; } });
+		Object.defineProperty(exports, "isProgressRow", { enumerable: true, get: function () { return client_common_1.isProgressRow; } });
+		Object.defineProperty(exports, "isRow", { enumerable: true, get: function () { return client_common_1.isRow; } });
+		Object.defineProperty(exports, "isException", { enumerable: true, get: function () { return client_common_1.isException; } });
+		Object.defineProperty(exports, "TupleParam", { enumerable: true, get: function () { return client_common_1.TupleParam; } });
+		
+	} (dist$1));
+	return dist$1;
+}
+
+var distExports = requireDist();
+
+function getClickhouseClientConfig() {
+    // http[s]://[username:password@]hostname:port[/database]
+    const clickHouseUrl = coreExports.getInput('clickhouse-url')?.trim();
+    const clickHouseTable = coreExports.getInput('clickhouse-table')?.trim();
+    if (!clickHouseUrl) {
+        throw new Error('ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-host` input.');
+    }
+    if (!clickHouseTable) {
+        throw new Error('ClickHouse table name is required when configuring ClickHouse logging; provide one via the `clickhouse-table` input.');
+    }
+    return {
+        url: clickHouseUrl,
+        table: clickHouseTable
+    };
+}
+async function createPullRequestToInferenceRecord(request) {
+    const { url, table } = getClickhouseClientConfig();
+    const client = distExports.createClient({
+        url,
+        application: 'tensorzero-github-action'
+    });
+    try {
+        await client.insert({
+            table,
+            values: [
+                {
+                    pull_request_id: request.pullRequestId,
+                    inference_id: request.inferenceId,
+                    original_pull_request_url: request.originalPullRequestUrl
+                }
+            ],
+            format: 'JSONEachRow'
+        });
+    }
+    finally {
+        await client.close();
+    }
+}
+
 const execFileAsync = promisify(execFile);
 function maskSecret(value, secret) {
     if (!secret || !value) {
@@ -46762,6 +50410,7 @@ async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff
         }
         return {
             number: createdPr.data.number,
+            id: createdPr.data.id,
             htmlUrl: createdPr.data.html_url
         };
     }
@@ -46810,36 +50459,6 @@ function getOpenAiCompatibleUrl(baseUrl) {
     }
     return `${baseUrl}/openai/v1`;
 }
-async function recordInferenceInClickHouse(config, params) {
-    const { url, database, table, username, password } = config;
-    const endpoint = new URL(url);
-    if (database) {
-        endpoint.searchParams.set('database', database);
-    }
-    const query = `INSERT INTO ${table} FORMAT JSONEachRow`;
-    endpoint.searchParams.set('query', query);
-    const row = {
-        inference_id: params.inferenceId,
-        pull_request_number: params.pullRequestNumber,
-        created_at: new Date().toISOString()
-    };
-    const headers = {
-        'Content-Type': 'application/json'
-    };
-    if (username) {
-        const authValue = `${username}:${password ?? ''}`;
-        headers.Authorization = `Basic ${Buffer.from(authValue).toString('base64')}`;
-    }
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: `${JSON.stringify(row)}\n`
-    });
-    if (!response.ok) {
-        const responseText = await response.text();
-        throw new Error(`ClickHouse insert request failed with status ${response.status}: ${responseText}`);
-    }
-}
 function isPullRequestEligibleForFix() {
     // If the workflow run is not associated with a single pull request, we don't want to fix it.
     if (githubExports.context.payload.workflow_run?.pull_requests?.length !== 1) {
@@ -46879,40 +50498,13 @@ function parseAndValidateActionInputs() {
     if (!tensorZeroBaseUrl) {
         throw new Error('TensorZero base url is required; provide one via the `tensorzero-base-url` input.');
     }
-    const clickHouseUrl = coreExports.getInput('clickhouse-url')?.trim();
-    const clickHouseTable = coreExports.getInput('clickhouse-table')?.trim();
-    const clickHouseUsername = coreExports.getInput('clickhouse-username')?.trim();
-    const clickHousePassword = coreExports.getInput('clickhouse-password')?.trim();
-    const clickHouseDatabase = coreExports.getInput('clickhouse-database')?.trim();
-    const clickHouseInputsProvided = Boolean(clickHouseUrl ||
-        clickHouseTable ||
-        clickHouseUsername ||
-        clickHousePassword ||
-        clickHouseDatabase);
-    let clickHouseConfig;
-    if (clickHouseInputsProvided) {
-        if (!clickHouseUrl) {
-            throw new Error('ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-url` input.');
-        }
-        if (!clickHouseTable) {
-            throw new Error('ClickHouse table name is required when configuring ClickHouse logging; provide one via the `clickhouse-table` input.');
-        }
-        clickHouseConfig = {
-            url: clickHouseUrl,
-            table: clickHouseTable,
-            username: clickHouseUsername || undefined,
-            password: clickHousePassword || undefined,
-            database: clickHouseDatabase || undefined
-        };
-    }
     return {
         token,
         tensorZeroBaseUrl,
         diffSummaryPath: coreExports.getInput('diff-summary-path')?.trim(),
         fullDiffPath: coreExports.getInput('full-diff-path')?.trim(),
         inputLogsDir: coreExports.getInput('input-logs-dir')?.trim(),
-        outputArtifactsDir: coreExports.getInput('output-artifacts-dir')?.trim(),
-        clickHouseConfig
+        outputArtifactsDir: coreExports.getInput('output-artifacts-dir')?.trim()
     };
 }
 /**
@@ -46922,7 +50514,7 @@ function parseAndValidateActionInputs() {
  */
 async function run() {
     const inputs = parseAndValidateActionInputs();
-    const { token, tensorZeroBaseUrl, diffSummaryPath, fullDiffPath, inputLogsDir, outputArtifactsDir, clickHouseConfig } = inputs;
+    const { token, tensorZeroBaseUrl, diffSummaryPath, fullDiffPath, inputLogsDir, outputArtifactsDir } = inputs;
     // Prepare artifact directory
     coreExports.info(`Action running in directory ${process.cwd()}`);
     const outputDir = outputArtifactsDir
@@ -47081,20 +50673,23 @@ async function run() {
             diff: trimmedDiff
         }, outputDir);
     }
-    // TODO: Associate response with the follow-up PR.
+    // TODO: consider using episode_id instead of inference ID.
     const tensorZeroResponse = response;
-    const inferenceId = tensorZeroResponse.inference_id;
-    if (followupPr && clickHouseConfig) {
+    const inferenceId = tensorZeroResponse.id;
+    if (followupPr) {
+        const request = {
+            inferenceId: inferenceId.replace(/-/g, ''),
+            pullRequestId: followupPr.id,
+            originalPullRequestUrl: pullRequest.html_url
+        };
+        coreExports.info(`Outgoing request: ${JSON.stringify(request, null, 2)}`);
         try {
-            await recordInferenceInClickHouse(clickHouseConfig, {
-                inferenceId,
-                pullRequestNumber: followupPr.number
-            });
-            coreExports.info(`Recorded inference ${inferenceId} for follow-up PR #${followupPr.number} in ClickHouse.`);
+            await createPullRequestToInferenceRecord(request);
+            coreExports.info(`Recorded inference ${inferenceId} for follow-up PR #${followupPr.number} (id ${followupPr.id}) in ClickHouse.`);
         }
         catch (error) {
             const errorMessage = error instanceof Error ? error.message : `${error}`;
-            coreExports.warning(`Failed to record inference ${inferenceId} in ClickHouse: ${errorMessage}`);
+            coreExports.warning(`Failed to record inference ${inferenceId} for follow-up PR #${followupPr.number} (id ${followupPr.id}) in ClickHouse: ${errorMessage}`);
         }
     }
     let commentBody = comments.trim();

@@ -24,6 +24,20 @@ If you are new, there's also a simpler introduction in the
     optional authentication parameters so the action can write inference to PR
     mappings after creating follow-up pull requests.
 
+### Prepare Clickhouse database
+
+```
+CREATE TABLE $table_name
+(
+   pull_request_id UInt128,
+   inference_id UInt128,
+   created_at DateTime DEFAULT now(),
+   original_pull_request_url String
+)
+ENGINE = ReplacingMergeTree
+ORDER BY pull_request_id;
+```
+
 ## When might this fail over?
 
 - Long context / large PRs

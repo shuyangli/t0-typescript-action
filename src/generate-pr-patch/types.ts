@@ -5,15 +5,6 @@ export interface GeneratePrPatchActionInput {
   fullDiffPath: string
   inputLogsDir: string
   outputArtifactsDir: string | undefined
-  clickHouseConfig?: ClickHouseConfig
-}
-
-export interface ClickHouseConfig {
-  url: string
-  username?: string
-  password?: string
-  database?: string
-  table: string
 }
 
 export interface WorkflowJobStep {
@@ -69,6 +60,7 @@ export type PullRequestData = Awaited<
 
 export interface FollowupPrResult {
   number: number
+  id: number
   htmlUrl: string
 }
 
@@ -82,7 +74,8 @@ export interface CreateFollowupPrOptions {
 }
 
 export interface TensorZeroResponse {
-  inference_id: string
+  // Inference ID
+  id: string
   episode_id: string
   variant_name: string
 }

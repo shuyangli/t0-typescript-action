@@ -28,15 +28,12 @@ inputs:
     description: Directory to store output artifacts for debugging purposes.
   clickhouse-url:
     description:
-      Base URL for ClickHouse HTTP interface (e.g. https://<host>:8443/).
+      URL for ClickHouse HTTP interface, in the format of
+      http[s]://[username:password@]hostname:port[/database].
+    required: true
   clickhouse-table:
     description: Table where inference to PR associations should be recorded.
-  clickhouse-username:
-    description: Username for ClickHouse basic authentication.
-  clickhouse-password:
-    description: Password for ClickHouse basic authentication.
-  clickhouse-database:
-    description: Database that contains the ClickHouse table.
+    required: true
 
 outputs:
   comment:

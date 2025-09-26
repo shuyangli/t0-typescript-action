@@ -13,16 +13,16 @@ import {
   extractDiffFromLlmResponse,
   renderPrPatchPrompt
 } from './promptTemplate.js'
-
 import {
   type WorkflowJobsResponse,
   type FollowupPrResult,
   type CreateFollowupPrOptions,
   type FailedJobSummary,
-  type ClickHouseConfig,
   type TensorZeroResponse,
   type GeneratePrPatchActionInput
 } from './types.js'
+import { CreatePullRequestToInferenceRequest } from '../clickhouse-utils/clickhouseTypes.js'
+import { createPullRequestToInferenceRecord } from '../clickhouse-utils/clickhouseClient.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -189,6 +189,7 @@ async function createFollowupPr(
 
     return {
       number: createdPr.data.number,
+      id: createdPr.data.id,
       htmlUrl: createdPr.data.html_url
     }
   } catch (error) {
@@ -246,49 +247,6 @@ function getOpenAiCompatibleUrl(baseUrl: string): string {
     baseUrl = baseUrl.slice(0, -1)
   }
   return `${baseUrl}/openai/v1`
-}
-
-async function recordInferenceInClickHouse(
-  config: ClickHouseConfig,
-  params: { inferenceId: string; pullRequestNumber: number }
-): Promise<void> {
-  const { url, database, table, username, password } = config
-  const endpoint = new URL(url)
-
-  if (database) {
-    endpoint.searchParams.set('database', database)
-  }
-
-  const query = `INSERT INTO ${table} FORMAT JSONEachRow`
-  endpoint.searchParams.set('query', query)
-
-  const row = {
-    inference_id: params.inferenceId,
-    pull_request_number: params.pullRequestNumber,
-    created_at: new Date().toISOString()
-  }
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json'
-  }
-
-  if (username) {
-    const authValue = `${username}:${password ?? ''}`
-    headers.Authorization = `Basic ${Buffer.from(authValue).toString('base64')}`
-  }
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers,
-    body: `${JSON.stringify(row)}\n`
-  })
-
-  if (!response.ok) {
-    const responseText = await response.text()
-    throw new Error(
-      `ClickHouse insert request failed with status ${response.status}: ${responseText}`
-    )
-  }
 }
 
 function isPullRequestEligibleForFix(): boolean {
@@ -353,51 +311,13 @@ function parseAndValidateActionInputs(): GeneratePrPatchActionInput {
     )
   }
 
-  const clickHouseUrl = core.getInput('clickhouse-url')?.trim()
-  const clickHouseTable = core.getInput('clickhouse-table')?.trim()
-  const clickHouseUsername = core.getInput('clickhouse-username')?.trim()
-  const clickHousePassword = core.getInput('clickhouse-password')?.trim()
-  const clickHouseDatabase = core.getInput('clickhouse-database')?.trim()
-
-  const clickHouseInputsProvided = Boolean(
-    clickHouseUrl ||
-      clickHouseTable ||
-      clickHouseUsername ||
-      clickHousePassword ||
-      clickHouseDatabase
-  )
-
-  let clickHouseConfig: ClickHouseConfig | undefined
-  if (clickHouseInputsProvided) {
-    if (!clickHouseUrl) {
-      throw new Error(
-        'ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-url` input.'
-      )
-    }
-
-    if (!clickHouseTable) {
-      throw new Error(
-        'ClickHouse table name is required when configuring ClickHouse logging; provide one via the `clickhouse-table` input.'
-      )
-    }
-
-    clickHouseConfig = {
-      url: clickHouseUrl,
-      table: clickHouseTable,
-      username: clickHouseUsername || undefined,
-      password: clickHousePassword || undefined,
-      database: clickHouseDatabase || undefined
-    }
-  }
-
   return {
     token,
     tensorZeroBaseUrl,
     diffSummaryPath: core.getInput('diff-summary-path')?.trim(),
     fullDiffPath: core.getInput('full-diff-path')?.trim(),
     inputLogsDir: core.getInput('input-logs-dir')?.trim(),
-    outputArtifactsDir: core.getInput('output-artifacts-dir')?.trim(),
-    clickHouseConfig
+    outputArtifactsDir: core.getInput('output-artifacts-dir')?.trim()
   }
 }
 
@@ -414,8 +334,7 @@ export async function run(): Promise<void> {
     diffSummaryPath,
     fullDiffPath,
     inputLogsDir,
-    outputArtifactsDir,
-    clickHouseConfig
+    outputArtifactsDir
   } = inputs
   // Prepare artifact directory
   core.info(`Action running in directory ${process.cwd()}`)
@@ -621,23 +540,26 @@ export async function run(): Promise<void> {
     )
   }
 
-  // TODO: Associate response with the follow-up PR.
+  // TODO: consider using episode_id instead of inference ID.
   const tensorZeroResponse = response as any as TensorZeroResponse
-  const inferenceId = tensorZeroResponse.inference_id
+  const inferenceId = tensorZeroResponse.id
 
-  if (followupPr && clickHouseConfig) {
+  if (followupPr) {
+    const request: CreatePullRequestToInferenceRequest = {
+      inferenceId: inferenceId.replace(/-/g, ''),
+      pullRequestId: followupPr.id,
+      originalPullRequestUrl: pullRequest.html_url
+    }
+    core.info(`Outgoing request: ${JSON.stringify(request, null, 2)}`)
     try {
-      await recordInferenceInClickHouse(clickHouseConfig, {
-        inferenceId,
-        pullRequestNumber: followupPr.number
-      })
+      await createPullRequestToInferenceRecord(request)
       core.info(
-        `Recorded inference ${inferenceId} for follow-up PR #${followupPr.number} in ClickHouse.`
+        `Recorded inference ${inferenceId} for follow-up PR #${followupPr.number} (id ${followupPr.id}) in ClickHouse.`
       )
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : `${error}`
       core.warning(
-        `Failed to record inference ${inferenceId} in ClickHouse: ${errorMessage}`
+        `Failed to record inference ${inferenceId} for follow-up PR #${followupPr.number} (id ${followupPr.id}) in ClickHouse: ${errorMessage}`
       )
     }
   }
