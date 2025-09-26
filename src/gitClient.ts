@@ -131,8 +131,8 @@ export async function createFollowupPr(
   { octokit, token, owner, repo, pullRequest, diff }: CreateFollowupPrOptions,
   outputDir?: string
 ): Promise<FollowupPrResult | undefined> {
-  const normalizedDiff = diff.trim()
-  if (!normalizedDiff) {
+  const trimmedDiff = diff.trim()
+  if (!trimmedDiff) {
     core.info(
       'Diff content empty after trimming; skipping follow-up PR creation.'
     )
@@ -163,7 +163,7 @@ export async function createFollowupPr(
     const patchPath = path.join(repoDir, 'tensorzero.patch')
     await fsPromises.writeFile(
       patchPath,
-      `${normalizedDiff}
+      `${trimmedDiff}
 `,
       { encoding: 'utf-8' }
     )

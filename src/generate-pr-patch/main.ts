@@ -13,7 +13,6 @@ import {
   type FollowupPrResult,
   type FailedJobSummary,
   type GeneratePrPatchActionInput,
-  type PullRequestData,
   OctokitInstance
 } from './types.js'
 import {
@@ -25,6 +24,7 @@ import {
   callTensorZeroOpenAi,
   provideInferenceFeedback
 } from '../tensorZeroClient.js'
+import { renderComment } from './pullRequestCommentTemplate.js'
 
 async function getJobStatus(
   jobsUrl: string,
@@ -259,6 +259,18 @@ async function fetchDiffSummaryAndFullDiff(
   }
 }
 
+function maybeWriteDebugArtifact(
+  outputDir: string | undefined,
+  filename: string,
+  content: string
+) {
+  if (!outputDir) {
+    return
+  }
+  fs.writeFileSync(path.join(outputDir, filename), content)
+  core.info(`${filename} written to ${path.join(outputDir, filename)}`)
+}
+
 /**
  * Collects artifacts, builds a prompt to an LLM, then
  *
@@ -267,8 +279,8 @@ async function fetchDiffSummaryAndFullDiff(
 export async function run(): Promise<void> {
   const inputs = parseAndValidateActionInputs()
   const { token, tensorZeroBaseUrl, inputLogsDir, outputArtifactsDir } = inputs
+
   // Prepare artifact directory
-  core.info(`Action running in directory ${process.cwd()}`)
   const outputDir = outputArtifactsDir
     ? path.join(process.cwd(), outputArtifactsDir)
     : undefined
@@ -277,15 +289,6 @@ export async function run(): Promise<void> {
     fs.mkdirSync(outputDir, { recursive: true })
   } else {
     core.warning(`Not creating output artifacts.`)
-  }
-
-  // Write context for debugging
-  if (outputDir) {
-    fs.writeFileSync(
-      path.join(outputDir, 'payload.json'),
-      JSON.stringify(github.context.payload, null, 2)
-    )
-    core.info('Payload written to payload.json')
   }
 
   if (!isPullRequestEligibleForFix()) {
@@ -299,7 +302,6 @@ export async function run(): Promise<void> {
     throw new Error('Unable to determine target workflow run.')
   }
   core.info(`Target workflow run ID: ${runId}`)
-
   if (workflow_run_payload.conclusion !== 'failure') {
     core.warning(`Workflow run did not fail. Skipping action.`)
     return
@@ -323,8 +325,8 @@ export async function run(): Promise<void> {
 
   const { owner, repo } = github.context.repo
   const octokit = github.getOctokit(token)
+  const pullRequest = workflow_run_payload.pull_requests?.[0]
   const prNumber = workflow_run_payload.pull_requests?.[0]?.number
-  let pullRequest: PullRequestData | undefined
 
   // Load diff summary and full diff.
   const { diffSummary, fullDiff } = await fetchDiffSummaryAndFullDiff(
@@ -334,25 +336,13 @@ export async function run(): Promise<void> {
     prNumber,
     token
   )
+  maybeWriteDebugArtifact(outputDir, 'fetched-diff-summary.txt', diffSummary)
+  maybeWriteDebugArtifact(outputDir, 'fetched-full-diff.txt', fullDiff)
 
-  if (outputDir) {
-    const llmPromptPath = path.join(outputDir, 'fetched-diff-summary.txt')
-    fs.writeFileSync(llmPromptPath, diffSummary)
-    core.info(`Diff summary written to ${llmPromptPath}`)
-  }
-  if (outputDir) {
-    const llmPromptPath = path.join(outputDir, 'fetched-full-diff.txt')
-    fs.writeFileSync(llmPromptPath, fullDiff)
-    core.info(`Full diff written to ${llmPromptPath}`)
-  }
   const failedJobs: FailedJobSummary[] = getAllFailedJobs(workflowJobsStatus)
 
-  // Collect artifacts from failed workflow run
   // Read failure logs from local filesystem
-  // TODO: specify the API for passing files.
   const failureLogsDir = path.join(process.cwd(), inputLogsDir)
-
-  // TODO: recursively traverse `failureLogsDir`, collect the contents of all files, and append them to `artifactContents`.
   const artifactContents = await readArtifactContentsRecursively(failureLogsDir)
 
   // Construct a prompt to call an LLM.
@@ -365,13 +355,7 @@ export async function run(): Promise<void> {
     artifactContents,
     failedJobs
   })
-  core.info(prompt)
-
-  if (outputDir) {
-    const llmPromptPath = path.join(outputDir, 'llm-prompt.txt')
-    fs.writeFileSync(llmPromptPath, prompt)
-    core.info(`Prompt written to ${llmPromptPath}`)
-  }
+  maybeWriteDebugArtifact(outputDir, 'llm-prompt.txt', prompt)
 
   const systemPrompt =
     'You are a meticulous senior engineer who produces concise plans and clean patches to repair failing pull requests.'
@@ -380,18 +364,16 @@ export async function run(): Promise<void> {
     systemPrompt,
     prompt
   )
-
-  if (outputDir) {
-    fs.writeFileSync(
-      path.join(outputDir, 'llm-response.json'),
-      JSON.stringify(response, null, 2)
-    )
-
-    fs.writeFileSync(
-      path.join(outputDir, 'artifact-contents.txt'),
-      artifactContents.join('\n\n' + '='.repeat(80) + '\n\n')
-    )
-  }
+  maybeWriteDebugArtifact(
+    outputDir,
+    'llm-response.json',
+    JSON.stringify(response, null, 2)
+  )
+  maybeWriteDebugArtifact(
+    outputDir,
+    'artifact-contents.txt',
+    artifactContents.join('\n\n' + '='.repeat(80) + '\n\n')
+  )
 
   // Get the LLM response from `response`
   const llmResponse = response.choices[0].message.content
@@ -401,12 +383,6 @@ export async function run(): Promise<void> {
 
   const comments = extractCommentsFromLlmResponse(llmResponse)
   const diff = extractDiffFromLlmResponse(llmResponse)
-
-  if (comments) {
-    core.setOutput('comment', comments)
-  } else {
-    core.setOutput('comment', '')
-  }
 
   if (!comments && !diff) {
     core.info(
@@ -420,15 +396,6 @@ export async function run(): Promise<void> {
       'Unable to identify the original pull request; skipping comment and follow-up PR creation.'
     )
     return
-  }
-
-  if (!pullRequest) {
-    const prResponse = await octokit.rest.pulls.get({
-      owner,
-      repo,
-      pull_number: prNumber
-    })
-    pullRequest = prResponse.data
   }
 
   if (!pullRequest) {
@@ -496,23 +463,18 @@ export async function run(): Promise<void> {
     }
   }
 
-  let commentBody = comments.trim()
-  if (followupPr) {
-    const prLink = `[#${followupPr.number}](${followupPr.htmlUrl})`
-    if (commentBody) {
-      commentBody += `\n\nI've also opened an automated follow-up PR ${prLink} with proposed fixes.`
-    } else {
-      commentBody = `I've opened an automated follow-up PR ${prLink} with proposed fixes.`
-    }
-  }
+  const comment = renderComment({
+    generatedCommentBody: comments.trim(),
+    followupPrNumber: followupPr?.number
+  })
 
-  if (commentBody) {
+  if (comment) {
     try {
       await octokit.rest.issues.createComment({
         owner,
         repo,
         issue_number: prNumber,
-        body: commentBody
+        body: comment
       })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : `${error}`

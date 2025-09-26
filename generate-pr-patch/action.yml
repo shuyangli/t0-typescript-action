@@ -18,8 +18,6 @@ inputs:
   input-logs-dir:
     description: Directory containing workflow failure logs.
     required: true
-  output-artifacts-dir:
-    description: Directory to store output artifacts for debugging purposes.
   clickhouse-url:
     description:
       URL for ClickHouse HTTP interface, in the format of
@@ -28,12 +26,10 @@ inputs:
   clickhouse-table:
     description: Table where inference to PR associations should be recorded.
     required: true
-
-outputs:
-  comment:
-    description: The comment string that will be posted to the PR
-  pull-request-patch:
-    description: The patch string that will be generated in a new pull request
+  output-artifacts-dir:
+    description:
+      Directory to store output artifacts (e.g. LLM prompt and output, git diff)
+      for debugging purposes, if present.
 
 runs:
   using: node24

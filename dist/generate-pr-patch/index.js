@@ -43465,8 +43465,8 @@ async function clonePullRequestRepository(options) {
     return { repoDir, cleanup, remoteUrl, maskedRemoteUrl };
 }
 async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff }, outputDir) {
-    const normalizedDiff = diff.trim();
-    if (!normalizedDiff) {
+    const trimmedDiff = diff.trim();
+    if (!trimmedDiff) {
         coreExports.info('Diff content empty after trimming; skipping follow-up PR creation.');
         return undefined;
     }
@@ -43485,7 +43485,7 @@ async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff
         const fixBranchName = `tensorzero/pr-${pullRequest.number}-${Date.now()}`;
         await execGit(['checkout', '-b', fixBranchName], { cwd: repoDir, token });
         const patchPath = path$1.join(repoDir, 'tensorzero.patch');
-        await fsPromises.writeFile(patchPath, `${normalizedDiff}
+        await fsPromises.writeFile(patchPath, `${trimmedDiff}
 `, { encoding: 'utf-8' });
         try {
             await execGit(['apply', '--whitespace=nowarn', patchPath], {
@@ -50525,6 +50525,23 @@ async function provideInferenceFeedback(tensorZeroBaseUrl, metricName, inference
     return;
 }
 
+const commentTemplateString = `
+### TensorZero CI Bot Automated Comment
+
+{{generatedCommentBody}}
+
+{{#if followupPrNumber}}
+I've also opened an automated follow-up PR #{{followupPrNumber}} with proposed fixes.
+{{/if}}
+`;
+const commentTemplate = Handlebars.compile(commentTemplateString.trim());
+function renderComment(commentContext) {
+    if (!commentContext.generatedCommentBody) {
+        return undefined;
+    }
+    return commentTemplate(commentContext).trim();
+}
+
 async function getJobStatus(jobsUrl, token) {
     // Fetch jobs from the workflow run
     let jobsResponse;
@@ -50699,6 +50716,13 @@ async function fetchDiffSummaryAndFullDiff(octokit, owner, repo, prNumber, token
         fullDiff: diffResult.fullDiff
     };
 }
+function maybeWriteDebugArtifact(outputDir, filename, content) {
+    if (!outputDir) {
+        return;
+    }
+    fs.writeFileSync(path$1.join(outputDir, filename), content);
+    coreExports.info(`${filename} written to ${path$1.join(outputDir, filename)}`);
+}
 /**
  * Collects artifacts, builds a prompt to an LLM, then
  *
@@ -50708,7 +50732,6 @@ async function run() {
     const inputs = parseAndValidateActionInputs();
     const { token, tensorZeroBaseUrl, inputLogsDir, outputArtifactsDir } = inputs;
     // Prepare artifact directory
-    coreExports.info(`Action running in directory ${process.cwd()}`);
     const outputDir = outputArtifactsDir
         ? path$1.join(process.cwd(), outputArtifactsDir)
         : undefined;
@@ -50718,11 +50741,6 @@ async function run() {
     }
     else {
         coreExports.warning(`Not creating output artifacts.`);
-    }
-    // Write context for debugging
-    if (outputDir) {
-        fs.writeFileSync(path$1.join(outputDir, 'payload.json'), JSON.stringify(githubExports.context.payload, null, 2));
-        coreExports.info('Payload written to payload.json');
     }
     if (!isPullRequestEligibleForFix()) {
         coreExports.warning(`Pull request is not eligible for fix. Skipping action.`);
@@ -50751,26 +50769,15 @@ async function run() {
     }
     const { owner, repo } = githubExports.context.repo;
     const octokit = githubExports.getOctokit(token);
+    const pullRequest = workflow_run_payload.pull_requests?.[0];
     const prNumber = workflow_run_payload.pull_requests?.[0]?.number;
-    let pullRequest;
     // Load diff summary and full diff.
     const { diffSummary, fullDiff } = await fetchDiffSummaryAndFullDiff(octokit, owner, repo, prNumber, token);
-    if (outputDir) {
-        const llmPromptPath = path$1.join(outputDir, 'fetched-diff-summary.txt');
-        fs.writeFileSync(llmPromptPath, diffSummary);
-        coreExports.info(`Diff summary written to ${llmPromptPath}`);
-    }
-    if (outputDir) {
-        const llmPromptPath = path$1.join(outputDir, 'fetched-full-diff.txt');
-        fs.writeFileSync(llmPromptPath, fullDiff);
-        coreExports.info(`Full diff written to ${llmPromptPath}`);
-    }
+    maybeWriteDebugArtifact(outputDir, 'fetched-diff-summary.txt', diffSummary);
+    maybeWriteDebugArtifact(outputDir, 'fetched-full-diff.txt', fullDiff);
     const failedJobs = getAllFailedJobs(workflowJobsStatus);
-    // Collect artifacts from failed workflow run
     // Read failure logs from local filesystem
-    // TODO: specify the API for passing files.
     const failureLogsDir = path$1.join(process.cwd(), inputLogsDir);
-    // TODO: recursively traverse `failureLogsDir`, collect the contents of all files, and append them to `artifactContents`.
     const artifactContents = await readArtifactContentsRecursively(failureLogsDir);
     // Construct a prompt to call an LLM.
     const prompt = renderPrPatchPrompt({
@@ -50782,18 +50789,11 @@ async function run() {
         artifactContents,
         failedJobs
     });
-    coreExports.info(prompt);
-    if (outputDir) {
-        const llmPromptPath = path$1.join(outputDir, 'llm-prompt.txt');
-        fs.writeFileSync(llmPromptPath, prompt);
-        coreExports.info(`Prompt written to ${llmPromptPath}`);
-    }
+    maybeWriteDebugArtifact(outputDir, 'llm-prompt.txt', prompt);
     const systemPrompt = 'You are a meticulous senior engineer who produces concise plans and clean patches to repair failing pull requests.';
     const response = await callTensorZeroOpenAi(tensorZeroBaseUrl, systemPrompt, prompt);
-    if (outputDir) {
-        fs.writeFileSync(path$1.join(outputDir, 'llm-response.json'), JSON.stringify(response, null, 2));
-        fs.writeFileSync(path$1.join(outputDir, 'artifact-contents.txt'), artifactContents.join('\n\n' + '='.repeat(80) + '\n\n'));
-    }
+    maybeWriteDebugArtifact(outputDir, 'llm-response.json', JSON.stringify(response, null, 2));
+    maybeWriteDebugArtifact(outputDir, 'artifact-contents.txt', artifactContents.join('\n\n' + '='.repeat(80) + '\n\n'));
     // Get the LLM response from `response`
     const llmResponse = response.choices[0].message.content;
     if (!llmResponse) {
@@ -50801,12 +50801,6 @@ async function run() {
     }
     const comments = extractCommentsFromLlmResponse(llmResponse);
     const diff = extractDiffFromLlmResponse(llmResponse);
-    if (comments) {
-        coreExports.setOutput('comment', comments);
-    }
-    else {
-        coreExports.setOutput('comment', '');
-    }
     if (!comments && !diff) {
         coreExports.info('LLM response contained neither comments nor diff; finishing without changes.');
         return;
@@ -50814,14 +50808,6 @@ async function run() {
     if (!prNumber) {
         coreExports.warning('Unable to identify the original pull request; skipping comment and follow-up PR creation.');
         return;
-    }
-    if (!pullRequest) {
-        const prResponse = await octokit.rest.pulls.get({
-            owner,
-            repo,
-            pull_number: prNumber
-        });
-        pullRequest = prResponse.data;
     }
     if (!pullRequest) {
         coreExports.warning('Unable to load pull request details; skipping follow-up PR creation.');
@@ -50865,23 +50851,17 @@ async function run() {
             coreExports.warning(`Failed to record inference ${inferenceId} for follow-up PR #${followupPr.number} (id ${followupPr.id}) in ClickHouse: ${errorMessage}`);
         }
     }
-    let commentBody = comments.trim();
-    if (followupPr) {
-        const prLink = `[#${followupPr.number}](${followupPr.htmlUrl})`;
-        if (commentBody) {
-            commentBody += `\n\nI've also opened an automated follow-up PR ${prLink} with proposed fixes.`;
-        }
-        else {
-            commentBody = `I've opened an automated follow-up PR ${prLink} with proposed fixes.`;
-        }
-    }
-    if (commentBody) {
+    const comment = renderComment({
+        generatedCommentBody: comments.trim(),
+        followupPrNumber: followupPr?.number
+    });
+    if (comment) {
         try {
             await octokit.rest.issues.createComment({
                 owner,
                 repo,
                 issue_number: prNumber,
-                body: commentBody
+                body: comment
             });
         }
         catch (error) {
