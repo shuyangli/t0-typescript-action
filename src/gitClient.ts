@@ -30,6 +30,18 @@ export interface CreateFollowupPrOptions {
   diff: string
 }
 
+export interface PullRequestDiffOptions {
+  token: string
+  owner: string
+  repo: string
+  pullRequest: PullRequestData
+}
+
+export interface PullRequestDiffResult {
+  diffSummary: string
+  fullDiff: string
+}
+
 function maskSecret(value: string, secret: string | undefined): string {
   if (!secret || !value) {
     return value
@@ -65,6 +77,56 @@ async function execGit(
   }
 }
 
+interface ClonedRepository {
+  repoDir: string
+  cleanup: () => Promise<void>
+  remoteUrl: string
+  maskedRemoteUrl: string
+}
+
+interface CloneRepositoryOptions {
+  token: string
+  owner: string
+  repo: string
+  pullRequest: PullRequestData
+}
+
+async function clonePullRequestRepository(
+  options: CloneRepositoryOptions
+): Promise<ClonedRepository> {
+  const { token, owner, repo, pullRequest } = options
+  const tempBaseDir = await fsPromises.mkdtemp(
+    path.join(os.tmpdir(), 'tensorzero-pr-')
+  )
+  const repoDir = path.join(tempBaseDir, 'repo')
+  const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`
+  const maskedRemoteUrl = maskSecret(remoteUrl, token)
+
+  try {
+    await execGit(
+      [
+        'clone',
+        '--origin',
+        'origin',
+        '--branch',
+        pullRequest.head.ref,
+        remoteUrl,
+        repoDir
+      ],
+      { token }
+    )
+  } catch (error) {
+    await fsPromises.rm(tempBaseDir, { recursive: true, force: true })
+    throw error
+  }
+
+  const cleanup = async (): Promise<void> => {
+    await fsPromises.rm(tempBaseDir, { recursive: true, force: true })
+  }
+
+  return { repoDir, cleanup, remoteUrl, maskedRemoteUrl }
+}
+
 export async function createFollowupPr(
   { octokit, token, owner, repo, pullRequest, diff }: CreateFollowupPrOptions,
   outputDir?: string
@@ -87,28 +149,14 @@ export async function createFollowupPr(
     return undefined
   }
 
-  const tempBaseDir = await fsPromises.mkdtemp(
-    path.join(os.tmpdir(), 'tensorzero-pr-')
-  )
-  const repoDir = path.join(tempBaseDir, 'repo')
-  const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`
-  const maskedRemoteUrl = maskSecret(remoteUrl, token)
+  const { repoDir, cleanup, maskedRemoteUrl } =
+    await clonePullRequestRepository({
+      token,
+      owner,
+      repo,
+      pullRequest
+    })
   try {
-    await execGit(
-      [
-        'clone',
-        '--origin',
-        'origin',
-        '--branch',
-        pullRequest.head.ref,
-        remoteUrl,
-        repoDir
-      ],
-      {
-        token
-      }
-    )
-
     const fixBranchName = `tensorzero/pr-${pullRequest.number}-${Date.now()}`
     await execGit(['checkout', '-b', fixBranchName], { cwd: repoDir, token })
 
@@ -203,6 +251,62 @@ export async function createFollowupPr(
     )
     return undefined
   } finally {
-    await fsPromises.rm(tempBaseDir, { recursive: true, force: true })
+    await cleanup()
+  }
+}
+
+export async function getPullRequestDiff(
+  options: PullRequestDiffOptions
+): Promise<PullRequestDiffResult> {
+  const { token, owner, repo, pullRequest } = options
+
+  const { repoDir, cleanup, maskedRemoteUrl } =
+    await clonePullRequestRepository({
+      token,
+      owner,
+      repo,
+      pullRequest
+    })
+
+  try {
+    core.info(
+      `Fetching base branch ${pullRequest.base.ref} for diff computation.`
+    )
+    await execGit(['fetch', 'origin', pullRequest.base.ref], {
+      cwd: repoDir,
+      token
+    })
+
+    core.info(
+      `Ensuring head branch ${pullRequest.head.ref} is up to date for diff computation.`
+    )
+    await execGit(['fetch', 'origin', pullRequest.head.ref], {
+      cwd: repoDir,
+      token
+    })
+
+    const diffRange = `origin/${pullRequest.base.ref}...${pullRequest.head.sha}`
+    core.info(`Computing diff summary with range ${diffRange}.`)
+    const diffSummary = await execGit(['diff', '--stat', diffRange], {
+      cwd: repoDir,
+      token
+    })
+    core.info(`Computing full diff with range ${diffRange}.`)
+    const fullDiff = await execGit(['diff', diffRange], {
+      cwd: repoDir,
+      token
+    })
+
+    return {
+      diffSummary: diffSummary.stdout,
+      fullDiff: fullDiff.stdout
+    }
+  } catch (error) {
+    const maskedMessage = maskSecret((error as Error).message, token)
+    throw new Error(
+      `Failed to compute diff using remote ${maskedRemoteUrl}: ${maskedMessage}`
+    )
+  } finally {
+    await cleanup()
   }
 }

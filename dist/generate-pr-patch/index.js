@@ -43438,17 +43438,8 @@ async function execGit(args, options = {}) {
         throw new Error(`${commandString} failed: ${maskSecret(stderr, token)}`);
     }
 }
-async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff }, outputDir) {
-    const normalizedDiff = diff.trim();
-    if (!normalizedDiff) {
-        coreExports.info('Diff content empty after trimming; skipping follow-up PR creation.');
-        return undefined;
-    }
-    if (!pullRequest.head.repo ||
-        pullRequest.head.repo.full_name !== `${owner}/${repo}`) {
-        coreExports.warning('Original PR branch lives in a fork; skipping follow-up PR creation.');
-        return undefined;
-    }
+async function clonePullRequestRepository(options) {
+    const { token, owner, repo, pullRequest } = options;
     const tempBaseDir = await fsPromises.mkdtemp(path$1.join(require$$0.tmpdir(), 'tensorzero-pr-'));
     const repoDir = path$1.join(tempBaseDir, 'repo');
     const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`;
@@ -43462,9 +43453,35 @@ async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff
             pullRequest.head.ref,
             remoteUrl,
             repoDir
-        ], {
-            token
-        });
+        ], { token });
+    }
+    catch (error) {
+        await fsPromises.rm(tempBaseDir, { recursive: true, force: true });
+        throw error;
+    }
+    const cleanup = async () => {
+        await fsPromises.rm(tempBaseDir, { recursive: true, force: true });
+    };
+    return { repoDir, cleanup, remoteUrl, maskedRemoteUrl };
+}
+async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff }, outputDir) {
+    const normalizedDiff = diff.trim();
+    if (!normalizedDiff) {
+        coreExports.info('Diff content empty after trimming; skipping follow-up PR creation.');
+        return undefined;
+    }
+    if (!pullRequest.head.repo ||
+        pullRequest.head.repo.full_name !== `${owner}/${repo}`) {
+        coreExports.warning('Original PR branch lives in a fork; skipping follow-up PR creation.');
+        return undefined;
+    }
+    const { repoDir, cleanup, maskedRemoteUrl } = await clonePullRequestRepository({
+        token,
+        owner,
+        repo,
+        pullRequest
+    });
+    try {
         const fixBranchName = `tensorzero/pr-${pullRequest.number}-${Date.now()}`;
         await execGit(['checkout', '-b', fixBranchName], { cwd: repoDir, token });
         const patchPath = path$1.join(repoDir, 'tensorzero.patch');
@@ -43538,7 +43555,50 @@ async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff
         return undefined;
     }
     finally {
-        await fsPromises.rm(tempBaseDir, { recursive: true, force: true });
+        await cleanup();
+    }
+}
+async function getPullRequestDiff(options) {
+    const { token, owner, repo, pullRequest } = options;
+    const { repoDir, cleanup, maskedRemoteUrl } = await clonePullRequestRepository({
+        token,
+        owner,
+        repo,
+        pullRequest
+    });
+    try {
+        coreExports.info(`Fetching base branch ${pullRequest.base.ref} for diff computation.`);
+        await execGit(['fetch', 'origin', pullRequest.base.ref], {
+            cwd: repoDir,
+            token
+        });
+        coreExports.info(`Ensuring head branch ${pullRequest.head.ref} is up to date for diff computation.`);
+        await execGit(['fetch', 'origin', pullRequest.head.ref], {
+            cwd: repoDir,
+            token
+        });
+        const diffRange = `origin/${pullRequest.base.ref}...${pullRequest.head.sha}`;
+        coreExports.info(`Computing diff summary with range ${diffRange}.`);
+        const diffSummary = await execGit(['diff', '--stat', diffRange], {
+            cwd: repoDir,
+            token
+        });
+        coreExports.info(`Computing full diff with range ${diffRange}.`);
+        const fullDiff = await execGit(['diff', diffRange], {
+            cwd: repoDir,
+            token
+        });
+        return {
+            diffSummary: diffSummary.stdout,
+            fullDiff: fullDiff.stdout
+        };
+    }
+    catch (error) {
+        const maskedMessage = maskSecret(error.message, token);
+        throw new Error(`Failed to compute diff using remote ${maskedRemoteUrl}: ${maskedMessage}`);
+    }
+    finally {
+        await cleanup();
     }
 }
 
@@ -50555,13 +50615,20 @@ function parseAndValidateActionInputs() {
     if (!tensorZeroBaseUrl) {
         throw new Error('TensorZero base url is required; provide one via the `tensorzero-base-url` input.');
     }
+    const inputLogsDirInput = coreExports.getInput('input-logs-dir');
+    const inputLogsDir = inputLogsDirInput ? inputLogsDirInput.trim() : '';
+    if (!inputLogsDir) {
+        throw new Error('`input-logs-dir` input is required and must not be empty.');
+    }
+    const outputArtifactsDirInput = coreExports.getInput('output-artifacts-dir');
+    const outputArtifactsDir = outputArtifactsDirInput
+        ? outputArtifactsDirInput.trim() || undefined
+        : undefined;
     return {
         token,
         tensorZeroBaseUrl,
-        diffSummaryPath: coreExports.getInput('diff-summary-path')?.trim(),
-        fullDiffPath: coreExports.getInput('full-diff-path')?.trim(),
-        inputLogsDir: coreExports.getInput('input-logs-dir')?.trim(),
-        outputArtifactsDir: coreExports.getInput('output-artifacts-dir')?.trim()
+        inputLogsDir,
+        outputArtifactsDir
     };
 }
 async function readArtifactContentsRecursively(failureLogsRootDir) {
@@ -50610,6 +50677,28 @@ async function readArtifactContentsRecursively(failureLogsRootDir) {
     }
     return artifactContents;
 }
+async function fetchDiffSummaryAndFullDiff(octokit, owner, repo, prNumber, token) {
+    if (!prNumber) {
+        throw new Error('Unable to determine pull request number to compute diff contents.');
+    }
+    coreExports.info('Diff inputs not provided; computing PR diff via git.');
+    const prResponse = await octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: prNumber
+    });
+    const pullRequest = prResponse.data;
+    const diffResult = await getPullRequestDiff({
+        token,
+        owner,
+        repo,
+        pullRequest
+    });
+    return {
+        diffSummary: diffResult.diffSummary,
+        fullDiff: diffResult.fullDiff
+    };
+}
 /**
  * Collects artifacts, builds a prompt to an LLM, then
  *
@@ -50617,7 +50706,7 @@ async function readArtifactContentsRecursively(failureLogsRootDir) {
  */
 async function run() {
     const inputs = parseAndValidateActionInputs();
-    const { token, tensorZeroBaseUrl, diffSummaryPath, fullDiffPath, inputLogsDir, outputArtifactsDir } = inputs;
+    const { token, tensorZeroBaseUrl, inputLogsDir, outputArtifactsDir } = inputs;
     // Prepare artifact directory
     coreExports.info(`Action running in directory ${process.cwd()}`);
     const outputDir = outputArtifactsDir
@@ -50660,28 +50749,24 @@ async function run() {
         fs.writeFileSync(path$1.join(outputDir, 'workflow-jobs.json'), JSON.stringify(workflowJobsStatus, null, 2));
         coreExports.info('Jobs data written to workflow-jobs.json');
     }
+    const { owner, repo } = githubExports.context.repo;
+    const octokit = githubExports.getOctokit(token);
+    const prNumber = workflow_run_payload.pull_requests?.[0]?.number;
+    let pullRequest;
     // Load diff summary and full diff.
-    // TODO: consider loading pull request diff here using github REST APIs.
-    let diffSummary;
-    let fullDiff;
-    try {
-        diffSummary = fs.readFileSync(diffSummaryPath, { encoding: 'utf-8' });
+    const { diffSummary, fullDiff } = await fetchDiffSummaryAndFullDiff(octokit, owner, repo, prNumber, token);
+    if (outputDir) {
+        const llmPromptPath = path$1.join(outputDir, 'fetched-diff-summary.txt');
+        fs.writeFileSync(llmPromptPath, diffSummary);
+        coreExports.info(`Diff summary written to ${llmPromptPath}`);
     }
-    catch (error) {
-        const errorMessage = error instanceof Error ? error.message : `${error}`;
-        throw new Error(`Failed to read diff summary file at ${diffSummaryPath}: ${errorMessage}`);
-    }
-    try {
-        fullDiff = fs.readFileSync(fullDiffPath, { encoding: 'utf-8' });
-    }
-    catch (error) {
-        const errorMessage = error instanceof Error ? error.message : `${error}`;
-        throw new Error(`Failed to read full diff file at ${fullDiffPath}: ${errorMessage}`);
+    if (outputDir) {
+        const llmPromptPath = path$1.join(outputDir, 'fetched-full-diff.txt');
+        fs.writeFileSync(llmPromptPath, fullDiff);
+        coreExports.info(`Full diff written to ${llmPromptPath}`);
     }
     const failedJobs = getAllFailedJobs(workflowJobsStatus);
     // Collect artifacts from failed workflow run
-    const { owner, repo } = githubExports.context.repo;
-    const octokit = githubExports.getOctokit(token);
     // Read failure logs from local filesystem
     // TODO: specify the API for passing files.
     const failureLogsDir = path$1.join(process.cwd(), inputLogsDir);
@@ -50691,7 +50776,7 @@ async function run() {
     const prompt = renderPrPatchPrompt({
         repoFullName: `${owner}/${repo}`,
         branch: workflow_run_payload.head_branch,
-        prNumber: workflow_run_payload.pull_requests?.[0]?.number,
+        prNumber,
         diffSummary,
         fullDiff,
         artifactContents,
@@ -50726,16 +50811,22 @@ async function run() {
         coreExports.info('LLM response contained neither comments nor diff; finishing without changes.');
         return;
     }
-    const prNumber = workflow_run_payload.pull_requests?.[0]?.number;
     if (!prNumber) {
         coreExports.warning('Unable to identify the original pull request; skipping comment and follow-up PR creation.');
         return;
     }
-    const { data: pullRequest } = await octokit.rest.pulls.get({
-        owner,
-        repo,
-        pull_number: prNumber
-    });
+    if (!pullRequest) {
+        const prResponse = await octokit.rest.pulls.get({
+            owner,
+            repo,
+            pull_number: prNumber
+        });
+        pullRequest = prResponse.data;
+    }
+    if (!pullRequest) {
+        coreExports.warning('Unable to load pull request details; skipping follow-up PR creation.');
+        return;
+    }
     const trimmedDiff = diff.trim();
     let followupPr;
     if (trimmedDiff) {

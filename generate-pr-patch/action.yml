@@ -15,12 +15,6 @@ inputs:
   tensorzero-base-url:
     description: Base URL for the TensorZero instance.
     required: true
-  diff-summary-path:
-    description: File path for diff summary.
-    required: true
-  full-diff-path:
-    description: File path for full diff.
-    required: true
   input-logs-dir:
     description: Directory containing workflow failure logs.
     required: true

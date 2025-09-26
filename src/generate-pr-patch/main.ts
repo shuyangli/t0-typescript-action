@@ -12,13 +12,15 @@ import {
   type WorkflowJobsResponse,
   type FollowupPrResult,
   type FailedJobSummary,
-  type GeneratePrPatchActionInput
+  type GeneratePrPatchActionInput,
+  type PullRequestData,
+  OctokitInstance
 } from './types.js'
 import {
   type CreatePullRequestToInferenceRequest,
   createPullRequestToInferenceRecord
 } from '../clickhouseClient.js'
-import { createFollowupPr } from '../gitClient.js'
+import { createFollowupPr, getPullRequestDiff } from '../gitClient.js'
 import {
   callTensorZeroOpenAi,
   provideInferenceFeedback
@@ -150,13 +152,21 @@ function parseAndValidateActionInputs(): GeneratePrPatchActionInput {
     )
   }
 
+  const inputLogsDirInput = core.getInput('input-logs-dir')
+  const inputLogsDir = inputLogsDirInput ? inputLogsDirInput.trim() : ''
+  if (!inputLogsDir) {
+    throw new Error('`input-logs-dir` input is required and must not be empty.')
+  }
+  const outputArtifactsDirInput = core.getInput('output-artifacts-dir')
+  const outputArtifactsDir = outputArtifactsDirInput
+    ? outputArtifactsDirInput.trim() || undefined
+    : undefined
+
   return {
     token,
     tensorZeroBaseUrl,
-    diffSummaryPath: core.getInput('diff-summary-path')?.trim(),
-    fullDiffPath: core.getInput('full-diff-path')?.trim(),
-    inputLogsDir: core.getInput('input-logs-dir')?.trim(),
-    outputArtifactsDir: core.getInput('output-artifacts-dir')?.trim()
+    inputLogsDir,
+    outputArtifactsDir
   }
 }
 
@@ -217,6 +227,38 @@ async function readArtifactContentsRecursively(
   return artifactContents
 }
 
+async function fetchDiffSummaryAndFullDiff(
+  octokit: OctokitInstance,
+  owner: string,
+  repo: string,
+  prNumber: number,
+  token: string
+): Promise<{ diffSummary: string; fullDiff: string }> {
+  if (!prNumber) {
+    throw new Error(
+      'Unable to determine pull request number to compute diff contents.'
+    )
+  }
+  core.info('Diff inputs not provided; computing PR diff via git.')
+  const prResponse = await octokit.rest.pulls.get({
+    owner,
+    repo,
+    pull_number: prNumber
+  })
+  const pullRequest = prResponse.data
+  const diffResult = await getPullRequestDiff({
+    token,
+    owner,
+    repo,
+    pullRequest
+  })
+
+  return {
+    diffSummary: diffResult.diffSummary,
+    fullDiff: diffResult.fullDiff
+  }
+}
+
 /**
  * Collects artifacts, builds a prompt to an LLM, then
  *
@@ -224,14 +266,7 @@ async function readArtifactContentsRecursively(
  */
 export async function run(): Promise<void> {
   const inputs = parseAndValidateActionInputs()
-  const {
-    token,
-    tensorZeroBaseUrl,
-    diffSummaryPath,
-    fullDiffPath,
-    inputLogsDir,
-    outputArtifactsDir
-  } = inputs
+  const { token, tensorZeroBaseUrl, inputLogsDir, outputArtifactsDir } = inputs
   // Prepare artifact directory
   core.info(`Action running in directory ${process.cwd()}`)
   const outputDir = outputArtifactsDir
@@ -286,32 +321,33 @@ export async function run(): Promise<void> {
     core.info('Jobs data written to workflow-jobs.json')
   }
 
+  const { owner, repo } = github.context.repo
+  const octokit = github.getOctokit(token)
+  const prNumber = workflow_run_payload.pull_requests?.[0]?.number
+  let pullRequest: PullRequestData | undefined
+
   // Load diff summary and full diff.
-  // TODO: consider loading pull request diff here using github REST APIs.
-  let diffSummary: string
-  let fullDiff: string
-  try {
-    diffSummary = fs.readFileSync(diffSummaryPath, { encoding: 'utf-8' })
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : `${error}`
-    throw new Error(
-      `Failed to read diff summary file at ${diffSummaryPath}: ${errorMessage}`
-    )
+  const { diffSummary, fullDiff } = await fetchDiffSummaryAndFullDiff(
+    octokit,
+    owner,
+    repo,
+    prNumber,
+    token
+  )
+
+  if (outputDir) {
+    const llmPromptPath = path.join(outputDir, 'fetched-diff-summary.txt')
+    fs.writeFileSync(llmPromptPath, diffSummary)
+    core.info(`Diff summary written to ${llmPromptPath}`)
   }
-  try {
-    fullDiff = fs.readFileSync(fullDiffPath, { encoding: 'utf-8' })
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : `${error}`
-    throw new Error(
-      `Failed to read full diff file at ${fullDiffPath}: ${errorMessage}`
-    )
+  if (outputDir) {
+    const llmPromptPath = path.join(outputDir, 'fetched-full-diff.txt')
+    fs.writeFileSync(llmPromptPath, fullDiff)
+    core.info(`Full diff written to ${llmPromptPath}`)
   }
   const failedJobs: FailedJobSummary[] = getAllFailedJobs(workflowJobsStatus)
 
   // Collect artifacts from failed workflow run
-  const { owner, repo } = github.context.repo
-  const octokit = github.getOctokit(token)
-
   // Read failure logs from local filesystem
   // TODO: specify the API for passing files.
   const failureLogsDir = path.join(process.cwd(), inputLogsDir)
@@ -323,7 +359,7 @@ export async function run(): Promise<void> {
   const prompt = renderPrPatchPrompt({
     repoFullName: `${owner}/${repo}`,
     branch: workflow_run_payload.head_branch,
-    prNumber: workflow_run_payload.pull_requests?.[0]?.number,
+    prNumber,
     diffSummary,
     fullDiff,
     artifactContents,
@@ -379,7 +415,6 @@ export async function run(): Promise<void> {
     return
   }
 
-  const prNumber = workflow_run_payload.pull_requests?.[0]?.number
   if (!prNumber) {
     core.warning(
       'Unable to identify the original pull request; skipping comment and follow-up PR creation.'
@@ -387,11 +422,21 @@ export async function run(): Promise<void> {
     return
   }
 
-  const { data: pullRequest } = await octokit.rest.pulls.get({
-    owner,
-    repo,
-    pull_number: prNumber
-  })
+  if (!pullRequest) {
+    const prResponse = await octokit.rest.pulls.get({
+      owner,
+      repo,
+      pull_number: prNumber
+    })
+    pullRequest = prResponse.data
+  }
+
+  if (!pullRequest) {
+    core.warning(
+      'Unable to load pull request details; skipping follow-up PR creation.'
+    )
+    return
+  }
 
   const trimmedDiff = diff.trim()
   let followupPr: FollowupPrResult | undefined

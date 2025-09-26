@@ -1,8 +1,6 @@
 export interface GeneratePrPatchActionInput {
   token: string
   tensorZeroBaseUrl: string
-  diffSummaryPath: string
-  fullDiffPath: string
   inputLogsDir: string
   outputArtifactsDir: string | undefined
 }
