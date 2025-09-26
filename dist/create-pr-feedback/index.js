@@ -34873,6 +34873,7 @@ async function getPullRequestToInferenceRecord(pullRequestId) {
     });
     let records = [];
     try {
+        coreExports.info(`SELECT * FROM ${table} WHERE pull_request_id = ${pullRequestId}`);
         const response = await client.query({
             query: `SELECT * FROM ${table} WHERE pull_request_id = ${pullRequestId}`,
             format: 'JSONEachRow'
@@ -34933,6 +34934,7 @@ async function provideFeedback(tensorZeroBaseUrl, inferenceId, isPullRequestMerg
         inference_id: inferenceId,
         value: isPullRequestMerged
     };
+    coreExports.info(`Feedback Request: ${JSON.stringify(feedbackRequest, null, 2)}`);
     const response = await fetch(feedbackUrl, {
         method: 'POST',
         headers: {
@@ -34953,6 +34955,7 @@ async function run() {
         throw new Error('Did not receive a pull request ID from the context.');
     }
     coreExports.info(`Handling Pull Request ID ${pullRequestId} (#${githubExports.context.payload.pull_request?.number}).`);
+    coreExports.info(`Handling Pull Request Merged ${githubExports.context.payload.pull_request?.merged}.`);
     // const githubToken = process.env.GITHUB_TOKEN
     // if (!githubToken) {
     //   throw new Error(`GITHUB_TOKEN is not set. Skipping action.`)
@@ -34971,6 +34974,7 @@ async function run() {
     if (!isPullRequestEligibleForFeedback(inferenceRecords)) {
         return;
     }
+    coreExports.info(`Inference Records: ${JSON.stringify(inferenceRecords, null, 2)}`);
     // Provide feedback
     await Promise.all(inferenceRecords.map(async (record) => {
         await provideFeedback(tensorZeroBaseUrl, record.inferenceId, isPullRequestMerged);

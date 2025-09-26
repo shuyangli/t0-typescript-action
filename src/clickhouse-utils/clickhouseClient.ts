@@ -56,6 +56,7 @@ export async function getPullRequestToInferenceRecord(
   })
   let records: PullRequestToInferenceRecord[] = []
   try {
+    core.info(`SELECT * FROM ${table} WHERE pull_request_id = ${pullRequestId}`)
     const response = await client.query({
       query: `SELECT * FROM ${table} WHERE pull_request_id = ${pullRequestId}`,
       format: 'JSONEachRow'

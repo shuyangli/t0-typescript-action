@@ -72,6 +72,7 @@ async function provideFeedback(
     inference_id: inferenceId,
     value: isPullRequestMerged
   }
+  core.info(`Feedback Request: ${JSON.stringify(feedbackRequest, null, 2)}`)
   const response = await fetch(feedbackUrl, {
     method: 'POST',
     headers: {
@@ -96,6 +97,9 @@ export async function run(): Promise<void> {
   core.info(
     `Handling Pull Request ID ${pullRequestId} (#${github.context.payload.pull_request?.number}).`
   )
+  core.info(
+    `Handling Pull Request Merged ${github.context.payload.pull_request?.merged}.`
+  )
 
   // const githubToken = process.env.GITHUB_TOKEN
   // if (!githubToken) {
@@ -118,6 +122,8 @@ export async function run(): Promise<void> {
   if (!isPullRequestEligibleForFeedback(inferenceRecords)) {
     return
   }
+
+  core.info(`Inference Records: ${JSON.stringify(inferenceRecords, null, 2)}`)
 
   // Provide feedback
   await Promise.all(
