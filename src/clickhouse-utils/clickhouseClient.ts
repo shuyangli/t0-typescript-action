@@ -2,7 +2,8 @@ import { createClient } from '@clickhouse/client'
 import * as core from '@actions/core'
 import {
   ClickHouseConfig,
-  CreatePullRequestToInferenceRequest
+  CreatePullRequestToInferenceRequest,
+  PullRequestToInferenceRecord
 } from './clickhouseTypes.js'
 
 function getClickhouseClientConfig(): ClickHouseConfig {
@@ -38,9 +39,30 @@ export async function createPullRequestToInferenceRecord(
   })
   try {
     await client.command({
-      query: `INSERT INTO ${table} (pull_request_id, inference_id, original_pull_request_url) VALUES (${request.pullRequestId}, toUInt128(toUUID('${request.inferenceId}')), '${request.originalPullRequestUrl}')`
+      query: `INSERT INTO ${table} (pull_request_id, inference_id, original_pull_request_url) VALUES (${request.pullRequestId}, '${request.inferenceId}', '${request.originalPullRequestUrl}')`
     })
   } finally {
     await client.close()
   }
+}
+
+export async function getPullRequestToInferenceRecord(
+  pullRequestId: number
+): Promise<PullRequestToInferenceRecord | undefined> {
+  const { url, table } = getClickhouseClientConfig()
+  const client = createClient({
+    url,
+    application: 'tensorzero-github-action'
+  })
+  let records: PullRequestToInferenceRecord[] = []
+  try {
+    const response = await client.query({
+      query: `SELECT * FROM ${table} WHERE pullRequestId = ${pullRequestId}`,
+      format: 'JSONEachRow'
+    })
+    records = await response.json()
+  } finally {
+    await client.close()
+  }
+  return records[0] ?? undefined
 }

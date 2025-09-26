@@ -12,6 +12,6 @@ export interface CreatePullRequestToInferenceRequest {
 export interface PullRequestToInferenceRecord {
   inferenceId: string
   pullRequestId: number
-  created_at: string
+  createdAt: string
   originalPullRequestUrl: string
 }

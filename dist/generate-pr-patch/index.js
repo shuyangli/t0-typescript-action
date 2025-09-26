@@ -50272,7 +50272,7 @@ async function createPullRequestToInferenceRecord(request) {
     });
     try {
         await client.command({
-            query: `INSERT INTO ${table} (pull_request_id, inference_id, original_pull_request_url) VALUES (${request.pullRequestId}, toUInt128(toUUID('${request.inferenceId}')), '${request.originalPullRequestUrl}')`
+            query: `INSERT INTO ${table} (pull_request_id, inference_id, original_pull_request_url) VALUES (${request.pullRequestId}, '${request.inferenceId}', '${request.originalPullRequestUrl}')`
         });
     }
     finally {
