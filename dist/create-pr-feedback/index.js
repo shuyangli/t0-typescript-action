@@ -41760,12 +41760,13 @@ OpenAI.Conversations = Conversations;
 OpenAI.Evals = Evals;
 OpenAI.Containers = Containers;
 
-async function provideInferenceFeedback(tensorZeroBaseUrl, metricName, inferenceId, value) {
+async function provideInferenceFeedback(tensorZeroBaseUrl, metricName, inferenceId, value, tags) {
     const feedbackUrl = `${tensorZeroBaseUrl}/feedback`;
     const feedbackRequest = {
         metric_name: metricName,
         inference_id: inferenceId,
-        value
+        value,
+        tags
     };
     coreExports.info(`Feedback Request: ${JSON.stringify(feedbackRequest, null, 2)}`);
     const response = await fetch(feedbackUrl, {
@@ -41838,8 +41839,11 @@ async function run() {
     }
     coreExports.info(`Inference Records: ${JSON.stringify(inferenceRecords, null, 2)}`);
     // Provide feedback
+    const feedbackReason = isPullRequestMerged
+        ? 'Pull Request Merged'
+        : 'Pull Request Rejected';
     await Promise.all(inferenceRecords.map(async (record) => {
-        await provideInferenceFeedback(tensorZeroBaseUrl, 'tensorzero_github_ci_bot_pr_merged', record.inference_id, isPullRequestMerged);
+        await provideInferenceFeedback(tensorZeroBaseUrl, 'tensorzero_github_ci_bot_pr_merged', record.inference_id, isPullRequestMerged, { reason: feedbackReason });
         coreExports.info(`Feedback (${isPullRequestMerged}) provided for inference ${record.inference_id}`);
     }));
 }

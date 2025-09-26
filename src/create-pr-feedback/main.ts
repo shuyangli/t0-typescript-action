@@ -87,13 +87,17 @@ export async function run(): Promise<void> {
   core.info(`Inference Records: ${JSON.stringify(inferenceRecords, null, 2)}`)
 
   // Provide feedback
+  const feedbackReason: string = isPullRequestMerged
+    ? 'Pull Request Merged'
+    : 'Pull Request Rejected'
   await Promise.all(
     inferenceRecords.map(async (record) => {
       await provideInferenceFeedback(
         tensorZeroBaseUrl,
         'tensorzero_github_ci_bot_pr_merged',
         record.inference_id,
-        isPullRequestMerged
+        isPullRequestMerged,
+        { reason: feedbackReason }
       )
       core.info(
         `Feedback (${isPullRequestMerged}) provided for inference ${record.inference_id}`

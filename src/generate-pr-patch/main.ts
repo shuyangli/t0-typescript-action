@@ -19,7 +19,10 @@ import {
   createPullRequestToInferenceRecord
 } from '../clickhouseClient.js'
 import { createFollowupPr } from '../gitClient.js'
-import { callTensorZeroOpenAi } from '../tensorZeroClient.js'
+import {
+  callTensorZeroOpenAi,
+  provideInferenceFeedback
+} from '../tensorZeroClient.js'
 
 async function getJobStatus(
   jobsUrl: string,
@@ -393,17 +396,36 @@ export async function run(): Promise<void> {
   const trimmedDiff = diff.trim()
   let followupPr: FollowupPrResult | undefined
   if (trimmedDiff) {
-    followupPr = await createFollowupPr(
-      {
-        octokit,
-        token,
-        owner,
-        repo,
-        pullRequest,
-        diff: trimmedDiff
-      },
-      outputDir
-    )
+    try {
+      followupPr = await createFollowupPr(
+        {
+          octokit,
+          token,
+          owner,
+          repo,
+          pullRequest,
+          diff: trimmedDiff
+        },
+        outputDir
+      )
+      await provideInferenceFeedback(
+        tensorZeroBaseUrl,
+        'tensorzero_github_ci_bot_diff_patched_successfully',
+        response.id,
+        true
+      )
+    } catch (error) {
+      await provideInferenceFeedback(
+        tensorZeroBaseUrl,
+        'tensorzero_github_ci_bot_diff_patched_successfully',
+        response.id,
+        false,
+        { reason: 'Failed to Apply Patch' }
+      )
+
+      const errorMessage = error instanceof Error ? error.message : `${error}`
+      core.warning(`Failed to create follow-up PR: ${errorMessage}`)
+    }
   }
 
   // TODO: consider using episode_id instead of inference ID.

@@ -50443,6 +50443,27 @@ async function callTensorZeroOpenAi(tensorZeroBaseUrl, systemPrompt, prompt) {
         ]
     }));
 }
+async function provideInferenceFeedback(tensorZeroBaseUrl, metricName, inferenceId, value, tags) {
+    const feedbackUrl = `${tensorZeroBaseUrl}/feedback`;
+    const feedbackRequest = {
+        metric_name: metricName,
+        inference_id: inferenceId,
+        value,
+        tags
+    };
+    coreExports.info(`Feedback Request: ${JSON.stringify(feedbackRequest, null, 2)}`);
+    const response = await fetch(feedbackUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(feedbackRequest)
+    });
+    if (!response.ok) {
+        throw new Error(`Failed to provide feedback: ${response.statusText}`);
+    }
+    return;
+}
 
 async function getJobStatus(jobsUrl, token) {
     // Fetch jobs from the workflow run
@@ -50718,14 +50739,22 @@ async function run() {
     const trimmedDiff = diff.trim();
     let followupPr;
     if (trimmedDiff) {
-        followupPr = await createFollowupPr({
-            octokit,
-            token,
-            owner,
-            repo,
-            pullRequest,
-            diff: trimmedDiff
-        }, outputDir);
+        try {
+            followupPr = await createFollowupPr({
+                octokit,
+                token,
+                owner,
+                repo,
+                pullRequest,
+                diff: trimmedDiff
+            }, outputDir);
+            await provideInferenceFeedback(tensorZeroBaseUrl, 'tensorzero_github_ci_bot_diff_patched_successfully', response.id, true);
+        }
+        catch (error) {
+            await provideInferenceFeedback(tensorZeroBaseUrl, 'tensorzero_github_ci_bot_diff_patched_successfully', response.id, false, { reason: 'Failed to Apply Patch' });
+            const errorMessage = error instanceof Error ? error.message : `${error}`;
+            coreExports.warning(`Failed to create follow-up PR: ${errorMessage}`);
+        }
     }
     // TODO: consider using episode_id instead of inference ID.
     const inferenceId = response.id;

@@ -14,6 +14,11 @@ export interface TensorZeroFeedbackRequest<T> {
   metric_name: string
   inference_id: string
   value: T
+  tags?: TensorZeroGithubCiBotFeedbackTags
+}
+
+export interface TensorZeroGithubCiBotFeedbackTags {
+  reason: string
 }
 
 function getOpenAiCompatibleUrl(baseUrl: string): string {
@@ -53,13 +58,15 @@ export async function provideInferenceFeedback<T>(
   tensorZeroBaseUrl: string,
   metricName: string,
   inferenceId: string,
-  value: T
+  value: T,
+  tags?: TensorZeroGithubCiBotFeedbackTags
 ): Promise<void> {
   const feedbackUrl = `${tensorZeroBaseUrl}/feedback`
   const feedbackRequest: TensorZeroFeedbackRequest<T> = {
     metric_name: metricName,
     inference_id: inferenceId,
-    value
+    value,
+    tags
   }
   core.info(`Feedback Request: ${JSON.stringify(feedbackRequest, null, 2)}`)
   const response = await fetch(feedbackUrl, {
