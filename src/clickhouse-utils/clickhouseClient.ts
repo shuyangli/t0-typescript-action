@@ -37,16 +37,8 @@ export async function createPullRequestToInferenceRecord(
     application: 'tensorzero-github-action'
   })
   try {
-    await client.insert({
-      table,
-      values: [
-        {
-          pull_request_id: request.pullRequestId,
-          inference_id: request.inferenceId,
-          original_pull_request_url: request.originalPullRequestUrl
-        }
-      ],
-      format: 'JSONEachRow'
+    await client.command({
+      query: `INSERT INTO ${table} (pull_request_id, inference_id, original_pull_request_url) VALUES (${request.pullRequestId}, toUInt128(toUUID('${request.inferenceId}')), '${request.originalPullRequestUrl}')`
     })
   } finally {
     await client.close()
