@@ -50671,7 +50671,7 @@ async function run() {
     const inferenceId = tensorZeroResponse.id;
     if (followupPr) {
         const request = {
-            inferenceId: inferenceId.replace(/-/g, ''),
+            inferenceId,
             pullRequestId: followupPr.id,
             originalPullRequestUrl: pullRequest.html_url
         };

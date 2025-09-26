@@ -10,8 +10,8 @@ export interface CreatePullRequestToInferenceRequest {
 }
 
 export interface PullRequestToInferenceRecord {
-  inferenceId: string
-  pullRequestId: number
-  createdAt: string
-  originalPullRequestUrl: string
+  inference_id: string
+  pull_request_id: number
+  created_at: string
+  original_pull_request_url: string
 }

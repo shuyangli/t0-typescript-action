@@ -547,7 +547,7 @@ export async function run(): Promise<void> {
 
   if (followupPr) {
     const request: CreatePullRequestToInferenceRequest = {
-      inferenceId: inferenceId.replace(/-/g, ''),
+      inferenceId,
       pullRequestId: followupPr.id,
       originalPullRequestUrl: pullRequest.html_url
     }

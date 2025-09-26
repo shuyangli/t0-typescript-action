@@ -130,11 +130,11 @@ export async function run(): Promise<void> {
     inferenceRecords.map(async (record) => {
       await provideFeedback(
         tensorZeroBaseUrl,
-        record.inferenceId,
+        record.inference_id,
         isPullRequestMerged
       )
       core.info(
-        `Feedback (${isPullRequestMerged}) provided for inference ${record.inferenceId}`
+        `Feedback (${isPullRequestMerged}) provided for inference ${record.inference_id}`
       )
     })
   )

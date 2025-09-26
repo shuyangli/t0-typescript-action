@@ -34977,8 +34977,8 @@ async function run() {
     coreExports.info(`Inference Records: ${JSON.stringify(inferenceRecords, null, 2)}`);
     // Provide feedback
     await Promise.all(inferenceRecords.map(async (record) => {
-        await provideFeedback(tensorZeroBaseUrl, record.inferenceId, isPullRequestMerged);
-        coreExports.info(`Feedback (${isPullRequestMerged}) provided for inference ${record.inferenceId}`);
+        await provideFeedback(tensorZeroBaseUrl, record.inference_id, isPullRequestMerged);
+        coreExports.info(`Feedback (${isPullRequestMerged}) provided for inference ${record.inference_id}`);
     }));
 }
 
