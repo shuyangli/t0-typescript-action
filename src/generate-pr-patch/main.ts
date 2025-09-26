@@ -459,6 +459,7 @@ export async function run(): Promise<void> {
   const tensorZeroOpenAiEndpointUrl = getOpenAiCompatibleUrl(tensorZeroBaseUrl)
   const client = new OpenAI({
     baseURL: tensorZeroOpenAiEndpointUrl,
+    // API key is supplied from the Gateway; we just need an API key for OpenAI client to be happy.
     apiKey: 'dummy'
   })
   const response = await client.chat.completions.create({

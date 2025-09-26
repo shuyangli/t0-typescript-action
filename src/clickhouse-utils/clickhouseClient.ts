@@ -48,7 +48,7 @@ export async function createPullRequestToInferenceRecord(
 
 export async function getPullRequestToInferenceRecord(
   pullRequestId: number
-): Promise<PullRequestToInferenceRecord | undefined> {
+): Promise<PullRequestToInferenceRecord[]> {
   const { url, table } = getClickhouseClientConfig()
   const client = createClient({
     url,
@@ -64,5 +64,5 @@ export async function getPullRequestToInferenceRecord(
   } finally {
     await client.close()
   }
-  return records[0] ?? undefined
+  return records
 }

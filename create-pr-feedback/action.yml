@@ -7,12 +7,19 @@ branding:
   color: blue
 
 inputs:
-  feedback-body:
-    description: Inline markdown content to use as the feedback body.
-    required: false
-  feedback-file:
-    description: Path to a file containing markdown feedback content.
-    required: false
+  tensorzero-base-url:
+    description: Base URL for the TensorZero instance.
+    required: true
+  clickhouse-url:
+    description:
+      URL for ClickHouse HTTP interface, in the format of
+      http[s]://[username:password@]hostname:port[/database].
+    required: true
+  clickhouse-table:
+    description: Table for the PR to inference mapping.
+    required: true
+  output-artifacts-dir:
+    description: Directory to store output artifacts for debugging purposes.
 
 outputs:
   feedback-body:
