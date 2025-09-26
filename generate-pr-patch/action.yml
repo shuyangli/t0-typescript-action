@@ -15,6 +15,9 @@ inputs:
   tensorzero-base-url:
     description: Base URL for the TensorZero instance.
     required: true
+  tensorzero-diff-patched-successfully-metric-name:
+    description: Metric name for tracking diff patching success.
+    required: true
   input-logs-dir:
     description: Directory containing workflow failure logs.
     required: true

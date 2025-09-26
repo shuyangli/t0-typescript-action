@@ -41785,11 +41785,16 @@ async function provideInferenceFeedback(tensorZeroBaseUrl, metricName, inference
 function parseAndValidateActionInputs() {
     const inputs = {
         tensorZeroBaseUrl: coreExports.getInput('tensorzero-base-url')?.trim(),
+        tensorZeroPrMergedMetricName: coreExports.getInput('tensorzero-pr-merged-metric-name')
+            ?.trim(),
         clickhouseUrl: coreExports.getInput('clickhouse-url')?.trim(),
         clickhouseTable: coreExports.getInput('clickhouse-table')?.trim()
     };
     if (!inputs.tensorZeroBaseUrl) {
         throw new Error('TensorZero base url is required; provide one via the `tensorzero-base-url` input.');
+    }
+    if (!inputs.tensorZeroPrMergedMetricName) {
+        throw new Error('TensorZero PR merged metric name is required; provide one via the `tensorzero-pr-merged-metric-name` input.');
     }
     if (!inputs.clickhouseUrl) {
         throw new Error('ClickHouse URL is required; provide one via the `clickhouse-url` input.');
@@ -41825,7 +41830,7 @@ function isPullRequestEligibleForFeedback(inferenceRecords) {
 }
 async function run() {
     const inputs = parseAndValidateActionInputs();
-    const { tensorZeroBaseUrl } = inputs;
+    const { tensorZeroBaseUrl, tensorZeroPrMergedMetricName } = inputs;
     const pullRequestId = githubExports.context.payload.pull_request?.id;
     if (!pullRequestId) {
         throw new Error('Did not receive a pull request ID from the context.');
@@ -41843,7 +41848,7 @@ async function run() {
         ? 'Pull Request Merged'
         : 'Pull Request Rejected';
     await Promise.all(inferenceRecords.map(async (record) => {
-        await provideInferenceFeedback(tensorZeroBaseUrl, 'tensorzero_github_ci_bot_pr_merged', record.inference_id, isPullRequestMerged, { reason: feedbackReason });
+        await provideInferenceFeedback(tensorZeroBaseUrl, tensorZeroPrMergedMetricName, record.inference_id, isPullRequestMerged, { reason: feedbackReason });
         coreExports.info(`Feedback (${isPullRequestMerged}) provided for inference ${record.inference_id}`);
     }));
 }

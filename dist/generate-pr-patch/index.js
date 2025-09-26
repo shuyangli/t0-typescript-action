@@ -50632,6 +50632,11 @@ function parseAndValidateActionInputs() {
     if (!tensorZeroBaseUrl) {
         throw new Error('TensorZero base url is required; provide one via the `tensorzero-base-url` input.');
     }
+    const tensorZeroDiffPatchedSuccessfullyMetricName = coreExports.getInput('tensorzero-diff-patched-successfully-metric-name')
+        ?.trim();
+    if (!tensorZeroDiffPatchedSuccessfullyMetricName) {
+        throw new Error('TensorZero metric name is required; provide one via the `tensorzero-diff-patched-successfully-metric-name` input.');
+    }
     const inputLogsDirInput = coreExports.getInput('input-logs-dir');
     const inputLogsDir = inputLogsDirInput ? inputLogsDirInput.trim() : '';
     if (!inputLogsDir) {
@@ -50644,6 +50649,7 @@ function parseAndValidateActionInputs() {
     return {
         token,
         tensorZeroBaseUrl,
+        tensorZeroDiffPatchedSuccessfullyMetricName,
         inputLogsDir,
         outputArtifactsDir
     };
@@ -50730,7 +50736,7 @@ function maybeWriteDebugArtifact(outputDir, filename, content) {
  */
 async function run() {
     const inputs = parseAndValidateActionInputs();
-    const { token, tensorZeroBaseUrl, inputLogsDir, outputArtifactsDir } = inputs;
+    const { token, tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, inputLogsDir, outputArtifactsDir } = inputs;
     // Prepare artifact directory
     const outputDir = outputArtifactsDir
         ? path$1.join(process.cwd(), outputArtifactsDir)
@@ -50825,10 +50831,10 @@ async function run() {
                 pullRequest,
                 diff: trimmedDiff
             }, outputDir);
-            await provideInferenceFeedback(tensorZeroBaseUrl, 'tensorzero_github_ci_bot_diff_patched_successfully', response.id, true);
+            await provideInferenceFeedback(tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, response.id, true);
         }
         catch (error) {
-            await provideInferenceFeedback(tensorZeroBaseUrl, 'tensorzero_github_ci_bot_diff_patched_successfully', response.id, false, { reason: 'Failed to Apply Patch' });
+            await provideInferenceFeedback(tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, response.id, false, { reason: 'Failed to Apply Patch' });
             const errorMessage = error instanceof Error ? error.message : `${error}`;
             coreExports.warning(`Failed to create follow-up PR: ${errorMessage}`);
         }

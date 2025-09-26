@@ -10,12 +10,20 @@ import { provideInferenceFeedback } from '../tensorZeroClient.js'
 function parseAndValidateActionInputs(): CreatePrFeedbackActionInput {
   const inputs: CreatePrFeedbackActionInput = {
     tensorZeroBaseUrl: core.getInput('tensorzero-base-url')?.trim(),
+    tensorZeroPrMergedMetricName: core
+      .getInput('tensorzero-pr-merged-metric-name')
+      ?.trim(),
     clickhouseUrl: core.getInput('clickhouse-url')?.trim(),
     clickhouseTable: core.getInput('clickhouse-table')?.trim()
   }
   if (!inputs.tensorZeroBaseUrl) {
     throw new Error(
       'TensorZero base url is required; provide one via the `tensorzero-base-url` input.'
+    )
+  }
+  if (!inputs.tensorZeroPrMergedMetricName) {
+    throw new Error(
+      'TensorZero PR merged metric name is required; provide one via the `tensorzero-pr-merged-metric-name` input.'
     )
   }
   if (!inputs.clickhouseUrl) {
@@ -63,7 +71,7 @@ function isPullRequestEligibleForFeedback(
 
 export async function run(): Promise<void> {
   const inputs = parseAndValidateActionInputs()
-  const { tensorZeroBaseUrl } = inputs
+  const { tensorZeroBaseUrl, tensorZeroPrMergedMetricName } = inputs
 
   const pullRequestId = github.context.payload.pull_request?.id
   if (!pullRequestId) {
@@ -94,7 +102,7 @@ export async function run(): Promise<void> {
     inferenceRecords.map(async (record) => {
       await provideInferenceFeedback(
         tensorZeroBaseUrl,
-        'tensorzero_github_ci_bot_pr_merged',
+        tensorZeroPrMergedMetricName,
         record.inference_id,
         isPullRequestMerged,
         { reason: feedbackReason }

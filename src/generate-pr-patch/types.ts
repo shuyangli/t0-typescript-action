@@ -1,6 +1,7 @@
 export interface GeneratePrPatchActionInput {
   token: string
   tensorZeroBaseUrl: string
+  tensorZeroDiffPatchedSuccessfullyMetricName: string
   inputLogsDir: string
   outputArtifactsDir: string | undefined
 }

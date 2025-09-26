@@ -151,6 +151,14 @@ function parseAndValidateActionInputs(): GeneratePrPatchActionInput {
       'TensorZero base url is required; provide one via the `tensorzero-base-url` input.'
     )
   }
+  const tensorZeroDiffPatchedSuccessfullyMetricName = core
+    .getInput('tensorzero-diff-patched-successfully-metric-name')
+    ?.trim()
+  if (!tensorZeroDiffPatchedSuccessfullyMetricName) {
+    throw new Error(
+      'TensorZero metric name is required; provide one via the `tensorzero-diff-patched-successfully-metric-name` input.'
+    )
+  }
 
   const inputLogsDirInput = core.getInput('input-logs-dir')
   const inputLogsDir = inputLogsDirInput ? inputLogsDirInput.trim() : ''
@@ -165,6 +173,7 @@ function parseAndValidateActionInputs(): GeneratePrPatchActionInput {
   return {
     token,
     tensorZeroBaseUrl,
+    tensorZeroDiffPatchedSuccessfullyMetricName,
     inputLogsDir,
     outputArtifactsDir
   }
@@ -278,7 +287,13 @@ function maybeWriteDebugArtifact(
  */
 export async function run(): Promise<void> {
   const inputs = parseAndValidateActionInputs()
-  const { token, tensorZeroBaseUrl, inputLogsDir, outputArtifactsDir } = inputs
+  const {
+    token,
+    tensorZeroBaseUrl,
+    tensorZeroDiffPatchedSuccessfullyMetricName,
+    inputLogsDir,
+    outputArtifactsDir
+  } = inputs
 
   // Prepare artifact directory
   const outputDir = outputArtifactsDir
@@ -422,14 +437,14 @@ export async function run(): Promise<void> {
       )
       await provideInferenceFeedback(
         tensorZeroBaseUrl,
-        'tensorzero_github_ci_bot_diff_patched_successfully',
+        tensorZeroDiffPatchedSuccessfullyMetricName,
         response.id,
         true
       )
     } catch (error) {
       await provideInferenceFeedback(
         tensorZeroBaseUrl,
-        'tensorzero_github_ci_bot_diff_patched_successfully',
+        tensorZeroDiffPatchedSuccessfullyMetricName,
         response.id,
         false,
         { reason: 'Failed to Apply Patch' }
