@@ -43470,8 +43470,11 @@ async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff
         coreExports.info('Diff content empty after trimming; skipping follow-up PR creation.');
         return undefined;
     }
-    if (!pullRequest.head.repo ||
-        pullRequest.head.repo.full_name !== `${owner}/${repo}`) {
+    if (!pullRequest.base.repo?.id) {
+        coreExports.warning('Cannot identify base PR repository; skipping follow-up PR creation.');
+        return undefined;
+    }
+    if (pullRequest.head.repo?.id !== pullRequest.base.repo?.id) {
         coreExports.warning('Original PR branch lives in a fork; skipping follow-up PR creation.');
         return undefined;
     }

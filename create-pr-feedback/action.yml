@@ -24,10 +24,6 @@ inputs:
   output-artifacts-dir:
     description: Directory to store output artifacts for debugging purposes.
 
-outputs:
-  feedback-body:
-    description: The feedback body that was generated for downstream steps.
-
 runs:
   using: node24
   main: ../dist/create-pr-feedback/index.js

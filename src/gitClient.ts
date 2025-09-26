@@ -138,11 +138,13 @@ export async function createFollowupPr(
     )
     return undefined
   }
-
-  if (
-    !pullRequest.head.repo ||
-    pullRequest.head.repo.full_name !== `${owner}/${repo}`
-  ) {
+  if (!pullRequest.base.repo?.id) {
+    core.warning(
+      'Cannot identify base PR repository; skipping follow-up PR creation.'
+    )
+    return undefined
+  }
+  if (pullRequest.head.repo?.id !== pullRequest.base.repo?.id) {
     core.warning(
       'Original PR branch lives in a fork; skipping follow-up PR creation.'
     )
