@@ -1,12 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import * as fs from 'fs'
-import * as fsPromises from 'fs/promises'
-import * as os from 'os'
 import * as path from 'path'
-import { execFile } from 'child_process'
-import { OpenAI } from 'openai'
-import { promisify } from 'util'
 
 import {
   extractCommentsFromLlmResponse,
@@ -16,192 +11,15 @@ import {
 import {
   type WorkflowJobsResponse,
   type FollowupPrResult,
-  type CreateFollowupPrOptions,
   type FailedJobSummary,
-  type TensorZeroResponse,
   type GeneratePrPatchActionInput
 } from './types.js'
-import { CreatePullRequestToInferenceRequest } from '../clickhouse-utils/clickhouseTypes.js'
-import { createPullRequestToInferenceRecord } from '../clickhouse-utils/clickhouseClient.js'
-
-const execFileAsync = promisify(execFile)
-
-function maskSecret(value: string, secret: string | undefined): string {
-  if (!secret || !value) {
-    return value
-  }
-  return value.split(secret).join('***')
-}
-
-async function execGit(
-  args: string[],
-  options: { cwd?: string; token?: string } = {}
-): Promise<{ stdout: string; stderr: string }> {
-  const { cwd, token } = options
-  const commandString = maskSecret(`git ${args.join(' ')}`, token)
-  core.info(commandString)
-  try {
-    const result = await execFileAsync('git', args, {
-      cwd,
-      env: {
-        ...process.env,
-        GIT_TERMINAL_PROMPT: '0'
-      },
-      maxBuffer: 10 * 1024 * 1024,
-      encoding: 'utf-8'
-    })
-    return {
-      stdout: result.stdout ?? '',
-      stderr: result.stderr ?? ''
-    }
-  } catch (error) {
-    const err = error as { message: string; stdout?: string; stderr?: string }
-    const stderr = err.stderr || err.stdout || err.message
-    throw new Error(`${commandString} failed: ${maskSecret(stderr, token)}`)
-  }
-}
-
-async function createFollowupPr(
-  { octokit, token, owner, repo, pullRequest, diff }: CreateFollowupPrOptions,
-  outputDir?: string
-): Promise<FollowupPrResult | undefined> {
-  const normalizedDiff = diff.trim()
-  if (!normalizedDiff) {
-    core.info(
-      'Diff content empty after trimming; skipping follow-up PR creation.'
-    )
-    return undefined
-  }
-
-  if (
-    !pullRequest.head.repo ||
-    pullRequest.head.repo.full_name !== `${owner}/${repo}`
-  ) {
-    core.warning(
-      'Original PR branch lives in a fork; skipping follow-up PR creation.'
-    )
-    return undefined
-  }
-
-  const tempBaseDir = await fsPromises.mkdtemp(
-    path.join(os.tmpdir(), 'tensorzero-pr-')
-  )
-  const repoDir = path.join(tempBaseDir, 'repo')
-  const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`
-  const maskedRemoteUrl = maskSecret(remoteUrl, token)
-  try {
-    await execGit(
-      [
-        'clone',
-        '--origin',
-        'origin',
-        '--branch',
-        pullRequest.head.ref,
-        remoteUrl,
-        repoDir
-      ],
-      {
-        token
-      }
-    )
-
-    const fixBranchName = `tensorzero/pr-${pullRequest.number}-${Date.now()}`
-    await execGit(['checkout', '-b', fixBranchName], { cwd: repoDir, token })
-
-    const patchPath = path.join(repoDir, 'tensorzero.patch')
-    await fsPromises.writeFile(
-      patchPath,
-      `${normalizedDiff}
-`,
-      { encoding: 'utf-8' }
-    )
-    try {
-      await execGit(['apply', '--whitespace=nowarn', patchPath], {
-        cwd: repoDir,
-        token
-      })
-    } finally {
-      await fsPromises.rm(patchPath, { force: true })
-    }
-
-    const status = await execGit(['status', '--porcelain'], {
-      cwd: repoDir,
-      token
-    })
-    if (!status.stdout.trim()) {
-      core.warning(
-        'Diff did not produce any changes; skipping follow-up PR creation.'
-      )
-      return undefined
-    }
-
-    await execGit(
-      [
-        'config',
-        'user.email',
-        '41898282+github-actions[bot]@users.noreply.github.com'
-      ],
-      {
-        cwd: repoDir,
-        token
-      }
-    )
-    await execGit(['config', 'user.name', 'github-actions[bot]'], {
-      cwd: repoDir,
-      token
-    })
-    await execGit(['add', '--all'], { cwd: repoDir, token })
-    await execGit(
-      ['commit', '-m', `chore: automated fix for PR #${pullRequest.number}`],
-      {
-        cwd: repoDir,
-        token
-      }
-    )
-    await execGit(['push', '--set-upstream', 'origin', fixBranchName], {
-      cwd: repoDir,
-      token
-    })
-
-    const prTitle = `Automated follow-up for #${pullRequest.number}`
-    const prBodyLines = [
-      `This pull request was generated automatically in response to failing CI on #${pullRequest.number}.`,
-      '',
-      'The proposed changes were produced from an LLM-provided diff.'
-    ]
-    const prBody = prBodyLines.join('\n')
-
-    const createdPr = await octokit.rest.pulls.create({
-      owner,
-      repo,
-      base: pullRequest.head.ref,
-      head: fixBranchName,
-      title: prTitle,
-      body: prBody
-    })
-
-    if (outputDir) {
-      fs.writeFileSync(
-        path.join(outputDir, 'followup-pr-payload.json'),
-        JSON.stringify(createdPr, null, 2)
-      )
-    }
-
-    return {
-      number: createdPr.data.number,
-      id: createdPr.data.id,
-      htmlUrl: createdPr.data.html_url
-    }
-  } catch (error) {
-    const maskedMessage = maskSecret((error as Error).message, token)
-    core.error(
-      `Failed to create follow-up PR using remote ${maskedRemoteUrl}: ${maskedMessage}`
-    )
-    return undefined
-  } finally {
-    await fsPromises.rm(tempBaseDir, { recursive: true, force: true })
-  }
-}
+import {
+  type CreatePullRequestToInferenceRequest,
+  createPullRequestToInferenceRecord
+} from '../clickhouseClient.js'
+import { createFollowupPr } from '../gitClient.js'
+import { callTensorZeroOpenAi } from '../tensorZeroClient.js'
 
 async function getJobStatus(
   jobsUrl: string,
@@ -240,13 +58,6 @@ function getAllFailedJobs(
           conclusion: step.conclusion
         }))
     }))
-}
-
-function getOpenAiCompatibleUrl(baseUrl: string): string {
-  if (baseUrl[baseUrl.length - 1] === '/') {
-    baseUrl = baseUrl.slice(0, -1)
-  }
-  return `${baseUrl}/openai/v1`
 }
 
 function isPullRequestEligibleForFix(): boolean {
@@ -403,6 +214,8 @@ export async function run(): Promise<void> {
   // Read failure logs from local filesystem
   // TODO: specify the API for passing files.
   const failureLogsDir = path.join(process.cwd(), inputLogsDir)
+
+  // TODO: recursively traverse `failureLogsDir`, collect the contents of all files, and append them to `artifactContents`.
   let artifactContents: string[] = []
   try {
     if (fs.existsSync(failureLogsDir)) {
@@ -438,6 +251,7 @@ export async function run(): Promise<void> {
 
   core.endGroup()
 
+  // Construct a prompt to call an LLM.
   const prompt = renderPrPatchPrompt({
     repoFullName: `${owner}/${repo}`,
     branch: workflow_run_payload.head_branch,
@@ -455,27 +269,13 @@ export async function run(): Promise<void> {
     core.info(`Prompt written to ${llmPromptPath}`)
   }
 
-  // Construct a prompt to call an LLM.
-  const tensorZeroOpenAiEndpointUrl = getOpenAiCompatibleUrl(tensorZeroBaseUrl)
-  const client = new OpenAI({
-    baseURL: tensorZeroOpenAiEndpointUrl,
-    // API key is supplied from the Gateway; we just need an API key for OpenAI client to be happy.
-    apiKey: 'dummy'
-  })
-  const response = await client.chat.completions.create({
-    model: 'tensorzero::model_name::openai::gpt-5',
-    messages: [
-      {
-        content:
-          'You are a meticulous senior engineer who produces concise plans and clean patches to repair failing pull requests.',
-        role: 'system'
-      },
-      {
-        content: prompt,
-        role: 'user'
-      }
-    ]
-  })
+  const systemPrompt =
+    'You are a meticulous senior engineer who produces concise plans and clean patches to repair failing pull requests.'
+  const response = await callTensorZeroOpenAi(
+    tensorZeroBaseUrl,
+    systemPrompt,
+    prompt
+  )
 
   if (outputDir) {
     fs.writeFileSync(
@@ -542,8 +342,7 @@ export async function run(): Promise<void> {
   }
 
   // TODO: consider using episode_id instead of inference ID.
-  const tensorZeroResponse = response as any as TensorZeroResponse
-  const inferenceId = tensorZeroResponse.id
+  const inferenceId = response.id
 
   if (followupPr) {
     const request: CreatePullRequestToInferenceRequest = {

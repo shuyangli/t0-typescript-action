@@ -1,11 +1,11 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import { CreatePrFeedbackActionInput } from './types.js'
 import {
-  CreatePrFeedbackActionInput,
-  TensorZeroFeedbackRequest
-} from './types.js'
-import { getPullRequestToInferenceRecord } from '../clickhouse-utils/clickhouseClient.js'
-import { PullRequestToInferenceRecord } from '../clickhouse-utils/clickhouseTypes.js'
+  type PullRequestToInferenceRecord,
+  getPullRequestToInferenceRecord
+} from '../clickhouseClient.js'
+import { provideInferenceFeedback } from '../tensorZeroClient.js'
 
 function parseAndValidateActionInputs(): CreatePrFeedbackActionInput {
   const inputs: CreatePrFeedbackActionInput = {
@@ -61,31 +61,6 @@ function isPullRequestEligibleForFeedback(
   return true
 }
 
-async function provideFeedback(
-  tensorZeroBaseUrl: string,
-  inferenceId: string,
-  isPullRequestMerged: boolean
-): Promise<void> {
-  const feedbackUrl = `${tensorZeroBaseUrl}/feedback`
-  const feedbackRequest: TensorZeroFeedbackRequest<boolean> = {
-    metric_name: 'tensorzero_github_ci_bot_pr_merged',
-    inference_id: inferenceId,
-    value: isPullRequestMerged
-  }
-  core.info(`Feedback Request: ${JSON.stringify(feedbackRequest, null, 2)}`)
-  const response = await fetch(feedbackUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(feedbackRequest)
-  })
-  if (!response.ok) {
-    throw new Error(`Failed to provide feedback: ${response.statusText}`)
-  }
-  return
-}
-
 export async function run(): Promise<void> {
   const inputs = parseAndValidateActionInputs()
   const { tensorZeroBaseUrl } = inputs
@@ -101,22 +76,8 @@ export async function run(): Promise<void> {
     `Handling Pull Request Merged ${github.context.payload.pull_request?.merged}.`
   )
 
-  // const githubToken = process.env.GITHUB_TOKEN
-  // if (!githubToken) {
-  //   throw new Error(`GITHUB_TOKEN is not set. Skipping action.`)
-  // }
-  // const octokit = github.getOctokit(githubToken)
-  // // Checked above
-  // const pullRequestNumber = github.context.payload.pull_request
-  //   ?.number as number
-
-  // const pullRequestMergedResponse = await octokit.rest.pulls.checkIfMerged({
-  //   owner: github.context.payload.pull_request?.head.repo.owner,
-  //   repo: github.context.payload.pull_request?.head.repo.name,
-  //   pull_number: pullRequestNumber
-  // })
   const isPullRequestMerged =
-    (github.context.payload.pull_request?.merged as boolean) ?? false // pullRequestMergedResponse.status === 204
+    (github.context.payload.pull_request?.merged as boolean) ?? false
 
   const inferenceRecords = await getPullRequestToInferenceRecord(pullRequestId)
   if (!isPullRequestEligibleForFeedback(inferenceRecords)) {
@@ -128,8 +89,9 @@ export async function run(): Promise<void> {
   // Provide feedback
   await Promise.all(
     inferenceRecords.map(async (record) => {
-      await provideFeedback(
+      await provideInferenceFeedback(
         tensorZeroBaseUrl,
+        'tensorzero_github_ci_bot_pr_merged',
         record.inference_id,
         isPullRequestMerged
       )

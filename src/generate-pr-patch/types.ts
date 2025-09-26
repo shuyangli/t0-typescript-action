@@ -72,10 +72,3 @@ export interface CreateFollowupPrOptions {
   pullRequest: PullRequestData
   diff: string
 }
-
-export interface TensorZeroResponse {
-  // Inference ID
-  id: string
-  episode_id: string
-  variant_name: string
-}
