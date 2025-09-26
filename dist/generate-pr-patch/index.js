@@ -50446,17 +50446,38 @@ async function callTensorZeroOpenAi(tensorZeroBaseUrl, systemPrompt, prompt) {
 
 async function getJobStatus(jobsUrl, token) {
     // Fetch jobs from the workflow run
-    const jobsResponse = await fetch(jobsUrl, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28'
-        }
-    });
-    if (jobsResponse.ok) {
-        return (await jobsResponse.json());
+    let jobsResponse;
+    try {
+        jobsResponse = await fetch(jobsUrl, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28'
+            }
+        });
     }
-    throw new Error('Failed to load jobs');
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : `${error}`;
+        throw new Error(`Failed to fetch workflow jobs from ${jobsUrl}: ${errorMessage}`);
+    }
+    if (jobsResponse.ok) {
+        try {
+            return (await jobsResponse.json());
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : `${error}`;
+            throw new Error(`Failed to parse workflow jobs JSON response: ${errorMessage}`);
+        }
+    }
+    // Provide more context about the error
+    let errorBody = '';
+    try {
+        errorBody = await jobsResponse.text();
+    }
+    catch {
+        // Ignore error when trying to read error body
+    }
+    throw new Error(`Failed to load workflow jobs from ${jobsUrl}: ${jobsResponse.status} ${jobsResponse.statusText}${errorBody ? ` - ${errorBody}` : ''}`);
 }
 function getAllFailedJobs(workflowJobsStatus) {
     return (workflowJobsStatus.jobs ?? [])
@@ -50522,6 +50543,52 @@ function parseAndValidateActionInputs() {
         outputArtifactsDir: coreExports.getInput('output-artifacts-dir')?.trim()
     };
 }
+async function readArtifactContentsRecursively(failureLogsRootDir) {
+    const artifactContents = [];
+    try {
+        // Check if directory exists first
+        await fs.promises.access(failureLogsRootDir);
+    }
+    catch (error) {
+        coreExports.warning(`Failure logs directory does not exist: ${failureLogsRootDir}`);
+        return artifactContents;
+    }
+    try {
+        const files = await fs.promises.readdir(failureLogsRootDir, {
+            recursive: true
+        });
+        coreExports.info(`Found ${files.length} files/directories in failure-logs directory: ${files.join(', ')}`);
+        // Filter to only files (exclude directories)
+        const fileStats = await Promise.all(files.map(async (file) => {
+            const filePath = path$1.join(failureLogsRootDir, file);
+            try {
+                const stat = await fs.promises.stat(filePath);
+                return { file, filePath, isFile: stat.isFile() };
+            }
+            catch (error) {
+                coreExports.warning(`Could not stat file ${filePath}: ${error}`);
+                return { file, filePath, isFile: false };
+            }
+        }));
+        const actualFiles = fileStats.filter((item) => item.isFile);
+        for (const { file, filePath } of actualFiles) {
+            try {
+                const content = await fs.promises.readFile(filePath, 'utf-8');
+                artifactContents.push(`## ${file}\n\n${content}`);
+            }
+            catch (error) {
+                const errorMessage = error instanceof Error ? error.message : `${error}`;
+                coreExports.warning(`Failed to read file ${filePath}: ${errorMessage}`);
+                // Continue with other files instead of failing completely
+            }
+        }
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : `${error}`;
+        coreExports.warning(`Failed to read failure logs directory ${failureLogsRootDir}: ${errorMessage}`);
+    }
+    return artifactContents;
+}
 /**
  * Collects artifacts, builds a prompt to an LLM, then
  *
@@ -50574,8 +50641,22 @@ async function run() {
     }
     // Load diff summary and full diff.
     // TODO: consider loading pull request diff here using github REST APIs.
-    const diffSummary = fs.readFileSync(diffSummaryPath, { encoding: 'utf-8' });
-    const fullDiff = fs.readFileSync(fullDiffPath, { encoding: 'utf-8' });
+    let diffSummary;
+    let fullDiff;
+    try {
+        diffSummary = fs.readFileSync(diffSummaryPath, { encoding: 'utf-8' });
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : `${error}`;
+        throw new Error(`Failed to read diff summary file at ${diffSummaryPath}: ${errorMessage}`);
+    }
+    try {
+        fullDiff = fs.readFileSync(fullDiffPath, { encoding: 'utf-8' });
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : `${error}`;
+        throw new Error(`Failed to read full diff file at ${fullDiffPath}: ${errorMessage}`);
+    }
     const failedJobs = getAllFailedJobs(workflowJobsStatus);
     // Collect artifacts from failed workflow run
     const { owner, repo } = githubExports.context.repo;
@@ -50584,34 +50665,7 @@ async function run() {
     // TODO: specify the API for passing files.
     const failureLogsDir = path$1.join(process.cwd(), inputLogsDir);
     // TODO: recursively traverse `failureLogsDir`, collect the contents of all files, and append them to `artifactContents`.
-    let artifactContents = [];
-    try {
-        if (fs.existsSync(failureLogsDir)) {
-            const files = fs.readdirSync(failureLogsDir);
-            coreExports.info(`Found ${files.length} files in failure-logs directory: ${files.join(', ')}`);
-            for (const file of files) {
-                const filePath = path$1.join(failureLogsDir, file);
-                const stat = fs.statSync(filePath);
-                if (stat.isFile()) {
-                    try {
-                        const content = fs.readFileSync(filePath, 'utf-8');
-                        artifactContents.push(`## ${file}\n\n${content}`);
-                        coreExports.info(`Read content from ${file} (${content.length} characters)`);
-                    }
-                    catch (error) {
-                        coreExports.warning(`Failed to read ${file}: ${error}`);
-                    }
-                }
-            }
-        }
-        else {
-            coreExports.warning(`Failure logs directory not found: ${failureLogsDir}`);
-        }
-    }
-    catch (error) {
-        coreExports.warning(`Error reading failure logs directory ${failureLogsDir}: ${error}`);
-    }
-    coreExports.endGroup();
+    const artifactContents = await readArtifactContentsRecursively(failureLogsDir);
     // Construct a prompt to call an LLM.
     const prompt = renderPrPatchPrompt({
         repoFullName: `${owner}/${repo}`,
@@ -50702,12 +50756,19 @@ async function run() {
         }
     }
     if (commentBody) {
-        await octokit.rest.issues.createComment({
-            owner,
-            repo,
-            issue_number: prNumber,
-            body: commentBody
-        });
+        try {
+            await octokit.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: prNumber,
+                body: commentBody
+            });
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : `${error}`;
+            coreExports.warning(`Failed to create comment on pull request #${prNumber}: ${errorMessage}`);
+            // Don't throw here - commenting is not critical to the main functionality
+        }
     }
 }
 
