@@ -14,6 +14,10 @@ publishing, and versioning guidance.
 If you are new, there's also a simpler introduction in the
 [Hello world JavaScript action repository](https://github.com/actions/hello-world-javascript-action).
 
+## Tests
+
+`npm test`
+
 ## Deploying
 
 - `npm run bundle` will build the action.
