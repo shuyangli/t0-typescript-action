@@ -34874,7 +34874,7 @@ async function getPullRequestToInferenceRecord(pullRequestId) {
     let records = [];
     try {
         const response = await client.query({
-            query: `SELECT * FROM ${table} WHERE pullRequestId = ${pullRequestId}`,
+            query: `SELECT * FROM ${table} WHERE pull_request_id = ${pullRequestId}`,
             format: 'JSONEachRow'
         });
         records = await response.json();
