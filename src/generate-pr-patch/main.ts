@@ -353,6 +353,7 @@ export async function run(): Promise<void> {
 
   const trimmedDiff = diff.trim()
   let followupPr: FollowupPrResult | undefined
+  let followupPrCreationError: string | undefined
   if (trimmedDiff) {
     try {
       followupPr = await createFollowupPr(
@@ -383,8 +384,9 @@ export async function run(): Promise<void> {
         { reason: 'Failed to Apply Patch' }
       )
 
-      const errorMessage = error instanceof Error ? error.message : `${error}`
-      core.warning(`Failed to create follow-up PR: ${errorMessage}`)
+      followupPrCreationError =
+        error instanceof Error ? error.message : `${error}`
+      core.warning(`Failed to create follow-up PR: ${followupPrCreationError}`)
     }
   }
 
@@ -413,7 +415,9 @@ export async function run(): Promise<void> {
 
   const comment = renderComment({
     generatedCommentBody: comments.trim(),
-    followupPrNumber: followupPr?.number
+    generatedPatch: trimmedDiff,
+    followupPrNumber: followupPr?.number,
+    followupPrCreationError
   })
   if (comment) {
     try {
