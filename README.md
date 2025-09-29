@@ -9,7 +9,7 @@
 ## Deploying
 
 - `npm run bundle` will build the action.
-- Prepare a Clickhouse Cloud database
+- Prepare a ClickHouse Cloud database
   - We need to add a table for Inference => PR association; assuming one
     inference per PR. Might be able to iterate.
   - Configure the action inputs `clickhouse-url`, `clickhouse-table`, and
@@ -17,15 +17,15 @@
     mappings after creating follow-up pull requests.
 - Configure secrets for the repository:
   - OPENAI_API_KEY: OpenAI API key, used when starting TensorZero gateway
-  - CLICKHOUSE_URL: ClickHouse URL for both TensorZero gateway and the Github PR
+  - CLICKHOUSE_URL: ClickHouse URL for both TensorZero gateway and the GitHub PR
     to inference mapping; expected format is
     `http[s]://[username:password@]hostname:port[/database]`.
 
-### Prepare Clickhouse database
+### Prepare Clickh=House database
 
-We need to create a new table to store Github PR to Inference Map:
+We need to create a new table to store GitHub PR to Inference Map:
 
-```
+```sql
 CREATE TABLE GitHubBotPullRequestToInferenceMap
 (
    pull_request_id UInt128,
