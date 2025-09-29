@@ -26,29 +26,6 @@ export interface WorkflowJobsResponse {
   jobs: WorkflowJob[]
 }
 
-export interface FailedStepSummary {
-  name: string
-  status: string
-  conclusion: string | undefined
-}
-
-export interface FailedJobSummary {
-  name: string
-  conclusion: string | undefined
-  failedSteps: FailedStepSummary[]
-  htmlUrl?: string
-}
-
-export interface PrPatchPromptContext {
-  repoFullName: string
-  branch?: string
-  prNumber?: number
-  diffSummary?: string
-  fullDiff?: string
-  artifactContents: string[]
-  failedJobs: FailedJobSummary[]
-}
-
 export type OctokitInstance = ReturnType<
   typeof import('@actions/github').getOctokit
 >

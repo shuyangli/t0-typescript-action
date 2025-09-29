@@ -13,21 +13,6 @@ const createConfig = (actionName) => {
     commonjs()
   ]
 
-  // Add custom plugin to copy prompt file for generate-pr-patch
-  if (actionName === 'generate-pr-patch') {
-    plugins.push({
-      name: 'copy-prompt-file',
-      writeBundle() {
-        const srcPath = 'src/generate-pr-patch/prompt.txt'
-        const destDir = 'dist/generate-pr-patch'
-        const destPath = join(destDir, 'prompt.txt')
-
-        mkdirSync(destDir, { recursive: true })
-        copyFileSync(srcPath, destPath)
-      }
-    })
-  }
-
   return {
     input: `src/${actionName}/index.ts`,
     output: {
