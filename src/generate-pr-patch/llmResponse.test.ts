@@ -6,7 +6,7 @@ import {
 describe('LLM response helpers', () => {
   it('extracts comments and diffs between markers', () => {
     const response = `prefix
-<comments>A detailed summary</comments>
+<comments>A detailed summary test</comments>
 <diff>diff --git</diff>
 suffix`
 
