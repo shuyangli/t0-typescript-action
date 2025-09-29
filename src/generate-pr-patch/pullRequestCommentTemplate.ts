@@ -3,7 +3,6 @@ import Handlebars from 'handlebars'
 const commentTemplateString = `
 ### TensorZero CI Bot Automated Comment
 
-{{generatedCommentBody}}
 
 {{#if followupPrNumber}}
 I've also opened an automated follow-up PR #{{followupPrNumber}} with proposed fixes.
