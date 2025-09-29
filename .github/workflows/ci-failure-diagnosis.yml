@@ -24,6 +24,12 @@ jobs:
           sparse-checkout: |
             tensorzero
 
+      
+      - name: Move tensorzero to tensorzero-for-gateway
+        run: |
+          mv ./tensorzero ./tensorzero-for-gateway
+          ls -lR .
+
 
       - name: Start TensorZero gateway
         run: |
@@ -33,7 +39,7 @@ jobs:
             -e TENSORZERO_CLICKHOUSE_URL=${{ secrets.CLICKHOUSE_URL }} \
             -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             -p 3000:3000 \
-            --volume ./t0-typescript-action/tensorzero:/action-config \
+            --volume ./tensorzero-for-gateway:/action-config \
             tensorzero/gateway:latest --config-file /action-config/tensorzero.toml
 
           for i in {1..20}; do
