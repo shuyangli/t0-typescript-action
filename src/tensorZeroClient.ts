@@ -23,7 +23,7 @@ export type TensorZeroGenerationArguments = {
   failed_jobs: FailedJobSummary[]
   diff_summary: string
   full_diff: string
-  artifact_contents: string[]
+  failure_logs: string
 }
 
 interface TensorZeroInferenceResponse {

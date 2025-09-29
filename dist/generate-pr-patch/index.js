@@ -35092,6 +35092,21 @@ async function getPullRequestDiff(options) {
         await cleanup();
     }
 }
+async function getFailedWorkflowRunLogs(workflowRunId) {
+    const { stdout, stderr } = await execFileAsync('gh', [
+        'run',
+        'view',
+        `${workflowRunId}`,
+        '--log-failed'
+    ]);
+    if (stderr) {
+        coreExports.warning(`Encountered stderr when getting failed workflow logs: ${stderr}`);
+    }
+    if (stdout) {
+        return stdout;
+    }
+    throw new Error(`Did not receive any logs for workflow ${workflowRunId}`);
+}
 
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
     if (typeof state === "function" ? receiver !== state || true : !state.has(receiver))
@@ -50485,52 +50500,6 @@ function renderComment(commentContext) {
     return commentTemplate(commentContext).trim();
 }
 
-async function readArtifactContentsRecursively(rootDir) {
-    const artifactContents = [];
-    try {
-        // Check if we can access the directory
-        await fs.promises.access(rootDir);
-    }
-    catch (error) {
-        coreExports.warning(`Directory does not exist: ${rootDir}, error: ${error}`);
-        return artifactContents;
-    }
-    let filePaths = [];
-    try {
-        filePaths = await fs.promises.readdir(rootDir, {
-            recursive: true
-        });
-        coreExports.info(`Found ${filePaths.length} fileNames/directories in directory: ${rootDir}`);
-    }
-    catch (error) {
-        coreExports.warning(`Failed to read directory ${rootDir}: ${error}`);
-        return artifactContents;
-    }
-    // Expand path and filter to only files
-    const fileInfo = (await Promise.all(filePaths.map(async (relativePath) => {
-        const absolutePath = path$1.join(rootDir, relativePath);
-        try {
-            const stat = await fs.promises.stat(absolutePath);
-            return { relativePath, absolutePath, isFile: stat.isFile() };
-        }
-        catch (error) {
-            coreExports.warning(`Could not stat file ${absolutePath}: ${error}`);
-            return { relativePath, absolutePath, isFile: false };
-        }
-    }))).filter((item) => item.isFile);
-    for (const { relativePath, absolutePath } of fileInfo) {
-        try {
-            const content = await fs.promises.readFile(absolutePath, 'utf-8');
-            artifactContents.push(`## ${relativePath}\n\n${content}`);
-        }
-        catch (error) {
-            coreExports.warning(`Failed to read file ${absolutePath}: ${error}`);
-            // Continue with other files instead of failing completely
-        }
-    }
-    return artifactContents;
-}
-
 async function getJobStatus(jobsUrl, token) {
     // Fetch jobs from the workflow run
     let jobsResponse;
@@ -50626,11 +50595,6 @@ function parseAndValidateActionInputs() {
     if (!tensorZeroDiffPatchedSuccessfullyMetricName) {
         throw new Error('TensorZero metric name is required; provide one via the `tensorzero-diff-patched-successfully-metric-name` input.');
     }
-    const inputLogsDirInput = coreExports.getInput('input-logs-dir');
-    const inputLogsDir = inputLogsDirInput ? inputLogsDirInput.trim() : '';
-    if (!inputLogsDir) {
-        throw new Error('`input-logs-dir` input is required and must not be empty.');
-    }
     const outputArtifactsDirInput = coreExports.getInput('output-artifacts-dir');
     const outputArtifactsDir = outputArtifactsDirInput
         ? outputArtifactsDirInput.trim() || undefined
@@ -50639,7 +50603,6 @@ function parseAndValidateActionInputs() {
         token,
         tensorZeroBaseUrl,
         tensorZeroDiffPatchedSuccessfullyMetricName,
-        inputLogsDir,
         outputArtifactsDir
     };
 }
@@ -50682,7 +50645,7 @@ function maybeWriteDebugArtifact(outputDir, filename, content) {
  */
 async function run() {
     const inputs = parseAndValidateActionInputs();
-    const { token, tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, inputLogsDir, outputArtifactsDir } = inputs;
+    const { token, tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, outputArtifactsDir } = inputs;
     // Prepare artifact directory
     const outputDir = outputArtifactsDir
         ? path$1.join(process.cwd(), outputArtifactsDir)
@@ -50724,22 +50687,21 @@ async function run() {
     maybeWriteDebugArtifact(outputDir, 'fetched-diff-summary.txt', diffSummary);
     maybeWriteDebugArtifact(outputDir, 'fetched-full-diff.txt', fullDiff);
     const failedJobs = getAllFailedJobs(workflowJobsStatus);
-    // Read failure logs from local filesystem
-    const failureLogsDir = path$1.join(process.cwd(), inputLogsDir);
-    const artifactContents = await readArtifactContentsRecursively(failureLogsDir);
+    // Gather failure logs
+    const failureLogs = await getFailedWorkflowRunLogs(runId);
     // Call TensorZero to generate a PR and comment.
     const generationArguments = {
         failed_jobs: failedJobs,
         diff_summary: diffSummary,
         full_diff: fullDiff,
-        artifact_contents: artifactContents,
+        failure_logs: failureLogs,
         repo_full_name: `${owner}/${repo}`,
         branch: workflow_run_payload.head_branch,
         pr_number: prNumber
     };
     const response = await callTensorZeroOpenAi(tensorZeroBaseUrl, generationArguments);
     maybeWriteDebugArtifact(outputDir, 'llm-response.json', JSON.stringify(response, null, 2));
-    maybeWriteDebugArtifact(outputDir, 'artifact-contents.txt', artifactContents.join('\n\n' + '='.repeat(80) + '\n\n'));
+    maybeWriteDebugArtifact(outputDir, 'failure-logs.txt', failureLogs);
     // Get the LLM response from `response`
     const llmResponse = response.choices[0].message.content;
     if (!llmResponse) {

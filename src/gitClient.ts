@@ -312,3 +312,23 @@ export async function getPullRequestDiff(
     await cleanup()
   }
 }
+
+export async function getFailedWorkflowRunLogs(
+  workflowRunId: number
+): Promise<string> {
+  const { stdout, stderr } = await execFileAsync('gh', [
+    'run',
+    'view',
+    `${workflowRunId}`,
+    '--log-failed'
+  ])
+  if (stderr) {
+    core.warning(
+      `Encountered stderr when getting failed workflow logs: ${stderr}`
+    )
+  }
+  if (stdout) {
+    return stdout
+  }
+  throw new Error(`Did not receive any logs for workflow ${workflowRunId}`)
+}

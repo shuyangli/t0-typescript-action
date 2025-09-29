@@ -18,9 +18,6 @@ inputs:
   tensorzero-diff-patched-successfully-metric-name:
     description: Metric name for tracking diff patching success.
     required: true
-  input-logs-dir:
-    description: Directory containing workflow failure logs.
-    required: true
   clickhouse-url:
     description:
       URL for ClickHouse HTTP interface, in the format of

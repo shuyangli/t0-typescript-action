@@ -17,7 +17,11 @@ import {
   type CreatePullRequestToInferenceRequest,
   createPullRequestToInferenceRecord
 } from '../clickhouseClient.js'
-import { createFollowupPr, getPullRequestDiff } from '../gitClient.js'
+import {
+  createFollowupPr,
+  getPullRequestDiff,
+  getFailedWorkflowRunLogs
+} from '../gitClient.js'
 import {
   callTensorZeroOpenAi,
   provideInferenceFeedback,
@@ -25,7 +29,6 @@ import {
   type FailedJobSummary
 } from '../tensorZeroClient.js'
 import { renderComment } from './pullRequestCommentTemplate.js'
-import { readArtifactContentsRecursively } from '../fileClient.js'
 
 async function getJobStatus(
   jobsUrl: string,
@@ -161,11 +164,6 @@ function parseAndValidateActionInputs(): GeneratePrPatchActionInput {
     )
   }
 
-  const inputLogsDirInput = core.getInput('input-logs-dir')
-  const inputLogsDir = inputLogsDirInput ? inputLogsDirInput.trim() : ''
-  if (!inputLogsDir) {
-    throw new Error('`input-logs-dir` input is required and must not be empty.')
-  }
   const outputArtifactsDirInput = core.getInput('output-artifacts-dir')
   const outputArtifactsDir = outputArtifactsDirInput
     ? outputArtifactsDirInput.trim() || undefined
@@ -175,7 +173,6 @@ function parseAndValidateActionInputs(): GeneratePrPatchActionInput {
     token,
     tensorZeroBaseUrl,
     tensorZeroDiffPatchedSuccessfullyMetricName,
-    inputLogsDir,
     outputArtifactsDir
   }
 }
@@ -238,7 +235,6 @@ export async function run(): Promise<void> {
     token,
     tensorZeroBaseUrl,
     tensorZeroDiffPatchedSuccessfullyMetricName,
-    inputLogsDir,
     outputArtifactsDir
   } = inputs
 
@@ -300,16 +296,15 @@ export async function run(): Promise<void> {
 
   const failedJobs: FailedJobSummary[] = getAllFailedJobs(workflowJobsStatus)
 
-  // Read failure logs from local filesystem
-  const failureLogsDir = path.join(process.cwd(), inputLogsDir)
-  const artifactContents = await readArtifactContentsRecursively(failureLogsDir)
+  // Gather failure logs
+  const failureLogs = await getFailedWorkflowRunLogs(runId)
 
   // Call TensorZero to generate a PR and comment.
   const generationArguments: TensorZeroGenerationArguments = {
     failed_jobs: failedJobs,
     diff_summary: diffSummary,
     full_diff: fullDiff,
-    artifact_contents: artifactContents,
+    failure_logs: failureLogs,
     repo_full_name: `${owner}/${repo}`,
     branch: workflow_run_payload.head_branch,
     pr_number: prNumber
@@ -324,11 +319,7 @@ export async function run(): Promise<void> {
     'llm-response.json',
     JSON.stringify(response, null, 2)
   )
-  maybeWriteDebugArtifact(
-    outputDir,
-    'artifact-contents.txt',
-    artifactContents.join('\n\n' + '='.repeat(80) + '\n\n')
-  )
+  maybeWriteDebugArtifact(outputDir, 'failure-logs.txt', failureLogs)
 
   // Get the LLM response from `response`
   const llmResponse = response.choices[0].message.content

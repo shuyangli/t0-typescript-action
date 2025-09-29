@@ -60,24 +60,14 @@ jobs:
           cat /tmp/tensorzero-for-gateway/tensorzero.toml
           cat /tmp/tensorzero-for-gateway/prompt.minijinja
 
-      - name: Collect logs from the failed workflow run
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p diagnostics
-          cd diagnostics
-          gh run view ${{ github.event.workflow_run.id }} --log-failed > failed-jobs.log
-          cd ..
-          # Print the contents of the logs directory for debugging
-          ls -la diagnostics
-
       - name: Call LLM to generate PR revision
         uses: shuyangli/t0-typescript-action/generate-pr-patch@main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tensorzero-base-url: http://localhost:3000
           tensorzero-diff-patched-successfully-metric-name: tensorzero_github_ci_bot_diff_patched_successfully
-          input-logs-dir: diagnostics
           output-artifacts-dir: debug-logs
           clickhouse-url: ${{ secrets.CLICKHOUSE_URL }}
           clickhouse-table: GitHubBotPullRequestToInferenceMap
@@ -89,7 +79,6 @@ jobs:
         with:
           name: ci-failure-diagnostics
           path: |
-            diagnostics/
             debug-logs/
 
       - name: Stop TensorZero gateway

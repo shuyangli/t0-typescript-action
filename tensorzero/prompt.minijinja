@@ -7,7 +7,7 @@ Original PR: {% if pr_number %}#{{ pr_number }}{% else %}(unknown){% endif %}
 {% if failed_jobs %}
 ## Failed Jobs
 {% for job in failed_jobs %}
-- {{ job.name }} (conclusion: {% if job.conclusion %}{{ job.conclusion }}{% else %}unknown{% endif %}){% if job.html_url %} – {{ job.html_url }}{% endif %}
+- {{ job.name }} (conclusion: {% if job.conclusion %}{{ job.conclusion }}{% else %}unknown{% endif %})
 {% if job.failed_steps %}
   Failed steps:
 {% for step in job.failed_steps %}
@@ -27,14 +27,11 @@ No failing jobs were detected in the most recent run.
 ## Full Diff
 {% if full_diff %}{{ full_diff }}{% else %}Full diff not supplied.{% endif %}
 
-{% if artifact_contents %}
-## Available Artifacts
-{% for artifact in artifact_contents %}
-{{ artifact }}
-
-{% endfor %}
+## Failure Logs
+{% if failure_logs %}
+{{ failure_logs }}
 {% else %}
-No artifact were available from the failing run.
+No logs were available from the failing run.
 {% endif %}
 
 Your response should contain the following:
@@ -45,15 +42,17 @@ Your response should contain the following:
 Comments about the failure.
 </comments>
 
-* if the failure can be fixed by the user running a command, write a comment that includes the command and its expected output. Include the comment in the comments block.
+* if the failure can be fixed by the user running a command, specify the exact command the user should run to fix the problem:
+<command>
+Command the user should run.
+</command>
 
-* if the failure is due to an issue in the code, provide a unified diff patch that applies those fixes. Your diff will be generated as a new PR against the original PR branch.
-The diff should be wrapped in a block like this:
+* if the failure is due to an issue in the code, provide a unified diff patch that applies those fixes, in the exact Git patch format. Your diff will be applied with `git apply` to generate a new PR against the original PR branch. The diff should be wrapped in a block like this:
 
 <diff>
-Verbatim diff that you generated that can be applied as a patch to the original PR branch.
+Verbatim diff that can be applied as a patch to the original PR branch.
 </diff>
 
-If there is nothing to fix, only write a comment about the failure.
+If there is nothing to fix, only write a comment about the failure. Do not output the <command> or <diff> sections.
 
 IMPORTANT: You are not allowed to modify any GitHub actions. You can only modify the code in the repository.
