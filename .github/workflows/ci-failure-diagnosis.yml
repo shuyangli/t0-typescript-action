@@ -17,13 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Gather failure context and generate PR
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 0
-          fetch-tags: false
-
       - name: Checkout TensorZero config file
         uses: actions/checkout@v5
         with:
@@ -31,21 +24,11 @@ jobs:
           sparse-checkout: |
             tensorzero
 
-      - name: Collect logs from the failed workflow run
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p diagnostics
-          cd diagnostics
-          gh run view ${{ github.event.workflow_run.id }} --log-failed > failed-jobs.log
-          cd ..
-          # Print the contents of the logs directory for debugging
-          ls -la diagnostics
 
       - name: Start TensorZero gateway
         run: |
           docker pull tensorzero/gateway:latest
-          docker run -d --rm \
+          docker run --rm \
             --name tensorzero-gateway \
             -e TENSORZERO_CLICKHOUSE_URL=${{ secrets.CLICKHOUSE_URL }} \
             -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
@@ -59,6 +42,27 @@ jobs:
           done
           echo "Gateway never became ready" >&2
           exit 1
+      
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          fetch-tags: false
+
+
+      - name: Collect logs from the failed workflow run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p diagnostics
+          cd diagnostics
+          gh run view ${{ github.event.workflow_run.id }} --log-failed > failed-jobs.log
+          cd ..
+          # Print the contents of the logs directory for debugging
+          ls -la diagnostics
+
 
       - name: Call LLM to generate PR revision
         uses: shuyangli/t0-typescript-action/generate-pr-patch@main
