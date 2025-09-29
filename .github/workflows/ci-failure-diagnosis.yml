@@ -35,25 +35,6 @@ jobs:
           # Print the contents of the logs directory for debugging
           ls -la diagnostics
 
-      - name: Write TensorZero metrics configuration
-        run: |
-          echo "[functions.tensorzero_github_ci_bot]" > tensorzero.toml
-          echo "type = \"chat\"" >> tensorzero.toml
-          echo "" >> tensorzero.toml
-          echo "[functions.tensorzero_github_ci_bot.variants.gpt_5]" >> tensorzero.toml
-          echo "type = \"chat_completion\"" >> tensorzero.toml
-          echo "model = \"openai::gpt-5\"" >> tensorzero.toml
-          echo "" >> tensorzero.toml
-          echo "[metrics.tensorzero_github_ci_bot_pr_merged]" >> tensorzero.toml
-          echo "type = \"boolean\"" >> tensorzero.toml
-          echo "optimize = \"max\"" >> tensorzero.toml
-          echo "level = \"inference\"" >> tensorzero.toml
-          echo "" >> tensorzero.toml
-          echo "[metrics.tensorzero_github_ci_bot_diff_patched_successfully]" >> tensorzero.toml
-          echo "type = \"boolean\"" >> tensorzero.toml
-          echo "optimize = \"max\"" >> tensorzero.toml
-          echo "level = \"inference\"" >> tensorzero.toml
-
       - name: Start TensorZero gateway
         run: |
           docker pull tensorzero/gateway:latest
@@ -63,7 +44,7 @@ jobs:
             -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             -p 3000:3000 \
             --volume ./:/app \
-            tensorzero/gateway:latest --config-file /app/tensorzero.toml
+            tensorzero/gateway:latest --config-file /app/generate-pr-patch/tensorzero.toml
 
           for i in {1..20}; do
             curl -fsS http://localhost:3000/health && exit 0
@@ -73,7 +54,7 @@ jobs:
           exit 1
 
       - name: Call LLM to generate PR revision
-        uses: ./generate-pr-patch@main
+        uses: shuyangli/t0-typescript-action/generate-pr-patch@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tensorzero-base-url: http://localhost:3000
