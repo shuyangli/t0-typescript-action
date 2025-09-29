@@ -11,7 +11,7 @@ export async function readArtifactContentsRecursively(
     // Check if we can access the directory
     await fs.promises.access(rootDir)
   } catch (error) {
-    core.warning(`Directory does not exist: ${rootDir}`)
+    core.warning(`Directory does not exist: ${rootDir}, error: ${error}`)
     return artifactContents
   }
 
@@ -24,8 +24,7 @@ export async function readArtifactContentsRecursively(
       `Found ${filePaths.length} fileNames/directories in directory: ${rootDir}`
     )
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : `${error}`
-    core.warning(`Failed to read directory ${rootDir}: ${errorMessage}`)
+    core.warning(`Failed to read directory ${rootDir}: ${error}`)
     return artifactContents
   }
 
@@ -50,8 +49,7 @@ export async function readArtifactContentsRecursively(
       const content = await fs.promises.readFile(absolutePath, 'utf-8')
       artifactContents.push(`## ${relativePath}\n\n${content}`)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : `${error}`
-      core.warning(`Failed to read file ${absolutePath}: ${errorMessage}`)
+      core.warning(`Failed to read file ${absolutePath}: ${error}`)
       // Continue with other files instead of failing completely
     }
   }

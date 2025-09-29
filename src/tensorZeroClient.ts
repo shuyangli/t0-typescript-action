@@ -51,7 +51,7 @@ export async function callTensorZeroOpenAi(
         role: 'user'
       }
     ]
-  })) as any as TensorZeroOpenAiInferenceResponse
+  })) as TensorZeroOpenAiInferenceResponse
 }
 
 export async function provideInferenceFeedback<T>(
