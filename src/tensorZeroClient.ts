@@ -63,7 +63,7 @@ export async function callTensorZeroOpenAi(
   })
   // @ts-expect-error
   return await client.chat.completions.create({
-    model: 'tensorzero_github_ci_bot',
+    model: 'tensorzero::function_name::tensorzero_github_ci_bot',
     messages: [
       {
         content: [
