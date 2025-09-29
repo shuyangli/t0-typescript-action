@@ -28,12 +28,15 @@ If you are new, there's also a simpler introduction in the
     optional authentication parameters so the action can write inference to PR
     mappings after creating follow-up pull requests.
 - Configure secrets for the repository:
-  * OPENAI_API_KEY: OpenAI API key, used when starting TensorZero gateway
-  * CLICKHOUSE_URL: ClickHouse URL for both TensorZero gateway and the Github PR to inference mapping; expected format is `http[s]://[username:password@]hostname:port[/database]`.
-
+  - OPENAI_API_KEY: OpenAI API key, used when starting TensorZero gateway
+  - CLICKHOUSE_URL: ClickHouse URL for both TensorZero gateway and the Github PR
+    to inference mapping; expected format is
+    `http[s]://[username:password@]hostname:port[/database]`.
 
 ### Prepare Clickhouse database
+
 We need to create a new table to store Github PR to Inference Map:
+
 ```
 CREATE TABLE GitHubBotPullRequestToInferenceMap
 (
@@ -49,8 +52,6 @@ ORDER BY pull_request_id;
 ## When might this fail over?
 
 - Long context / large PRs
-
-
 
 ## Publishing a New Release
 

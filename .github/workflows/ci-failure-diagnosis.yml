@@ -2,7 +2,7 @@ name: TensorZero CI Diagnosis Bot
 
 on:
   workflow_run:
-    workflows: ["Continuous Integration"]
+    workflows: ['Continuous Integration']
     types:
       - completed
 
@@ -23,7 +23,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
           fetch-tags: false
-      
+
       - name: Collect logs from the failed workflow run
         env:
           GH_TOKEN: ${{ github.token }}
