@@ -39754,10 +39754,7 @@ If there is nothing to fix, only write a comment about the failure.
 
 IMPORTANT: You are not allowed to modify any GitHub actions. You can only modify the code in the repository.
 `;
-const prPatchTemplate = Handlebars.compile(prPatchTemplateSource.trim());
-function renderPrPatchPrompt(context) {
-    return prPatchTemplate(context).trim();
-}
+Handlebars.compile(prPatchTemplateSource.trim());
 function extractCommentsFromLlmResponse(response) {
     const comments = response.match(/<comments>(.*?)<\/comments>/s);
     return comments ? comments[1] : '';
@@ -50485,26 +50482,30 @@ function getOpenAiCompatibleUrl(baseUrl) {
     }
     return `${baseUrl}/openai/v1`;
 }
-async function callTensorZeroOpenAi(tensorZeroBaseUrl, systemPrompt, prompt) {
+async function callTensorZeroOpenAi(tensorZeroBaseUrl, generationArguments) {
     const tensorZeroOpenAiEndpointUrl = getOpenAiCompatibleUrl(tensorZeroBaseUrl);
     const client = new OpenAI({
         baseURL: tensorZeroOpenAiEndpointUrl,
         // API key is supplied from the Gateway; we just need an API key for OpenAI client to be happy.
         apiKey: 'dummy'
     });
-    return (await client.chat.completions.create({
+    // @ts-ignore
+    return await client.chat.completions.create({
         model: 'tensorzero::model_name::openai::gpt-5',
         messages: [
             {
-                content: systemPrompt,
-                role: 'system'
-            },
-            {
-                content: prompt,
+                content: [
+                    {
+                        // @ts-ignore
+                        type: 'tensorzero::template',
+                        name: 'generate_pr_and_comment',
+                        arguments: generationArguments
+                    }
+                ],
                 role: 'user'
             }
         ]
-    }));
+    });
 }
 async function provideInferenceFeedback(tensorZeroBaseUrl, metricName, inferenceId, value, tags) {
     const feedbackUrl = `${tensorZeroBaseUrl}/feedback`;
@@ -50632,8 +50633,8 @@ function getAllFailedJobs(workflowJobsStatus) {
         .map((job) => ({
         name: job.name,
         conclusion: job.conclusion,
-        htmlUrl: job.html_url,
-        failedSteps: (job.steps ?? [])
+        html_url: job.html_url,
+        failed_steps: (job.steps ?? [])
             .filter((step) => step.conclusion && step.conclusion !== 'success')
             .map((step) => ({
             name: step.name,
@@ -50790,19 +50791,17 @@ async function run() {
     // Read failure logs from local filesystem
     const failureLogsDir = path$1.join(process.cwd(), inputLogsDir);
     const artifactContents = await readArtifactContentsRecursively(failureLogsDir);
-    // Construct a prompt to call an LLM.
-    const prompt = renderPrPatchPrompt({
-        repoFullName: `${owner}/${repo}`,
+    // Call TensorZero to generate a PR and comment.
+    const generationArguments = {
+        failed_jobs: failedJobs,
+        diff_summary: diffSummary,
+        full_diff: fullDiff,
+        artifact_contents: artifactContents,
+        repo_full_name: `${owner}/${repo}`,
         branch: workflow_run_payload.head_branch,
-        prNumber,
-        diffSummary,
-        fullDiff,
-        artifactContents,
-        failedJobs
-    });
-    maybeWriteDebugArtifact(outputDir, 'llm-prompt.txt', prompt);
-    const systemPrompt = 'You are a meticulous senior engineer who produces concise plans and clean patches to repair failing pull requests.';
-    const response = await callTensorZeroOpenAi(tensorZeroBaseUrl, systemPrompt, prompt);
+        pr_number: prNumber
+    };
+    const response = await callTensorZeroOpenAi(tensorZeroBaseUrl, generationArguments);
     maybeWriteDebugArtifact(outputDir, 'llm-response.json', JSON.stringify(response, null, 2));
     maybeWriteDebugArtifact(outputDir, 'artifact-contents.txt', artifactContents.join('\n\n' + '='.repeat(80) + '\n\n'));
     // Get the LLM response from `response`

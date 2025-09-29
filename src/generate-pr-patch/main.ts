@@ -5,13 +5,11 @@ import * as path from 'path'
 
 import {
   extractCommentsFromLlmResponse,
-  extractDiffFromLlmResponse,
-  renderPrPatchPrompt
+  extractDiffFromLlmResponse
 } from './promptTemplate.js'
 import {
   type WorkflowJobsResponse,
   type FollowupPrResult,
-  type FailedJobSummary,
   type GeneratePrPatchActionInput,
   OctokitInstance
 } from './types.js'
@@ -22,7 +20,9 @@ import {
 import { createFollowupPr, getPullRequestDiff } from '../gitClient.js'
 import {
   callTensorZeroOpenAi,
-  provideInferenceFeedback
+  provideInferenceFeedback,
+  type TensorZeroGenerationArguments,
+  type FailedJobSummary
 } from '../tensorZeroClient.js'
 import { renderComment } from './pullRequestCommentTemplate.js'
 import { readArtifactContentsRecursively } from '../fileClient.js'
@@ -80,8 +80,8 @@ function getAllFailedJobs(
     .map((job) => ({
       name: job.name,
       conclusion: job.conclusion,
-      htmlUrl: job.html_url,
-      failedSteps: (job.steps ?? [])
+      html_url: job.html_url,
+      failed_steps: (job.steps ?? [])
         .filter((step) => step.conclusion && step.conclusion !== 'success')
         .map((step) => ({
           name: step.name,
@@ -306,24 +306,20 @@ export async function run(): Promise<void> {
   const failureLogsDir = path.join(process.cwd(), inputLogsDir)
   const artifactContents = await readArtifactContentsRecursively(failureLogsDir)
 
-  // Construct a prompt to call an LLM.
-  const prompt = renderPrPatchPrompt({
-    repoFullName: `${owner}/${repo}`,
+  // Call TensorZero to generate a PR and comment.
+  const generationArguments: TensorZeroGenerationArguments = {
+    failed_jobs: failedJobs,
+    diff_summary: diffSummary,
+    full_diff: fullDiff,
+    artifact_contents: artifactContents,
+    repo_full_name: `${owner}/${repo}`,
     branch: workflow_run_payload.head_branch,
-    prNumber,
-    diffSummary,
-    fullDiff,
-    artifactContents,
-    failedJobs
-  })
-  maybeWriteDebugArtifact(outputDir, 'llm-prompt.txt', prompt)
+    pr_number: prNumber
+  }
 
-  const systemPrompt =
-    'You are a meticulous senior engineer who produces concise plans and clean patches to repair failing pull requests.'
   const response = await callTensorZeroOpenAi(
     tensorZeroBaseUrl,
-    systemPrompt,
-    prompt
+    generationArguments
   )
   maybeWriteDebugArtifact(
     outputDir,

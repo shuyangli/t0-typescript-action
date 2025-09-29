@@ -3,6 +3,29 @@ import * as core from '@actions/core'
 
 export type TensorZeroOpenAiInferenceResponse =
   OpenAI.Chat.Completions.ChatCompletion & TensorZeroInferenceResponse
+export interface FailedStepSummary {
+  name: string
+  status: string
+  conclusion: string | undefined
+}
+
+export interface FailedJobSummary {
+  name: string
+  conclusion: string | undefined
+  failed_steps: FailedStepSummary[]
+  html_url?: string
+}
+
+export type TensorZeroGenerationArguments = {
+  repo_full_name: string
+  branch: string
+  pr_number: number
+  failed_jobs: FailedJobSummary[]
+  diff_summary: string
+  full_diff: string
+  artifact_contents: string[]
+}
+
 interface TensorZeroInferenceResponse {
   // Inference ID
   id: string
@@ -30,8 +53,7 @@ function getOpenAiCompatibleUrl(baseUrl: string): string {
 
 export async function callTensorZeroOpenAi(
   tensorZeroBaseUrl: string,
-  systemPrompt: string,
-  prompt: string
+  generationArguments: TensorZeroGenerationArguments
 ): Promise<TensorZeroOpenAiInferenceResponse> {
   const tensorZeroOpenAiEndpointUrl = getOpenAiCompatibleUrl(tensorZeroBaseUrl)
   const client = new OpenAI({
@@ -39,19 +61,23 @@ export async function callTensorZeroOpenAi(
     // API key is supplied from the Gateway; we just need an API key for OpenAI client to be happy.
     apiKey: 'dummy'
   })
-  return (await client.chat.completions.create({
+  // @ts-ignore
+  return await client.chat.completions.create({
     model: 'tensorzero::model_name::openai::gpt-5',
     messages: [
       {
-        content: systemPrompt,
-        role: 'system'
-      },
-      {
-        content: prompt,
+        content: [
+          {
+            // @ts-ignore
+            type: 'tensorzero::template',
+            name: 'generate_pr_and_comment',
+            arguments: generationArguments
+          }
+        ],
         role: 'user'
       }
     ]
-  })) as TensorZeroOpenAiInferenceResponse
+  })
 }
 
 export async function provideInferenceFeedback<T>(
