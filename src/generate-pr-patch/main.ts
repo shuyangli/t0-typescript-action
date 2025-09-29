@@ -386,7 +386,7 @@ export async function run(): Promise<void> {
 
       followupPrCreationError =
         error instanceof Error ? error.message : `${error}`
-      core.warning(`Failed to create follow-up PR: ${followupPrCreationError}`)
+      core.error(followupPrCreationError)
     }
   }
 
