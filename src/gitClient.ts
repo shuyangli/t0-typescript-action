@@ -248,10 +248,9 @@ export async function createFollowupPr(
     }
   } catch (error) {
     const maskedMessage = maskSecret((error as Error).message, token)
-    core.error(
+    throw new Error(
       `Failed to create follow-up PR using remote ${maskedRemoteUrl}: ${maskedMessage}`
     )
-    return undefined
   } finally {
     await cleanup()
   }
