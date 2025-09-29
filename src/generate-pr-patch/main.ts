@@ -276,6 +276,9 @@ function maybeWriteDebugArtifact(
   if (!outputDir) {
     return
   }
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true })
+  }
   fs.writeFileSync(path.join(outputDir, filename), content)
   core.info(`${filename} written to ${path.join(outputDir, filename)}`)
 }
@@ -301,7 +304,6 @@ export async function run(): Promise<void> {
     : undefined
   if (outputDir) {
     core.info(`Output artifact directory: ${outputDir}`)
-    fs.mkdirSync(outputDir, { recursive: true })
   } else {
     core.warning(`Not creating output artifacts.`)
   }
@@ -435,12 +437,14 @@ export async function run(): Promise<void> {
         },
         outputDir
       )
-      await provideInferenceFeedback(
-        tensorZeroBaseUrl,
-        tensorZeroDiffPatchedSuccessfullyMetricName,
-        response.id,
-        true
-      )
+      if (followupPr) {
+        await provideInferenceFeedback(
+          tensorZeroBaseUrl,
+          tensorZeroDiffPatchedSuccessfullyMetricName,
+          response.id,
+          true
+        )
+      }
     } catch (error) {
       await provideInferenceFeedback(
         tensorZeroBaseUrl,
