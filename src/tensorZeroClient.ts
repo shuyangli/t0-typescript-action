@@ -63,7 +63,7 @@ export async function callTensorZeroOpenAi(
   })
   // @ts-ignore
   return await client.chat.completions.create({
-    model: 'tensorzero::model_name::openai::gpt-5',
+    model: 'tensorzero_github_ci_bot',
     messages: [
       {
         content: [
