@@ -21,7 +21,8 @@
     to inference mapping; expected format is
     `http[s]://[username:password@]hostname:port[/database]`.
 - Configure GitHub Actions permissions for the repository:
-  - Under "Settings > Actions > General", check the box for "Allow GitHub Actions to create and approve pull requests".
+  - Under "Settings > Actions > General", check the box for "Allow GitHub
+    Actions to create and approve pull requests".
 
 ### Prepare Clickh=House database
 
