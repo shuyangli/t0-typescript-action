@@ -28,19 +28,6 @@ const createConfig = (actionName) => {
     })
   }
 
-  // Add custom plugin to copy tensorzero.toml for both actions
-  plugins.push({
-    name: 'copy-tensorzero-config',
-    writeBundle() {
-      const srcPath = 'tensorzero.toml'
-      const destDir = `dist/${actionName}`
-      const destPath = join(destDir, 'tensorzero.toml')
-
-      mkdirSync(destDir, { recursive: true })
-      copyFileSync(srcPath, destPath)
-    }
-  })
-
   return {
     input: `src/${actionName}/index.ts`,
     output: {

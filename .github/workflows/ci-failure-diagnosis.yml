@@ -24,6 +24,13 @@ jobs:
           fetch-depth: 0
           fetch-tags: false
 
+      - name: Checkout TensorZero config file
+        uses: actions/checkout@v5
+        with:
+          repository: shuyangli/t0-typescript-action
+          sparse-checkout: |
+            tensorzero
+
       - name: Collect logs from the failed workflow run
         env:
           GH_TOKEN: ${{ github.token }}
@@ -43,8 +50,8 @@ jobs:
             -e TENSORZERO_CLICKHOUSE_URL=${{ secrets.CLICKHOUSE_URL }} \
             -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             -p 3000:3000 \
-            --volume ./:/app \
-            tensorzero/gateway:latest --config-file /app/generate-pr-patch/tensorzero.toml
+            --volume ./t0-typescript-action/tensorzero:/action-config \
+            tensorzero/gateway:latest --config-file /action-config/tensorzero.toml
 
           for i in {1..20}; do
             curl -fsS http://localhost:3000/health && exit 0
