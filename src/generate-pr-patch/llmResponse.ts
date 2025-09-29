@@ -1,5 +1,5 @@
 export function extractCommentsFromLlmResponse(response: string): string {
-  const comments = response.match(/<comments>(.*?)<\/comments>/s)
+  const comments = response.match(/<comment>(.*?)<\/comment>/s)
   return comments ? comments[1] : ''
 }
 
