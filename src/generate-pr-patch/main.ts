@@ -6,7 +6,7 @@ import * as path from 'path'
 import {
   extractCommentsFromLlmResponse,
   extractDiffFromLlmResponse
-} from './promptTemplate.js'
+} from './llmResponse.js'
 import {
   type WorkflowJobsResponse,
   type FollowupPrResult,
