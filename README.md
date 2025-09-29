@@ -20,6 +20,9 @@
   - CLICKHOUSE_URL: ClickHouse URL for both TensorZero gateway and the GitHub PR
     to inference mapping; expected format is
     `http[s]://[username:password@]hostname:port[/database]`.
+- Configure GitHub Actions permissions for the repository:
+  - Under "Settings > Actions > General", check the box for "Allow GitHub
+    Actions to create and approve pull requests".
 
 ### Prepare Clickh=House database
 
