@@ -2,9 +2,9 @@ import * as require$$0 from 'os';
 import require$$0__default from 'os';
 import require$$0$1 from 'crypto';
 import * as fs from 'fs';
-import fs__default from 'fs';
+import fs__default, { readFileSync } from 'fs';
 import * as path$1 from 'path';
-import path__default from 'path';
+import path__default, { dirname, join } from 'path';
 import require$$2$1 from 'http';
 import require$$1 from 'https';
 import require$$0$4 from 'net';
@@ -24,7 +24,7 @@ import require$$2$2 from 'perf_hooks';
 import require$$5 from 'util/types';
 import require$$4$2 from 'async_hooks';
 import require$$1$4 from 'console';
-import require$$1$5 from 'url';
+import require$$1$5, { fileURLToPath } from 'url';
 import require$$3$1 from 'zlib';
 import require$$6 from 'string_decoder';
 import require$$0$9 from 'diagnostics_channel';
@@ -39694,66 +39694,11 @@ function requireLib () {
 var libExports = requireLib();
 var Handlebars = /*@__PURE__*/getDefaultExportFromCjs(libExports);
 
-const prPatchTemplateSource = `You are an expert software engineer helping to craft a follow-up pull request that fixes CI failures in the original PR.
-
-Repository: {{repoFullName}}
-Target Branch: {{#if branch}}{{branch}}{{else}}(unknown){{/if}}
-Original PR: {{#if prNumber}}#{{prNumber}}{{else}}(unknown){{/if}}
-
-{{#if failedJobs.length}}
-## Failed Jobs
-{{#each failedJobs}}
-- {{name}} (conclusion: {{#if conclusion}}{{conclusion}}{{else}}unknown{{/if}}){{#if htmlUrl}} – {{htmlUrl}}{{/if}}
-{{#if failedSteps.length}}
-  Failed steps:
-{{#each failedSteps}}
-  * {{name}} (status: {{status}}{{#if conclusion}}, conclusion: {{conclusion}}{{/if}})
-{{/each}}
-{{/if}}
-{{/each}}
-
-{{else}}
-## Failed Jobs
-No failing jobs were detected in the most recent run.
-{{/if}}
-
-## Diff Summary
-{{#if diffSummary}}{{diffSummary}}{{else}}Diff summary not supplied.{{/if}}
-
-## Full Diff
-{{#if fullDiff}}{{fullDiff}}{{else}}Full diff not supplied.{{/if}}
-
-{{#if artifactContents.length}}
-## Available Artifacts
-{{#each artifactContents}}
-{{this}}
-
-{{/each}}
-{{else}}
-No artifact were available from the failing run.
-{{/if}}
-
-Your response should contain the following:
-
-* a comment about the failure to be posted to the original PR as a comment. Include the comment in the comments block like this:
-
-<comments>
-Comments about the failure.
-</comments>
-
-* if the failure can be fixed by the user running a command, write a comment that includes the command and its expected output. Include the comment in the comments block.
-
-* if the failure is due to an issue in the code, provide a unified diff patch that applies those fixes. Your diff will be generated as a new PR against the original PR branch.
-The diff should be wrapped in a block like this:
-
-<diff>
-Verbatim diff that you generated that can be applied as a patch to the original PR branch.
-</diff>
-
-If there is nothing to fix, only write a comment about the failure.
-
-IMPORTANT: You are not allowed to modify any GitHub actions. You can only modify the code in the repository.
-`;
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+// Read the prompt template from the external file
+const prPatchTemplateSource = readFileSync(join(__dirname, 'prompt.txt'), 'utf8');
 const prPatchTemplate = Handlebars.compile(prPatchTemplateSource.trim());
 function renderPrPatchPrompt(context) {
     return prPatchTemplate(context).trim();
@@ -50552,7 +50497,7 @@ async function readArtifactContentsRecursively(rootDir) {
         await fs.promises.access(rootDir);
     }
     catch (error) {
-        coreExports.warning(`Directory does not exist: ${rootDir}`);
+        coreExports.warning(`Directory does not exist: ${rootDir}, error: ${error}`);
         return artifactContents;
     }
     let filePaths = [];
@@ -50563,8 +50508,7 @@ async function readArtifactContentsRecursively(rootDir) {
         coreExports.info(`Found ${filePaths.length} fileNames/directories in directory: ${rootDir}`);
     }
     catch (error) {
-        const errorMessage = error instanceof Error ? error.message : `${error}`;
-        coreExports.warning(`Failed to read directory ${rootDir}: ${errorMessage}`);
+        coreExports.warning(`Failed to read directory ${rootDir}: ${error}`);
         return artifactContents;
     }
     // Expand path and filter to only files
@@ -50585,8 +50529,7 @@ async function readArtifactContentsRecursively(rootDir) {
             artifactContents.push(`## ${relativePath}\n\n${content}`);
         }
         catch (error) {
-            const errorMessage = error instanceof Error ? error.message : `${error}`;
-            coreExports.warning(`Failed to read file ${absolutePath}: ${errorMessage}`);
+            coreExports.warning(`Failed to read file ${absolutePath}: ${error}`);
             // Continue with other files instead of failing completely
         }
     }
@@ -50675,9 +50618,9 @@ function isPullRequestEligibleForFix() {
 }
 // Parse action inputs
 function parseAndValidateActionInputs() {
-    const token = coreExports.getInput('token')?.trim() || process.env.GITHUB_TOKEN;
+    const token = coreExports.getInput('token')?.trim();
     if (!token) {
-        throw new Error('A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.');
+        throw new Error('A GitHub token is required. Provide one via the `token` input.');
     }
     const tensorZeroBaseUrl = coreExports.getInput('tensorzero-base-url')?.trim();
     if (!tensorZeroBaseUrl) {
