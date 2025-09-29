@@ -54,6 +54,12 @@ jobs:
           fetch-depth: 0
           fetch-tags: false
 
+      - name: Debug
+        run: |
+          ls -lR ./tensorzero-for-gateway
+          cat ./tensorzero-for-gateway/tensorzero.toml
+          cat ./tensorzero-for-gateway/prompt.minijinja
+
       - name: Collect logs from the failed workflow run
         env:
           GH_TOKEN: ${{ github.token }}
