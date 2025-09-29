@@ -13,7 +13,9 @@ describe('LLM response helpers', () => {
 suffix`
 
     expect(extractCommentsFromLlmResponse(response)).toBe('A detailed summary')
-    expect(extractCommandFromLlmResponse(response)).toBe('A command line command')
+    expect(extractCommandFromLlmResponse(response)).toBe(
+      'A command line command'
+    )
     expect(extractDiffFromLlmResponse(response)).toBe('diff --git')
   })
 

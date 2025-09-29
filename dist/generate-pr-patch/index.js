@@ -31247,7 +31247,7 @@ function requireGithub () {
 var githubExports = requireGithub();
 
 function extractCommentsFromLlmResponse(response) {
-    const comments = response.match(/<comments>(.*?)<\/comments>/s);
+    const comments = response.match(/<comment>(.*?)<\/comment>/s);
     return comments ? comments[1] : '';
 }
 function extractDiffFromLlmResponse(response) {
@@ -50490,7 +50490,7 @@ const commentTemplateString = `
 {{/if}}
 
 {{#if followupPrNumber}}
-I've also opened an automated follow-up PR #{{followupPrNumber}} with proposed fixes.
+I've opened an automated follow-up PR #{{followupPrNumber}} with proposed fixes.
 {{/if}}
 {{#if followupPrCreationError}}
 > [!WARNING]
