@@ -50486,15 +50486,32 @@ var Handlebars = /*@__PURE__*/getDefaultExportFromCjs(libExports);
 const commentTemplateString = `
 ### TensorZero CI Bot Automated Comment
 
+{{#if generatedCommentBody}}
 {{generatedCommentBody}}
+{{/if}}
 
 {{#if followupPrNumber}}
 I've also opened an automated follow-up PR #{{followupPrNumber}} with proposed fixes.
 {{/if}}
+{{#if followupPrCreationError}}
+> [!WARNING]
+> I encountered an error while trying to create a follow-up PR: {{followupPrCreationError}}.
+
+{{#if generatedPatch}}
+The patch I tried to generate is as follows:
+\`\`\`diff
+{{generatedPatch}}
+\`\`\`
+{{else}}
+No patch was generated.
+{{/if}}
+{{/if}}
 `;
 const commentTemplate = Handlebars.compile(commentTemplateString.trim());
 function renderComment(commentContext) {
-    if (!commentContext.generatedCommentBody) {
+    if (!commentContext.generatedCommentBody &&
+        !commentContext.followupPrCreationError &&
+        !commentContext.followupPrNumber) {
         return undefined;
     }
     return commentTemplate(commentContext).trim();
@@ -50723,6 +50740,7 @@ async function run() {
     }
     const trimmedDiff = diff.trim();
     let followupPr;
+    let followupPrCreationError;
     if (trimmedDiff) {
         try {
             followupPr = await createFollowupPr({
@@ -50739,8 +50757,9 @@ async function run() {
         }
         catch (error) {
             await provideInferenceFeedback(tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, response.id, false, { reason: 'Failed to Apply Patch' });
-            const errorMessage = error instanceof Error ? error.message : `${error}`;
-            coreExports.warning(`Failed to create follow-up PR: ${errorMessage}`);
+            followupPrCreationError =
+                error instanceof Error ? error.message : `${error}`;
+            coreExports.warning(`Failed to create follow-up PR: ${followupPrCreationError}`);
         }
     }
     // TODO: consider using episode_id instead of inference ID.
@@ -50763,7 +50782,9 @@ async function run() {
     }
     const comment = renderComment({
         generatedCommentBody: comments.trim(),
-        followupPrNumber: followupPr?.number
+        generatedPatch: trimmedDiff,
+        followupPrNumber: followupPr?.number,
+        followupPrCreationError
     });
     if (comment) {
         try {
