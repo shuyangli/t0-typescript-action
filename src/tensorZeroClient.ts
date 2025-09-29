@@ -61,14 +61,14 @@ export async function callTensorZeroOpenAi(
     // API key is supplied from the Gateway; we just need an API key for OpenAI client to be happy.
     apiKey: 'dummy'
   })
-  // @ts-expect-error
+  // @ts-expect-error(TensorZero-patched interface doesn't agree with OpenAI)
   return await client.chat.completions.create({
     model: 'tensorzero::function_name::tensorzero_github_ci_bot',
     messages: [
       {
         content: [
           {
-            // @ts-expect-error
+            // @ts-expect-error(TensorZero-patched interface adds a function type)
             type: 'tensorzero::template',
             name: 'generate_pr_and_comment',
             arguments: generationArguments
