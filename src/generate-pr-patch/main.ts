@@ -276,13 +276,11 @@ export async function run(): Promise<void> {
   core.info(`Fetching jobs from: ${jobsUrl}`)
   const workflowJobsStatus = await getJobStatus(jobsUrl, token)
 
-  if (outputDir) {
-    fs.writeFileSync(
-      path.join(outputDir, 'workflow-jobs.json'),
-      JSON.stringify(workflowJobsStatus, null, 2)
-    )
-    core.info('Jobs data written to workflow-jobs.json')
-  }
+  maybeWriteDebugArtifact(
+    outputDir,
+    'workflow-jobs.json',
+    JSON.stringify(workflowJobsStatus, null, 2)
+  )
 
   const { owner, repo } = github.context.repo
   const octokit = github.getOctokit(token)

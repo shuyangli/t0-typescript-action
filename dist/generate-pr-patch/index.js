@@ -50714,10 +50714,7 @@ async function run() {
     }
     coreExports.info(`Fetching jobs from: ${jobsUrl}`);
     const workflowJobsStatus = await getJobStatus(jobsUrl, token);
-    if (outputDir) {
-        fs.writeFileSync(path$1.join(outputDir, 'workflow-jobs.json'), JSON.stringify(workflowJobsStatus, null, 2));
-        coreExports.info('Jobs data written to workflow-jobs.json');
-    }
+    maybeWriteDebugArtifact(outputDir, 'workflow-jobs.json', JSON.stringify(workflowJobsStatus, null, 2));
     const { owner, repo } = githubExports.context.repo;
     const octokit = githubExports.getOctokit(token);
     const pullRequest = workflow_run_payload.pull_requests?.[0];

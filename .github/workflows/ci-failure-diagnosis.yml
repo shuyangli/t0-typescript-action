@@ -24,25 +24,28 @@ jobs:
           sparse-checkout: |
             tensorzero
 
+      - name: Move tensorzero to tensorzero-for-gateway
+        run: |
+          mv ./tensorzero ./tensorzero-for-gateway
+          ls -lR .
 
       - name: Start TensorZero gateway
         run: |
           docker pull tensorzero/gateway:latest
-          docker run --rm \
+          docker run -d --rm \
             --name tensorzero-gateway \
             -e TENSORZERO_CLICKHOUSE_URL=${{ secrets.CLICKHOUSE_URL }} \
             -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             -p 3000:3000 \
-            --volume ./t0-typescript-action/tensorzero:/action-config \
+            --volume ./tensorzero-for-gateway:/action-config \
             tensorzero/gateway:latest --config-file /action-config/tensorzero.toml
 
-          for i in {1..20}; do
+          for _i in {1..20}; do
             curl -fsS http://localhost:3000/health && exit 0
             sleep 3
           done
           echo "Gateway never became ready" >&2
           exit 1
-      
 
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -50,7 +53,6 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
           fetch-tags: false
-
 
       - name: Collect logs from the failed workflow run
         env:
@@ -62,7 +64,6 @@ jobs:
           cd ..
           # Print the contents of the logs directory for debugging
           ls -la diagnostics
-
 
       - name: Call LLM to generate PR revision
         uses: shuyangli/t0-typescript-action/generate-pr-patch@main
