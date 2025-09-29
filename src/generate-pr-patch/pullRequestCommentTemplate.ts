@@ -8,7 +8,7 @@ const commentTemplateString = `
 {{/if}}
 
 {{#if followupPrNumber}}
-I've also opened an automated follow-up PR #{{followupPrNumber}} with proposed fixes.
+I've opened an automated follow-up PR #{{followupPrNumber}} with proposed fixes.
 {{/if}}
 {{#if followupPrCreationError}}
 > [!WARNING]

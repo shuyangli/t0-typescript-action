@@ -35042,8 +35042,7 @@ async function createFollowupPr({ octokit, token, owner, repo, pullRequest, diff
     }
     catch (error) {
         const maskedMessage = maskSecret(error.message, token);
-        coreExports.error(`Failed to create follow-up PR using remote ${maskedRemoteUrl}: ${maskedMessage}`);
-        return undefined;
+        throw new Error(`Failed to create follow-up PR using remote ${maskedRemoteUrl}: ${maskedMessage}`);
     }
     finally {
         await cleanup();
@@ -50491,7 +50490,7 @@ const commentTemplateString = `
 {{/if}}
 
 {{#if followupPrNumber}}
-I've also opened an automated follow-up PR #{{followupPrNumber}} with proposed fixes.
+I've opened an automated follow-up PR #{{followupPrNumber}} with proposed fixes.
 {{/if}}
 {{#if followupPrCreationError}}
 > [!WARNING]
@@ -50759,7 +50758,7 @@ async function run() {
             await provideInferenceFeedback(tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, response.id, false, { reason: 'Failed to Apply Patch' });
             followupPrCreationError =
                 error instanceof Error ? error.message : `${error}`;
-            coreExports.warning(`Failed to create follow-up PR: ${followupPrCreationError}`);
+            coreExports.error(followupPrCreationError);
         }
     }
     // TODO: consider using episode_id instead of inference ID.

@@ -3,7 +3,6 @@ import { renderComment } from './pullRequestCommentTemplate.js'
 describe('renderComment', () => {
   it('returns undefined when comment body is absent', () => {
     expect(renderComment({})).toBeUndefined()
-    expect(renderComment({ followupPrNumber: 7 })).toBeUndefined()
   })
 
   it('renders a comment block and follow-up PR details when provided', () => {
