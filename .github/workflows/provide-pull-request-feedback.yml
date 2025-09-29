@@ -14,23 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     name: Create PR Feedback
     steps:
-      - name: Write TensorZero metrics configuration
-        run: |
-          echo "[functions.tensorzero_github_ci_bot]" > tensorzero.toml
-          echo "type = \"chat\"" >> tensorzero.toml
-          echo "" >> tensorzero.toml
-          echo "[functions.tensorzero_github_ci_bot.variants.gpt_5]" >> tensorzero.toml
-          echo "type = \"chat_completion\"" >> tensorzero.toml
-          echo "model = \"openai::gpt-5\"" >> tensorzero.toml
-          echo "" >> tensorzero.toml
-          echo "[metrics.tensorzero_github_ci_bot_pr_merged]" >> tensorzero.toml
-          echo "type = \"boolean\"" >> tensorzero.toml
-          echo "optimize = \"max\"" >> tensorzero.toml
-          echo "level = \"inference\"" >> tensorzero.toml
-          echo "[metrics.tensorzero_github_ci_bot_diff_patched_successfully]" >> tensorzero.toml
-          echo "type = \"boolean\"" >> tensorzero.toml
-          echo "optimize = \"max\"" >> tensorzero.toml
-          echo "level = \"inference\"" >> tensorzero.toml
+      - name: Checkout TensorZero config file
+        uses: actions/checkout@v5
+        with:
+          repository: shuyangli/t0-typescript-action
+          sparse-checkout: |
+            tensorzero
 
       - name: Start TensorZero gateway
         run: |
@@ -40,8 +29,8 @@ jobs:
             -e TENSORZERO_CLICKHOUSE_URL=${{ secrets.CLICKHOUSE_URL }} \
             -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             -p 3000:3000 \
-            --volume ./:/app \
-            tensorzero/gateway:latest --config-file /app/tensorzero.toml
+            --volume ./t0-typescript-action/tensorzero:/action-config \
+            tensorzero/gateway:latest --config-file /action-config/tensorzero.toml
 
           for i in {1..20}; do
             curl -fsS http://localhost:3000/health && exit 0

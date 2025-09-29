@@ -50552,7 +50552,7 @@ async function readArtifactContentsRecursively(rootDir) {
         await fs.promises.access(rootDir);
     }
     catch (error) {
-        coreExports.warning(`Directory does not exist: ${rootDir}`);
+        coreExports.warning(`Directory does not exist: ${rootDir}, error: ${error}`);
         return artifactContents;
     }
     let filePaths = [];
@@ -50563,8 +50563,7 @@ async function readArtifactContentsRecursively(rootDir) {
         coreExports.info(`Found ${filePaths.length} fileNames/directories in directory: ${rootDir}`);
     }
     catch (error) {
-        const errorMessage = error instanceof Error ? error.message : `${error}`;
-        coreExports.warning(`Failed to read directory ${rootDir}: ${errorMessage}`);
+        coreExports.warning(`Failed to read directory ${rootDir}: ${error}`);
         return artifactContents;
     }
     // Expand path and filter to only files
@@ -50585,8 +50584,7 @@ async function readArtifactContentsRecursively(rootDir) {
             artifactContents.push(`## ${relativePath}\n\n${content}`);
         }
         catch (error) {
-            const errorMessage = error instanceof Error ? error.message : `${error}`;
-            coreExports.warning(`Failed to read file ${absolutePath}: ${errorMessage}`);
+            coreExports.warning(`Failed to read file ${absolutePath}: ${error}`);
             // Continue with other files instead of failing completely
         }
     }
@@ -50675,9 +50673,9 @@ function isPullRequestEligibleForFix() {
 }
 // Parse action inputs
 function parseAndValidateActionInputs() {
-    const token = coreExports.getInput('token')?.trim() || process.env.GITHUB_TOKEN;
+    const token = coreExports.getInput('token')?.trim();
     if (!token) {
-        throw new Error('A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.');
+        throw new Error('A GitHub token is required. Provide one via the `token` input.');
     }
     const tensorZeroBaseUrl = coreExports.getInput('tensorzero-base-url')?.trim();
     if (!tensorZeroBaseUrl) {
