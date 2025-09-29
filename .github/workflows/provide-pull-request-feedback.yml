@@ -51,7 +51,7 @@ jobs:
           exit 1
 
       - name: Send PR Feedback
-        uses: ./create-pr-feedback@main
+        uses: shuyangli/t0-typescript-action/create-pr-feedback@main
         with:
           tensorzero-base-url: http://localhost:3000
           tensorzero-pr-merged-metric-name: tensorzero_github_ci_bot_pr_merged

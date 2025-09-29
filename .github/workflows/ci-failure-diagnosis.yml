@@ -73,7 +73,7 @@ jobs:
           exit 1
 
       - name: Call LLM to generate PR revision
-        uses: ./generate-pr-patch@main
+        uses: shuyangli/t0-typescript-action/generate-pr-patch@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tensorzero-base-url: http://localhost:3000
