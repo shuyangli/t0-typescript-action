@@ -61,14 +61,14 @@ export async function callTensorZeroOpenAi(
     // API key is supplied from the Gateway; we just need an API key for OpenAI client to be happy.
     apiKey: 'dummy'
   })
-  // @ts-ignore
+  // @ts-expect-error
   return await client.chat.completions.create({
     model: 'tensorzero_github_ci_bot',
     messages: [
       {
         content: [
           {
-            // @ts-ignore
+            // @ts-expect-error
             type: 'tensorzero::template',
             name: 'generate_pr_and_comment',
             arguments: generationArguments
