@@ -3,7 +3,7 @@ import * as github from '@actions/github'
 import { CreatePrFeedbackActionInput } from './types.js'
 import {
   type PullRequestToInferenceRecord,
-  getPullRequestToInferenceRecord
+  getPullRequestToInferenceRecords
 } from '../clickhouseClient.js'
 import { provideInferenceFeedback } from '../tensorZeroClient.js'
 
@@ -78,21 +78,16 @@ export async function run(): Promise<void> {
     throw new Error('Did not receive a pull request ID from the context.')
   }
   core.info(
-    `Handling Pull Request ID ${pullRequestId} (#${github.context.payload.pull_request?.number}).`
-  )
-  core.info(
-    `Handling Pull Request Merged ${github.context.payload.pull_request?.merged}.`
+    `Handling Pull Request ID ${pullRequestId} (#${github.context.payload.pull_request?.number}); merged: ${github.context.payload.pull_request?.merged}.`
   )
 
   const isPullRequestMerged =
     (github.context.payload.pull_request?.merged as boolean) ?? false
 
-  const inferenceRecords = await getPullRequestToInferenceRecord(pullRequestId)
+  const inferenceRecords = await getPullRequestToInferenceRecords(pullRequestId)
   if (!isPullRequestEligibleForFeedback(inferenceRecords)) {
     return
   }
-
-  core.info(`Inference Records: ${JSON.stringify(inferenceRecords, null, 2)}`)
 
   // Provide feedback
   const feedbackReason: string = isPullRequestMerged

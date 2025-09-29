@@ -34865,7 +34865,8 @@ function getClickhouseClientConfig() {
         table: clickHouseTable
     };
 }
-async function getPullRequestToInferenceRecord(pullRequestId) {
+// Returns all inference records for a given pull request. There should only be one since so far for simplicity, the table should be created with a ReplacingMergeTree, but we may want to support multiple inferences for interactive PR updates.
+async function getPullRequestToInferenceRecords(pullRequestId) {
     const { url, table } = getClickhouseClientConfig();
     const client = distExports.createClient({
         url,
@@ -34873,7 +34874,6 @@ async function getPullRequestToInferenceRecord(pullRequestId) {
     });
     let records = [];
     try {
-        coreExports.info(`SELECT * FROM ${table} WHERE pull_request_id = ${pullRequestId}`);
         const response = await client.query({
             query: `SELECT * FROM ${table} WHERE pull_request_id = ${pullRequestId}`,
             format: 'JSONEachRow'
@@ -41835,14 +41835,12 @@ async function run() {
     if (!pullRequestId) {
         throw new Error('Did not receive a pull request ID from the context.');
     }
-    coreExports.info(`Handling Pull Request ID ${pullRequestId} (#${githubExports.context.payload.pull_request?.number}).`);
-    coreExports.info(`Handling Pull Request Merged ${githubExports.context.payload.pull_request?.merged}.`);
+    coreExports.info(`Handling Pull Request ID ${pullRequestId} (#${githubExports.context.payload.pull_request?.number}); merged: ${githubExports.context.payload.pull_request?.merged}.`);
     const isPullRequestMerged = githubExports.context.payload.pull_request?.merged ?? false;
-    const inferenceRecords = await getPullRequestToInferenceRecord(pullRequestId);
+    const inferenceRecords = await getPullRequestToInferenceRecords(pullRequestId);
     if (!isPullRequestEligibleForFeedback(inferenceRecords)) {
         return;
     }
-    coreExports.info(`Inference Records: ${JSON.stringify(inferenceRecords, null, 2)}`);
     // Provide feedback
     const feedbackReason = isPullRequestMerged
         ? 'Pull Request Merged'

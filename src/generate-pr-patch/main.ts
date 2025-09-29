@@ -25,6 +25,7 @@ import {
   provideInferenceFeedback
 } from '../tensorZeroClient.js'
 import { renderComment } from './pullRequestCommentTemplate.js'
+import { readArtifactContentsRecursively } from '../fileClient.js'
 
 async function getJobStatus(
   jobsUrl: string,
@@ -177,63 +178,6 @@ function parseAndValidateActionInputs(): GeneratePrPatchActionInput {
     inputLogsDir,
     outputArtifactsDir
   }
-}
-
-async function readArtifactContentsRecursively(
-  failureLogsRootDir: string
-): Promise<string[]> {
-  const artifactContents: string[] = []
-
-  try {
-    // Check if directory exists first
-    await fs.promises.access(failureLogsRootDir)
-  } catch (error) {
-    core.warning(`Failure logs directory does not exist: ${failureLogsRootDir}`)
-    return artifactContents
-  }
-
-  try {
-    const files = await fs.promises.readdir(failureLogsRootDir, {
-      recursive: true
-    })
-    core.info(
-      `Found ${files.length} files/directories in failure-logs directory: ${files.join(', ')}`
-    )
-
-    // Filter to only files (exclude directories)
-    const fileStats = await Promise.all(
-      files.map(async (file) => {
-        const filePath = path.join(failureLogsRootDir, file)
-        try {
-          const stat = await fs.promises.stat(filePath)
-          return { file, filePath, isFile: stat.isFile() }
-        } catch (error) {
-          core.warning(`Could not stat file ${filePath}: ${error}`)
-          return { file, filePath, isFile: false }
-        }
-      })
-    )
-
-    const actualFiles = fileStats.filter((item) => item.isFile)
-
-    for (const { file, filePath } of actualFiles) {
-      try {
-        const content = await fs.promises.readFile(filePath, 'utf-8')
-        artifactContents.push(`## ${file}\n\n${content}`)
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : `${error}`
-        core.warning(`Failed to read file ${filePath}: ${errorMessage}`)
-        // Continue with other files instead of failing completely
-      }
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : `${error}`
-    core.warning(
-      `Failed to read failure logs directory ${failureLogsRootDir}: ${errorMessage}`
-    )
-  }
-
-  return artifactContents
 }
 
 async function fetchDiffSummaryAndFullDiff(
@@ -486,7 +430,6 @@ export async function run(): Promise<void> {
     generatedCommentBody: comments.trim(),
     followupPrNumber: followupPr?.number
   })
-
   if (comment) {
     try {
       await octokit.rest.issues.createComment({

@@ -50545,6 +50545,54 @@ function renderComment(commentContext) {
     return commentTemplate(commentContext).trim();
 }
 
+async function readArtifactContentsRecursively(rootDir) {
+    const artifactContents = [];
+    try {
+        // Check if we can access the directory
+        await fs.promises.access(rootDir);
+    }
+    catch (error) {
+        coreExports.warning(`Directory does not exist: ${rootDir}`);
+        return artifactContents;
+    }
+    let filePaths = [];
+    try {
+        filePaths = await fs.promises.readdir(rootDir, {
+            recursive: true
+        });
+        coreExports.info(`Found ${filePaths.length} fileNames/directories in directory: ${rootDir}`);
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : `${error}`;
+        coreExports.warning(`Failed to read directory ${rootDir}: ${errorMessage}`);
+        return artifactContents;
+    }
+    // Expand path and filter to only files
+    const fileInfo = (await Promise.all(filePaths.map(async (relativePath) => {
+        const absolutePath = path$1.join(rootDir, relativePath);
+        try {
+            const stat = await fs.promises.stat(absolutePath);
+            return { relativePath, absolutePath, isFile: stat.isFile() };
+        }
+        catch (error) {
+            coreExports.warning(`Could not stat file ${absolutePath}: ${error}`);
+            return { relativePath, absolutePath, isFile: false };
+        }
+    }))).filter((item) => item.isFile);
+    for (const { relativePath, absolutePath } of fileInfo) {
+        try {
+            const content = await fs.promises.readFile(absolutePath, 'utf-8');
+            artifactContents.push(`## ${relativePath}\n\n${content}`);
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : `${error}`;
+            coreExports.warning(`Failed to read file ${absolutePath}: ${errorMessage}`);
+            // Continue with other files instead of failing completely
+        }
+    }
+    return artifactContents;
+}
+
 async function getJobStatus(jobsUrl, token) {
     // Fetch jobs from the workflow run
     let jobsResponse;
@@ -50657,52 +50705,6 @@ function parseAndValidateActionInputs() {
         outputArtifactsDir
     };
 }
-async function readArtifactContentsRecursively(failureLogsRootDir) {
-    const artifactContents = [];
-    try {
-        // Check if directory exists first
-        await fs.promises.access(failureLogsRootDir);
-    }
-    catch (error) {
-        coreExports.warning(`Failure logs directory does not exist: ${failureLogsRootDir}`);
-        return artifactContents;
-    }
-    try {
-        const files = await fs.promises.readdir(failureLogsRootDir, {
-            recursive: true
-        });
-        coreExports.info(`Found ${files.length} files/directories in failure-logs directory: ${files.join(', ')}`);
-        // Filter to only files (exclude directories)
-        const fileStats = await Promise.all(files.map(async (file) => {
-            const filePath = path$1.join(failureLogsRootDir, file);
-            try {
-                const stat = await fs.promises.stat(filePath);
-                return { file, filePath, isFile: stat.isFile() };
-            }
-            catch (error) {
-                coreExports.warning(`Could not stat file ${filePath}: ${error}`);
-                return { file, filePath, isFile: false };
-            }
-        }));
-        const actualFiles = fileStats.filter((item) => item.isFile);
-        for (const { file, filePath } of actualFiles) {
-            try {
-                const content = await fs.promises.readFile(filePath, 'utf-8');
-                artifactContents.push(`## ${file}\n\n${content}`);
-            }
-            catch (error) {
-                const errorMessage = error instanceof Error ? error.message : `${error}`;
-                coreExports.warning(`Failed to read file ${filePath}: ${errorMessage}`);
-                // Continue with other files instead of failing completely
-            }
-        }
-    }
-    catch (error) {
-        const errorMessage = error instanceof Error ? error.message : `${error}`;
-        coreExports.warning(`Failed to read failure logs directory ${failureLogsRootDir}: ${errorMessage}`);
-    }
-    return artifactContents;
-}
 async function fetchDiffSummaryAndFullDiff(octokit, owner, repo, prNumber, token) {
     if (!prNumber) {
         throw new Error('Unable to determine pull request number to compute diff contents.');
@@ -50729,6 +50731,9 @@ function maybeWriteDebugArtifact(outputDir, filename, content) {
     if (!outputDir) {
         return;
     }
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
     fs.writeFileSync(path$1.join(outputDir, filename), content);
     coreExports.info(`${filename} written to ${path$1.join(outputDir, filename)}`);
 }
@@ -50746,7 +50751,6 @@ async function run() {
         : undefined;
     if (outputDir) {
         coreExports.info(`Output artifact directory: ${outputDir}`);
-        fs.mkdirSync(outputDir, { recursive: true });
     }
     else {
         coreExports.warning(`Not creating output artifacts.`);
@@ -50834,7 +50838,9 @@ async function run() {
                 pullRequest,
                 diff: trimmedDiff
             }, outputDir);
-            await provideInferenceFeedback(tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, response.id, true);
+            if (followupPr) {
+                await provideInferenceFeedback(tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, response.id, true);
+            }
         }
         catch (error) {
             await provideInferenceFeedback(tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, response.id, false, { reason: 'Failed to Apply Patch' });

@@ -46,8 +46,12 @@ describe('renderPrPatchPrompt', () => {
 
     expect(prompt).toContain('Target Branch: main')
     expect(prompt).toContain('Original PR: #42')
-    expect(prompt).toMatch(/- lint \(conclusion: failure\).+https:\/\/example.com\/job/)
-    expect(prompt).toContain('* Run lint (status: completed, conclusion: failure)')
+    expect(prompt).toMatch(
+      /- lint \(conclusion: failure\).+https:\/\/example.com\/job/
+    )
+    expect(prompt).toContain(
+      '* Run lint (status: completed, conclusion: failure)'
+    )
     expect(prompt).toContain('## log.txt')
     expect(prompt).toContain('Failure stack trace')
   })

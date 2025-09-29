@@ -58,7 +58,8 @@ export async function createPullRequestToInferenceRecord(
   }
 }
 
-export async function getPullRequestToInferenceRecord(
+// Returns all inference records for a given pull request. There should only be one since so far for simplicity, the table should be created with a ReplacingMergeTree, but we may want to support multiple inferences for interactive PR updates.
+export async function getPullRequestToInferenceRecords(
   pullRequestId: number
 ): Promise<PullRequestToInferenceRecord[]> {
   const { url, table } = getClickhouseClientConfig()
@@ -68,7 +69,6 @@ export async function getPullRequestToInferenceRecord(
   })
   let records: PullRequestToInferenceRecord[] = []
   try {
-    core.info(`SELECT * FROM ${table} WHERE pull_request_id = ${pullRequestId}`)
     const response = await client.query({
       query: `SELECT * FROM ${table} WHERE pull_request_id = ${pullRequestId}`,
       format: 'JSONEachRow'
