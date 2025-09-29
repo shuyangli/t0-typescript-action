@@ -21,8 +21,6 @@ inputs:
   clickhouse-table:
     description: Table for the PR to inference mapping.
     required: true
-  output-artifacts-dir:
-    description: Directory to store output artifacts for debugging purposes.
 
 runs:
   using: node24

@@ -1,0 +1,99 @@
+name: TensorZero CI Diagnosis Bot
+
+on:
+  workflow_run:
+    workflows: ['Continuous Integration']
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  gather-diff-and-generate-patch:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    name: Gather failure context and generate PR
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          fetch-tags: false
+
+      - name: Collect logs from the failed workflow run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p diagnostics
+          cd diagnostics
+          gh run view ${{ github.event.workflow_run.id }} --log-failed > failed-jobs.log
+          cd ..
+          # Print the contents of the logs directory for debugging
+          ls -la diagnostics
+
+      - name: Write TensorZero metrics configuration
+        run: |
+          echo "[functions.tensorzero_github_ci_bot]" > tensorzero.toml
+          echo "type = \"chat\"" >> tensorzero.toml
+          echo "" >> tensorzero.toml
+          echo "[functions.tensorzero_github_ci_bot.variants.gpt_5]" >> tensorzero.toml
+          echo "type = \"chat_completion\"" >> tensorzero.toml
+          echo "model = \"openai::gpt-5\"" >> tensorzero.toml
+          echo "" >> tensorzero.toml
+          echo "[metrics.tensorzero_github_ci_bot_pr_merged]" >> tensorzero.toml
+          echo "type = \"boolean\"" >> tensorzero.toml
+          echo "optimize = \"max\"" >> tensorzero.toml
+          echo "level = \"inference\"" >> tensorzero.toml
+          echo "" >> tensorzero.toml
+          echo "[metrics.tensorzero_github_ci_bot_diff_patched_successfully]" >> tensorzero.toml
+          echo "type = \"boolean\"" >> tensorzero.toml
+          echo "optimize = \"max\"" >> tensorzero.toml
+          echo "level = \"inference\"" >> tensorzero.toml
+
+      - name: Start TensorZero gateway
+        run: |
+          docker pull tensorzero/gateway:latest
+          docker run -d --rm \
+            --name tensorzero-gateway \
+            -e TENSORZERO_CLICKHOUSE_URL=${{ secrets.CLICKHOUSE_URL }} \
+            -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+            -p 3000:3000 \
+            --volume ./:/app \
+            tensorzero/gateway:latest --config-file /app/tensorzero.toml
+
+          for i in {1..20}; do
+            curl -fsS http://localhost:3000/health && exit 0
+            sleep 3
+          done
+          echo "Gateway never became ready" >&2
+          exit 1
+
+      - name: Call LLM to generate PR revision
+        uses: ./generate-pr-patch@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tensorzero-base-url: http://localhost:3000
+          tensorzero-diff-patched-successfully-metric-name: tensorzero_github_ci_bot_diff_patched_successfully
+          input-logs-dir: diagnostics
+          output-artifacts-dir: debug-logs
+          clickhouse-url: ${{ secrets.CLICKHOUSE_URL }}
+          clickhouse-table: GitHubBotPullRequestToInferenceMap
+
+      - name: Upload diagnostics bundle
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-failure-diagnostics
+          path: |
+            diagnostics/
+            debug-logs/
+
+      - name: Stop TensorZero gateway
+        if: always()
+        continue-on-error: true
+        run: docker stop tensorzero-gateway

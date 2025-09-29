@@ -140,10 +140,10 @@ function isPullRequestEligibleForFix(): boolean {
 
 // Parse action inputs
 function parseAndValidateActionInputs(): GeneratePrPatchActionInput {
-  const token = core.getInput('token')?.trim() || process.env.GITHUB_TOKEN
+  const token = core.getInput('token')?.trim()
   if (!token) {
     throw new Error(
-      'A GitHub token is required. Provide one via the `token` input or `GITHUB_TOKEN` env variable.'
+      'A GitHub token is required. Provide one via the `token` input.'
     )
   }
   const tensorZeroBaseUrl = core.getInput('tensorzero-base-url')?.trim()
