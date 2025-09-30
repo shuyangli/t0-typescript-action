@@ -8,35 +8,40 @@ import {
 import { provideInferenceFeedback } from '../tensorZeroClient.js'
 
 function parseAndValidateActionInputs(): CreatePrFeedbackActionInput {
-  const inputs: CreatePrFeedbackActionInput = {
-    tensorZeroBaseUrl: core.getInput('tensorzero-base-url')?.trim(),
-    tensorZeroPrMergedMetricName: core
-      .getInput('tensorzero-pr-merged-metric-name')
-      ?.trim(),
-    clickhouseUrl: core.getInput('clickhouse-url')?.trim(),
-    clickhouseTable: core.getInput('clickhouse-table')?.trim()
-  }
-  if (!inputs.tensorZeroBaseUrl) {
+  const tensorZeroBaseUrl = core.getInput('tensorzero-base-url')?.trim()
+  if (!tensorZeroBaseUrl) {
     throw new Error(
       'TensorZero base url is required; provide one via the `tensorzero-base-url` input.'
     )
   }
-  if (!inputs.tensorZeroPrMergedMetricName) {
+  const tensorZeroPrMergedMetricName = core
+    .getInput('tensorzero-pr-merged-metric-name')
+    ?.trim()
+  if (!tensorZeroPrMergedMetricName) {
     throw new Error(
       'TensorZero PR merged metric name is required; provide one via the `tensorzero-pr-merged-metric-name` input.'
     )
   }
-  if (!inputs.clickhouseUrl) {
+  const clickhouseUrl = core.getInput('clickhouse-url')?.trim()
+  if (!clickhouseUrl) {
     throw new Error(
       'ClickHouse URL is required; provide one via the `clickhouse-url` input.'
     )
   }
-  if (!inputs.clickhouseTable) {
+  const clickhouseTable = core.getInput('clickhouse-table')?.trim()
+  if (!clickhouseTable) {
     throw new Error(
       'ClickHouse Table is required; provide one via the `clickhouse-table` input.'
     )
   }
-  return inputs
+  return {
+    tensorZeroBaseUrl,
+    tensorZeroPrMergedMetricName,
+    clickhouse: {
+      url: clickhouseUrl,
+      table: clickhouseTable
+    }
+  }
 }
 
 function isPullRequestEligibleForFeedback(
@@ -71,7 +76,7 @@ function isPullRequestEligibleForFeedback(
 
 export async function run(): Promise<void> {
   const inputs = parseAndValidateActionInputs()
-  const { tensorZeroBaseUrl, tensorZeroPrMergedMetricName } = inputs
+  const { tensorZeroBaseUrl, tensorZeroPrMergedMetricName, clickhouse } = inputs
 
   const pullRequestId = github.context.payload.pull_request?.id
   if (!pullRequestId) {
@@ -84,7 +89,10 @@ export async function run(): Promise<void> {
   const isPullRequestMerged =
     (github.context.payload.pull_request?.merged as boolean) ?? false
 
-  const inferenceRecords = await getPullRequestToInferenceRecords(pullRequestId)
+  const inferenceRecords = await getPullRequestToInferenceRecords(
+    pullRequestId,
+    clickhouse
+  )
   if (!isPullRequestEligibleForFeedback(inferenceRecords)) {
     return
   }

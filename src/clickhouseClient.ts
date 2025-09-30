@@ -1,5 +1,4 @@
 import { createClient } from '@clickhouse/client'
-import * as core from '@actions/core'
 
 export interface ClickHouseConfig {
   url: string
@@ -29,39 +28,48 @@ function assertValidTableName(table: string): void {
   }
 }
 
-function getClickhouseClientConfig(): ClickHouseConfig {
-  // http[s]://[username:password@]hostname:port[/database]
-  const clickHouseUrl = core.getInput('clickhouse-url')?.trim()
-  const clickHouseTable = core.getInput('clickhouse-table')?.trim()
+function normalizeClickHouseConfig(
+  config: ClickHouseConfig
+): Required<ClickHouseConfig> {
+  const url = config.url?.trim()
+  const table = config.table?.trim()
 
-  if (!clickHouseUrl) {
+  if (!url) {
     throw new Error(
       'ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-url` input.'
     )
   }
 
-  if (!clickHouseTable) {
+  if (!table) {
     throw new Error(
       'ClickHouse table name is required when configuring ClickHouse logging; provide one via the `clickhouse-table` input.'
     )
   }
 
-  assertValidTableName(clickHouseTable)
+  assertValidTableName(table)
 
+  return { url, table }
+}
+
+function createTensorZeroClickHouseClient(config: ClickHouseConfig): {
+  client: ReturnType<typeof createClient>
+  table: string
+} {
+  const normalizedConfig = normalizeClickHouseConfig(config)
   return {
-    url: clickHouseUrl,
-    table: clickHouseTable
+    client: createClient({
+      url: normalizedConfig.url,
+      application: 'tensorzero-github-action'
+    }),
+    table: normalizedConfig.table
   }
 }
 
 export async function createPullRequestToInferenceRecord(
-  request: CreatePullRequestToInferenceRequest
+  request: CreatePullRequestToInferenceRequest,
+  config: ClickHouseConfig
 ): Promise<void> {
-  const { url, table } = getClickhouseClientConfig()
-  const client = createClient({
-    url,
-    application: 'tensorzero-github-action'
-  })
+  const { client, table } = createTensorZeroClickHouseClient(config)
   try {
     await client.insert({
       table,
@@ -81,13 +89,10 @@ export async function createPullRequestToInferenceRecord(
 
 // Returns all inference records for a given pull request. There should only be one since so far for simplicity, the table should be created with a ReplacingMergeTree, but we may want to support multiple inferences for interactive PR updates.
 export async function getPullRequestToInferenceRecords(
-  pullRequestId: number
+  pullRequestId: number,
+  config: ClickHouseConfig
 ): Promise<PullRequestToInferenceRecord[]> {
-  const { url, table } = getClickhouseClientConfig()
-  const client = createClient({
-    url,
-    application: 'tensorzero-github-action'
-  })
+  const { client, table } = createTensorZeroClickHouseClient(config)
   let records: PullRequestToInferenceRecord[] = []
   try {
     const response = await client.query({

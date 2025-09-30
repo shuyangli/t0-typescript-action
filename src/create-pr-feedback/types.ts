@@ -1,6 +1,7 @@
+import type { ClickHouseConfig } from '../clickhouseClient.js'
+
 export interface CreatePrFeedbackActionInput {
   tensorZeroBaseUrl: string
   tensorZeroPrMergedMetricName: string
-  clickhouseUrl: string
-  clickhouseTable: string
+  clickhouse: ClickHouseConfig
 }
