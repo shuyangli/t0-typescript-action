@@ -34850,16 +34850,23 @@ function requireDist () {
 
 var distExports = requireDist();
 
+const CLICKHOUSE_TABLE_NAME_REGEX = /^[a-zA-Z0-9_.]+$/;
+function assertValidTableName(table) {
+    if (!CLICKHOUSE_TABLE_NAME_REGEX.test(table)) {
+        throw new Error('ClickHouse table name must contain only alphanumeric characters, underscores, or dots.');
+    }
+}
 function getClickhouseClientConfig() {
     // http[s]://[username:password@]hostname:port[/database]
     const clickHouseUrl = coreExports.getInput('clickhouse-url')?.trim();
     const clickHouseTable = coreExports.getInput('clickhouse-table')?.trim();
     if (!clickHouseUrl) {
-        throw new Error('ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-host` input.');
+        throw new Error('ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-url` input.');
     }
     if (!clickHouseTable) {
         throw new Error('ClickHouse table name is required when configuring ClickHouse logging; provide one via the `clickhouse-table` input.');
     }
+    assertValidTableName(clickHouseTable);
     return {
         url: clickHouseUrl,
         table: clickHouseTable
@@ -34875,7 +34882,8 @@ async function getPullRequestToInferenceRecords(pullRequestId) {
     let records = [];
     try {
         const response = await client.query({
-            query: `SELECT * FROM ${table} WHERE pull_request_id = ${pullRequestId}`,
+            query: `SELECT inference_id, pull_request_id, created_at, original_pull_request_url FROM ${table} WHERE pull_request_id = {pullRequestId:UInt64}`,
+            query_params: { pullRequestId },
             format: 'JSONEachRow'
         });
         records = await response.json();
