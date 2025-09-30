@@ -169,11 +169,29 @@ function parseAndValidateActionInputs(): GeneratePrPatchActionInput {
     ? outputArtifactsDirInput.trim() || undefined
     : undefined
 
+  const clickhouseUrl = core.getInput('clickhouse-url')?.trim()
+  if (!clickhouseUrl) {
+    throw new Error(
+      'ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-url` input.'
+    )
+  }
+
+  const clickhouseTable = core.getInput('clickhouse-table')?.trim()
+  if (!clickhouseTable) {
+    throw new Error(
+      'ClickHouse table name is required when configuring ClickHouse logging; provide one via the `clickhouse-table` input.'
+    )
+  }
+
   return {
     token,
     tensorZeroBaseUrl,
     tensorZeroDiffPatchedSuccessfullyMetricName,
-    outputArtifactsDir
+    outputArtifactsDir,
+    clickhouse: {
+      url: clickhouseUrl,
+      table: clickhouseTable
+    }
   }
 }
 
@@ -237,7 +255,8 @@ export async function run(): Promise<void> {
     token,
     tensorZeroBaseUrl,
     tensorZeroDiffPatchedSuccessfullyMetricName,
-    outputArtifactsDir
+    outputArtifactsDir,
+    clickhouse
   } = inputs
 
   // Prepare artifact directory
@@ -402,7 +421,7 @@ export async function run(): Promise<void> {
       originalPullRequestUrl: pullRequest.html_url
     }
     try {
-      await createPullRequestToInferenceRecord(request)
+      await createPullRequestToInferenceRecord(request, clickhouse)
       core.info(
         `Recorded inference ${inferenceId} for follow-up PR #${followupPr.number} (id ${followupPr.id}) in ClickHouse.`
       )

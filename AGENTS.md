@@ -32,10 +32,13 @@ and keep test files as `*.test.ts`. Prefer descriptive function names
 
 Tests are written with Jest and colocated near the code (for example
 `src/generate-pr-patch/pullRequestCommentTemplate.test.ts`). Mirror the file
-under test and cover both success and failure paths. Use `npm run ci-test`
-inside CI when you need the same flags GitHub uses. Add new fixtures under
-`__fixtures__/` when mocking API payloads. Aim to maintain badge-level coverage
-by running `npm run coverage` before publishing.
+under test and cover both success and failure paths. Inject dependencies—like
+the ClickHouse client facade—via the optional arguments provided by
+`clickhouseClient.ts`; this keeps tests hermetic and avoids touching the real
+database API. Use `npm run ci-test` inside CI when you need the same flags
+GitHub uses. Add new fixtures under `__fixtures__/` when mocking API payloads.
+Aim to maintain badge-level coverage by running `npm run coverage` before
+publishing.
 
 ## Commit & Pull Request Guidelines
 

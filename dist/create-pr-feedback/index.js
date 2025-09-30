@@ -34856,29 +34856,32 @@ function assertValidTableName(table) {
         throw new Error('ClickHouse table name must contain only alphanumeric characters, underscores, or dots.');
     }
 }
-function getClickhouseClientConfig() {
-    // http[s]://[username:password@]hostname:port[/database]
-    const clickHouseUrl = coreExports.getInput('clickhouse-url')?.trim();
-    const clickHouseTable = coreExports.getInput('clickhouse-table')?.trim();
-    if (!clickHouseUrl) {
+function normalizeAndValidateClickHouseConfig(config) {
+    const url = config.url?.trim();
+    const table = config.table?.trim();
+    if (!url) {
         throw new Error('ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-url` input.');
     }
-    if (!clickHouseTable) {
+    if (!table) {
         throw new Error('ClickHouse table name is required when configuring ClickHouse logging; provide one via the `clickhouse-table` input.');
     }
-    assertValidTableName(clickHouseTable);
+    assertValidTableName(table);
+    return { url, table };
+}
+function createTensorZeroClickHouseClient(config, dependencies) {
+    const normalizedConfig = normalizeAndValidateClickHouseConfig(config);
     return {
-        url: clickHouseUrl,
-        table: clickHouseTable
+        client: distExports.createClient({
+            url: normalizedConfig.url,
+            application: 'tensorzero-github-action'
+        }),
+        table: normalizedConfig.table,
+        shouldClose: true
     };
 }
 // Returns all inference records for a given pull request. There should only be one since so far for simplicity, the table should be created with a ReplacingMergeTree, but we may want to support multiple inferences for interactive PR updates.
-async function getPullRequestToInferenceRecords(pullRequestId) {
-    const { url, table } = getClickhouseClientConfig();
-    const client = distExports.createClient({
-        url,
-        application: 'tensorzero-github-action'
-    });
+async function getPullRequestToInferenceRecords(pullRequestId, config, dependencies) {
+    const { client, table, shouldClose } = createTensorZeroClickHouseClient(config);
     let records = [];
     try {
         const response = await client.query({
@@ -34889,7 +34892,9 @@ async function getPullRequestToInferenceRecords(pullRequestId) {
         records = await response.json();
     }
     finally {
-        await client.close();
+        if (shouldClose) {
+            await client.close();
+        }
     }
     return records;
 }
@@ -41791,26 +41796,31 @@ async function provideInferenceFeedback(tensorZeroBaseUrl, metricName, inference
 }
 
 function parseAndValidateActionInputs() {
-    const inputs = {
-        tensorZeroBaseUrl: coreExports.getInput('tensorzero-base-url')?.trim(),
-        tensorZeroPrMergedMetricName: coreExports.getInput('tensorzero-pr-merged-metric-name')
-            ?.trim(),
-        clickhouseUrl: coreExports.getInput('clickhouse-url')?.trim(),
-        clickhouseTable: coreExports.getInput('clickhouse-table')?.trim()
-    };
-    if (!inputs.tensorZeroBaseUrl) {
+    const tensorZeroBaseUrl = coreExports.getInput('tensorzero-base-url')?.trim();
+    if (!tensorZeroBaseUrl) {
         throw new Error('TensorZero base url is required; provide one via the `tensorzero-base-url` input.');
     }
-    if (!inputs.tensorZeroPrMergedMetricName) {
+    const tensorZeroPrMergedMetricName = coreExports.getInput('tensorzero-pr-merged-metric-name')
+        ?.trim();
+    if (!tensorZeroPrMergedMetricName) {
         throw new Error('TensorZero PR merged metric name is required; provide one via the `tensorzero-pr-merged-metric-name` input.');
     }
-    if (!inputs.clickhouseUrl) {
+    const clickhouseUrl = coreExports.getInput('clickhouse-url')?.trim();
+    if (!clickhouseUrl) {
         throw new Error('ClickHouse URL is required; provide one via the `clickhouse-url` input.');
     }
-    if (!inputs.clickhouseTable) {
+    const clickhouseTable = coreExports.getInput('clickhouse-table')?.trim();
+    if (!clickhouseTable) {
         throw new Error('ClickHouse Table is required; provide one via the `clickhouse-table` input.');
     }
-    return inputs;
+    return {
+        tensorZeroBaseUrl,
+        tensorZeroPrMergedMetricName,
+        clickhouse: {
+            url: clickhouseUrl,
+            table: clickhouseTable
+        }
+    };
 }
 function isPullRequestEligibleForFeedback(inferenceRecords) {
     const pullRequestState = githubExports.context.payload.pull_request?.state;
@@ -41838,14 +41848,14 @@ function isPullRequestEligibleForFeedback(inferenceRecords) {
 }
 async function run() {
     const inputs = parseAndValidateActionInputs();
-    const { tensorZeroBaseUrl, tensorZeroPrMergedMetricName } = inputs;
+    const { tensorZeroBaseUrl, tensorZeroPrMergedMetricName, clickhouse } = inputs;
     const pullRequestId = githubExports.context.payload.pull_request?.id;
     if (!pullRequestId) {
         throw new Error('Did not receive a pull request ID from the context.');
     }
     coreExports.info(`Handling Pull Request ID ${pullRequestId} (#${githubExports.context.payload.pull_request?.number}); merged: ${githubExports.context.payload.pull_request?.merged}.`);
     const isPullRequestMerged = githubExports.context.payload.pull_request?.merged ?? false;
-    const inferenceRecords = await getPullRequestToInferenceRecords(pullRequestId);
+    const inferenceRecords = await getPullRequestToInferenceRecords(pullRequestId, clickhouse);
     if (!isPullRequestEligibleForFeedback(inferenceRecords)) {
         return;
     }
