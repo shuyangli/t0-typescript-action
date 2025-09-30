@@ -220,7 +220,9 @@ function maybeWriteDebugArtifact(
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true })
   }
-  fs.writeFileSync(path.join(outputDir, filename), content)
+  fs.writeFileSync(path.join(outputDir, filename), content, {
+    encoding: 'utf-8'
+  })
   core.info(`${filename} written to ${path.join(outputDir, filename)}`)
 }
 
@@ -399,7 +401,6 @@ export async function run(): Promise<void> {
       pullRequestId: followupPr.id,
       originalPullRequestUrl: pullRequest.html_url
     }
-    core.info(`Outgoing request: ${JSON.stringify(request, null, 2)}`)
     try {
       await createPullRequestToInferenceRecord(request)
       core.info(

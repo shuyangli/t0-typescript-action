@@ -50651,7 +50651,9 @@ function maybeWriteDebugArtifact(outputDir, filename, content) {
     if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
     }
-    fs.writeFileSync(path$1.join(outputDir, filename), content);
+    fs.writeFileSync(path$1.join(outputDir, filename), content, {
+        encoding: 'utf-8'
+    });
     coreExports.info(`${filename} written to ${path$1.join(outputDir, filename)}`);
 }
 /**
@@ -50769,7 +50771,6 @@ async function run() {
             pullRequestId: followupPr.id,
             originalPullRequestUrl: pullRequest.html_url
         };
-        coreExports.info(`Outgoing request: ${JSON.stringify(request, null, 2)}`);
         try {
             await createPullRequestToInferenceRecord(request);
             coreExports.info(`Recorded inference ${inferenceId} for follow-up PR #${followupPr.number} (id ${followupPr.id}) in ClickHouse.`);
