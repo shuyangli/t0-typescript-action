@@ -1,5 +1,8 @@
 export function extractCommentsFromLlmResponse(response: string): string {
-  const comments = response.match(/<comment>(.*?)<\/comment>/s)
+  // Support both legacy <comments> and newer <comment> markers
+  const comments =
+    response.match(/<comments>(.*?)<\/comments>/s) ||
+    response.match(/<comment>(.*?)<\/comment>/s)
   return comments ? comments[1] : ''
 }
 
