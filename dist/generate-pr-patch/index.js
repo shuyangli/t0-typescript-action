@@ -34869,28 +34869,31 @@ function assertValidTableName(table) {
         throw new Error('ClickHouse table name must contain only alphanumeric characters, underscores, or dots.');
     }
 }
-function getClickhouseClientConfig() {
-    // http[s]://[username:password@]hostname:port[/database]
-    const clickHouseUrl = coreExports.getInput('clickhouse-url')?.trim();
-    const clickHouseTable = coreExports.getInput('clickhouse-table')?.trim();
-    if (!clickHouseUrl) {
+function normalizeAndValidateClickHouseConfig(config) {
+    const url = config.url?.trim();
+    const table = config.table?.trim();
+    if (!url) {
         throw new Error('ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-url` input.');
     }
-    if (!clickHouseTable) {
+    if (!table) {
         throw new Error('ClickHouse table name is required when configuring ClickHouse logging; provide one via the `clickhouse-table` input.');
     }
-    assertValidTableName(clickHouseTable);
+    assertValidTableName(table);
+    return { url, table };
+}
+function createTensorZeroClickHouseClient(config, dependencies) {
+    const normalizedConfig = normalizeAndValidateClickHouseConfig(config);
     return {
-        url: clickHouseUrl,
-        table: clickHouseTable
+        client: distExports.createClient({
+            url: normalizedConfig.url,
+            application: 'tensorzero-github-action'
+        }),
+        table: normalizedConfig.table,
+        shouldClose: true
     };
 }
-async function createPullRequestToInferenceRecord(request) {
-    const { url, table } = getClickhouseClientConfig();
-    const client = distExports.createClient({
-        url,
-        application: 'tensorzero-github-action'
-    });
+async function createPullRequestToInferenceRecord(request, config, dependencies) {
+    const { client, table, shouldClose } = createTensorZeroClickHouseClient(config);
     try {
         await client.insert({
             table,
@@ -34905,7 +34908,9 @@ async function createPullRequestToInferenceRecord(request) {
         });
     }
     finally {
-        await client.close();
+        if (shouldClose) {
+            await client.close();
+        }
     }
 }
 
@@ -50630,11 +50635,23 @@ function parseAndValidateActionInputs() {
     const outputArtifactsDir = outputArtifactsDirInput
         ? outputArtifactsDirInput.trim() || undefined
         : undefined;
+    const clickhouseUrl = coreExports.getInput('clickhouse-url')?.trim();
+    if (!clickhouseUrl) {
+        throw new Error('ClickHouse URL is required when configuring ClickHouse logging; provide one via the `clickhouse-url` input.');
+    }
+    const clickhouseTable = coreExports.getInput('clickhouse-table')?.trim();
+    if (!clickhouseTable) {
+        throw new Error('ClickHouse table name is required when configuring ClickHouse logging; provide one via the `clickhouse-table` input.');
+    }
     return {
         token,
         tensorZeroBaseUrl,
         tensorZeroDiffPatchedSuccessfullyMetricName,
-        outputArtifactsDir
+        outputArtifactsDir,
+        clickhouse: {
+            url: clickhouseUrl,
+            table: clickhouseTable
+        }
     };
 }
 async function fetchDiffSummaryAndFullDiff(octokit, owner, repo, prNumber, token) {
@@ -50678,7 +50695,7 @@ function maybeWriteDebugArtifact(outputDir, filename, content) {
  */
 async function run() {
     const inputs = parseAndValidateActionInputs();
-    const { token, tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, outputArtifactsDir } = inputs;
+    const { token, tensorZeroBaseUrl, tensorZeroDiffPatchedSuccessfullyMetricName, outputArtifactsDir, clickhouse } = inputs;
     // Prepare artifact directory
     const outputDir = outputArtifactsDir
         ? path$1.join(process.cwd(), outputArtifactsDir)
@@ -50787,7 +50804,7 @@ async function run() {
             originalPullRequestUrl: pullRequest.html_url
         };
         try {
-            await createPullRequestToInferenceRecord(request);
+            await createPullRequestToInferenceRecord(request, clickhouse);
             coreExports.info(`Recorded inference ${inferenceId} for follow-up PR #${followupPr.number} (id ${followupPr.id}) in ClickHouse.`);
         }
         catch (error) {

@@ -1,35 +1,30 @@
-import { jest } from '@jest/globals'
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 
-const mockInsert = jest.fn()
-const mockQuery = jest.fn()
-const mockClose = jest.fn()
-const createClientMock = jest.fn(() => ({
-  insert: mockInsert,
-  query: mockQuery,
-  close: mockClose
-}))
+import {
+  type ClickHouseClientLike,
+  type ClickHouseConfig,
+  createPullRequestToInferenceRecord,
+  getPullRequestToInferenceRecords
+} from './clickhouseClient.js'
 
-await jest.unstable_mockModule('@clickhouse/client', () => ({
-  __esModule: true,
-  createClient: createClientMock
-}))
-
-const { createPullRequestToInferenceRecord, getPullRequestToInferenceRecords } =
-  await import('./clickhouseClient.js')
-
-const defaultConfig = {
+const defaultConfig: ClickHouseConfig = {
   url: 'https://clickhouse.example.com',
   table: 'tensorzero.inference_records'
 }
 
+function createMockClient(): jest.Mocked<ClickHouseClientLike> {
+  return {
+    insert: jest.fn(),
+    query: jest.fn(),
+    close: jest.fn()
+  }
+}
+
 describe('clickhouseClient', () => {
+  let client: jest.Mocked<ClickHouseClientLike>
+
   beforeEach(() => {
-    jest.clearAllMocks()
-    mockInsert.mockResolvedValue(undefined)
-    mockQuery.mockImplementation(async () => ({
-      json: jest.fn().mockResolvedValue([])
-    }))
-    mockClose.mockResolvedValue(undefined)
+    client = createMockClient()
   })
 
   it('writes inference records using structured inserts', async () => {
@@ -39,14 +34,11 @@ describe('clickhouseClient', () => {
         pullRequestId: 42,
         originalPullRequestUrl: 'https://github.com/org/repo/pull/42'
       },
-      defaultConfig
+      defaultConfig,
+      { client }
     )
 
-    expect(createClientMock).toHaveBeenCalledWith({
-      url: 'https://clickhouse.example.com',
-      application: 'tensorzero-github-action'
-    })
-    expect(mockInsert).toHaveBeenCalledWith({
+    expect(client.insert).toHaveBeenCalledWith({
       table: 'tensorzero.inference_records',
       values: [
         {
@@ -57,7 +49,7 @@ describe('clickhouseClient', () => {
       ],
       format: 'JSONEachRow'
     })
-    expect(mockClose).toHaveBeenCalledTimes(1)
+    expect(client.close).not.toHaveBeenCalled()
   })
 
   it('queries inference records with parameter binding', async () => {
@@ -69,12 +61,17 @@ describe('clickhouseClient', () => {
         original_pull_request_url: 'https://github.com/org/repo/pull/77'
       }
     ]
-    const jsonMock = jest.fn().mockResolvedValue(expectedRecords)
-    mockQuery.mockResolvedValueOnce({ json: jsonMock })
+    const jsonMock = jest
+      .fn<() => Promise<unknown>>()
+      .mockResolvedValue(expectedRecords)
+    // @ts-expect-error(Mock type is inaccurate)
+    client.query.mockResolvedValueOnce({ json: jsonMock })
 
-    const records = await getPullRequestToInferenceRecords(77, defaultConfig)
+    const records = await getPullRequestToInferenceRecords(77, defaultConfig, {
+      client
+    })
 
-    expect(mockQuery).toHaveBeenCalledWith({
+    expect(client.query).toHaveBeenCalledWith({
       query:
         'SELECT inference_id, pull_request_id, created_at, original_pull_request_url FROM tensorzero.inference_records WHERE pull_request_id = {pullRequestId:UInt64}',
       query_params: { pullRequestId: 77 },
@@ -95,8 +92,6 @@ describe('clickhouseClient', () => {
         { ...defaultConfig, table: 'invalid-table!' }
       )
     ).rejects.toThrow('ClickHouse table name must contain only')
-
-    expect(createClientMock).not.toHaveBeenCalled()
   })
 
   it('validates missing URL', async () => {
@@ -112,8 +107,8 @@ describe('clickhouseClient', () => {
     ).rejects.toThrow('ClickHouse URL is required')
   })
 
-  it('closes the client even if insert fails', async () => {
-    mockInsert.mockRejectedValueOnce(new Error('insert failed'))
+  it('propagates insert failures from the injected client without closing it', async () => {
+    client.insert.mockRejectedValueOnce(new Error('insert failed'))
 
     await expect(
       createPullRequestToInferenceRecord(
@@ -122,10 +117,11 @@ describe('clickhouseClient', () => {
           pullRequestId: 1,
           originalPullRequestUrl: 'https://example.com/pr/1'
         },
-        defaultConfig
+        defaultConfig,
+        { client }
       )
     ).rejects.toThrow('insert failed')
 
-    expect(mockClose).toHaveBeenCalledTimes(1)
+    expect(client.close).not.toHaveBeenCalled()
   })
 })
